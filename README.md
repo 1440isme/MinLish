@@ -15,11 +15,12 @@
 Mở terminal trên máy cá nhân và chạy các lệnh sau:
 
 ```bash
-git clone <URL_KHO_LƯU_TRỮ_CỦA_BẠN>
+git clone [<URL_KHO_LƯU_TRỮ_CỦA_BẠN>](https://github.com/1440isme/MinLish.git)
 cd MinLish/backend
-git pull origin main
 git fetch origin
 git checkout <ten nhanh>
+git pull origin main
+
 ```
 
 #### **Bước 2: Cài đặt các thư viện phụ thuộc (Dependencies)**
