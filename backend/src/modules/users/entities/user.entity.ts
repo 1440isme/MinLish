@@ -1,19 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
-
-// ----------------------------------------------------------------
-// Enums (mirror Prisma enums)
-// ----------------------------------------------------------------
-
-export enum AuthProvider {
-  LOCAL = 'LOCAL',
-  GOOGLE = 'GOOGLE',
-}
-
-export enum LearningGoal {
-  TOEIC = 'TOEIC',
-  IELTS = 'IELTS',
-}
+import { AuthProvider, LearningGoal } from '@prisma/client';
 
 // ----------------------------------------------------------------
 // User Entity

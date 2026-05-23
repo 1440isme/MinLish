@@ -20,6 +20,7 @@ function parseDatabaseUrl(url: string) {
     password: decodeURIComponent(parsed.password),
     database: parsed.pathname.replace(/^\//, ''),
     connectionLimit: 10,
+    allowPublicKeyRetrieval: true,
   };
 }
 
