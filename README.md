@@ -17,6 +17,9 @@ Mở terminal trên máy cá nhân và chạy các lệnh sau:
 ```bash
 git clone <URL_KHO_LƯU_TRỮ_CỦA_BẠN>
 cd MinLish/backend
+git pull origin main
+git fetch origin
+git checkout <ten nhanh>
 ```
 
 #### **Bước 2: Cài đặt các thư viện phụ thuộc (Dependencies)**
