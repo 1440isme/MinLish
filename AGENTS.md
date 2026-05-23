@@ -355,8 +355,9 @@ Users MUST NOT modify:
 
 1. **Multi-Line for Multi-Option Decorators:**
    Any `@ApiProperty` or `@ApiPropertyOptional` decorator containing **more than one key** in its options object **must** be written in multi-line format with a trailing comma.
-   
+
    Example (Correct):
+
    ```ts
    @ApiProperty({
      example: 4,
@@ -367,6 +368,7 @@ Users MUST NOT modify:
    ```
 
    Example (Incorrect - STRICTLY FORBIDDEN):
+
    ```ts
    @ApiProperty({ example: 4, description: 'Quality 0–5 tương ứng...' })
    ```
@@ -415,13 +417,15 @@ DO NOT:
    The `datasource db` block in `prisma/schema.prisma` **must not** contain a direct `url` property. The URL is passed dynamically at runtime.
 2. **Database Client Adapter Required:**
    Do not instantiate `PrismaClient` with default constructors. You **must** configure and pass the `PrismaMariaDb` adapter:
+
    ```ts
-   import { PrismaClient } from '@prisma/client';
-   import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+   import { PrismaClient } from "@prisma/client";
+   import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 
    const adapter = new PrismaMariaDb(connectionOptions);
    const prisma = new PrismaClient({ adapter });
    ```
+
 3. **Database Migration & Seeding:**
    Seed scripts are configured under `migrations.seed` inside `prisma.config.ts` rather than `package.json`.
 4. **Soft Delete Implementation:**
@@ -512,7 +516,7 @@ Example:
 
 ```ts
 function normalizeText(value: string): string {
-  return value.trim().toLowerCase().replace(/\s+/g, ' ');
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
 ```
 
@@ -617,7 +621,14 @@ Required:
 
 ---
 
-# 15. MVP SCOPE PROTECTION
+# 15. LỜI KHUYÊN CHO DEV ANDROID KHI TRIỂN KHAI
+
+Navigation: Nên có một MainNavGraph để điều hướng. Nếu kiểm tra DataStore thấy có accessToken, tự động mở màn hình chính (HomeScreen), ngược lại thì mở màn hình đăng nhập (LoginScreen).
+Dependency Injection: Khuyến nghị sử dụng Hilt (Dagger Hilt) để quản lý việc truyền (inject) AuthRepository, OkHttpClient có Interceptor vào các ViewModels nhằm giữ code sạch sẽ và dễ viết Unit Test.
+
+---
+
+# 16. MVP SCOPE PROTECTION
 
 MVP PRIORITIES:
 
@@ -637,10 +648,9 @@ DO NOT introduce:
 - unnecessary microservices
 - unnecessary abstractions
 
-
 ---
 
-# 16. AI AGENT WORKFLOW
+# 17. AI AGENT WORKFLOW
 
 ALL AGENTS MUST:
 
@@ -711,4 +721,3 @@ The MinLish project values:
 > Stable MVP delivery over feature explosion.
 
 ALL AGENTS MUST FOLLOW THESE RULES STRICTLY.
-
