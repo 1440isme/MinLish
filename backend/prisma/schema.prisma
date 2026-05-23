@@ -1,0 +1,577 @@
+// =============================================================
+// MinLish App - Prisma Schema
+// MySQL 8.0+ | Engine: InnoDB | Charset: utf8mb4
+// =============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  // url is now configured in prisma.config.ts (Prisma 7+)
+}
+
+// =============================================================
+// ENUMS
+// =============================================================
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+}
+
+enum LearningGoal {
+  TOEIC
+  IELTS
+}
+
+enum DeckType {
+  SYSTEM
+  USER
+}
+
+enum DeckVisibility {
+  PRIVATE
+  PUBLIC
+}
+
+enum VocabularyDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum ReviewCardStatus {
+  NEW
+  LEARNING
+  REVIEW
+  MASTERED
+  SUSPENDED
+}
+
+enum ReviewRating {
+  AGAIN
+  HARD
+  GOOD
+  EASY
+}
+
+enum PracticeType {
+  MULTIPLE_CHOICE
+  FILL_IN_BLANK
+  LISTENING
+}
+
+enum PracticeSessionStatus {
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum QuestionType {
+  WORD_TO_MEANING
+  MEANING_TO_WORD
+  FILL_IN_BLANK
+  LISTENING_WORD
+}
+
+enum DevicePlatform {
+  ANDROID
+  IOS
+  WEB
+}
+
+enum ImportFileType {
+  CSV
+  XLSX
+}
+
+enum ImportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  PARTIAL_SUCCESS
+}
+
+// =============================================================
+// 1. USERS
+// =============================================================
+
+model User {
+  id           String       @id @default(uuid()) @db.Char(36)
+  email        String       @unique @db.VarChar(255)
+  passwordHash String?      @map("password_hash") @db.VarChar(255)
+  fullName     String       @map("full_name") @db.VarChar(150)
+  avatarUrl    String?      @map("avatar_url") @db.Text
+
+  authProvider   AuthProvider @default(LOCAL) @map("auth_provider")
+  providerId     String?      @map("provider_id") @db.VarChar(255)
+
+  learningGoal   LearningGoal? @map("learning_goal")
+  currentLevelId String?       @map("current_level_id") @db.Char(36)
+  targetLevelId  String?       @map("target_level_id") @db.Char(36)
+
+  dailyNewWordsGoal Int    @default(10) @map("daily_new_words_goal")
+  timezone          String @default("Asia/Ho_Chi_Minh") @db.VarChar(100)
+
+  isActive    Boolean   @default(true) @map("is_active")
+  lastLoginAt DateTime? @map("last_login_at") @db.DateTime(3)
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt DateTime? @map("deleted_at") @db.DateTime(3)
+
+  // Relations
+  currentLevel        LearningLevel?       @relation("UserCurrentLevel", fields: [currentLevelId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  targetLevel         LearningLevel?       @relation("UserTargetLevel", fields: [targetLevelId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  decks               Deck[]
+  refreshTokens       RefreshToken[]
+  reviewCards         ReviewCard[]
+  reviewLogs          ReviewLog[]
+  practiceSessions    PracticeSession[]
+  practiceAnswers     PracticeAnswer[]
+  dailyActivities     DailyActivity[]
+  notificationSetting NotificationSetting?
+  deviceTokens        DeviceToken[]
+  importJobs          ImportJob[]
+
+  @@unique([authProvider, providerId])
+  @@index([learningGoal])
+  @@index([targetLevelId])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+// =============================================================
+// 2. REFRESH TOKENS
+// =============================================================
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Char(36)
+  userId    String    @map("user_id") @db.Char(36)
+  tokenHash String    @map("token_hash") @db.VarChar(255)
+  expiresAt DateTime  @map("expires_at") @db.DateTime(3)
+  revokedAt DateTime? @map("revoked_at") @db.DateTime(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+  @@map("refresh_tokens")
+}
+
+// =============================================================
+// 3. LEARNING PATHS
+// =============================================================
+
+model LearningPath {
+  id           String @id @default(uuid()) @db.Char(36)
+  code         String @unique @db.VarChar(50)
+  name         String @db.VarChar(100)
+  description  String? @db.Text
+  displayOrder Int     @default(0) @map("display_order")
+  isActive     Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+
+  // Relations
+  learningLevels LearningLevel[]
+
+  @@index([isActive, displayOrder])
+  @@map("learning_paths")
+}
+
+// =============================================================
+// 4. LEARNING LEVELS
+// =============================================================
+
+model LearningLevel {
+  id             String  @id @default(uuid()) @db.Char(36)
+  learningPathId String  @map("learning_path_id") @db.Char(36)
+  code           String  @db.VarChar(50)
+  name           String  @db.VarChar(100)
+  description    String? @db.Text
+  minScore       Decimal? @map("min_score") @db.Decimal(5, 2)
+  maxScore       Decimal? @map("max_score") @db.Decimal(5, 2)
+  displayOrder   Int     @default(0) @map("display_order")
+  isActive       Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+
+  // Relations
+  learningPath    LearningPath @relation(fields: [learningPathId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  decks           Deck[]
+  usersAsCurrent  User[]       @relation("UserCurrentLevel")
+  usersAsTarget   User[]       @relation("UserTargetLevel")
+
+  @@unique([learningPathId, code])
+  @@index([learningPathId, displayOrder])
+  @@index([isActive])
+  @@map("learning_levels")
+}
+
+// =============================================================
+// 5. DECKS
+// =============================================================
+
+model Deck {
+  id              String         @id @default(uuid()) @db.Char(36)
+  ownerUserId     String?        @map("owner_user_id") @db.Char(36)
+  learningLevelId String?        @map("learning_level_id") @db.Char(36)
+
+  deckType        DeckType       @default(USER) @map("deck_type")
+  visibility      DeckVisibility @default(PRIVATE)
+
+  name           String  @db.VarChar(200)
+  normalizedName String  @map("normalized_name") @db.VarChar(200)
+  description    String? @db.Text
+  tags           Json?
+
+  thumbnailUrl String? @map("thumbnail_url") @db.Text
+  displayOrder Int     @default(0) @map("display_order")
+  totalWords   Int     @default(0) @map("total_words")
+
+  isDefault Boolean @default(false) @map("is_default")
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt DateTime? @map("deleted_at") @db.DateTime(3)
+
+  // Relations
+  ownerUser      User?           @relation(fields: [ownerUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  learningLevel  LearningLevel?  @relation(fields: [learningLevelId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  vocabularies   Vocabulary[]
+  practiceSessions PracticeSession[]
+  importJobs     ImportJob[]
+
+  @@index([ownerUserId])
+  @@index([learningLevelId])
+  @@index([deckType, visibility])
+  @@index([deletedAt])
+  @@index([name])
+  @@index([ownerUserId, isDefault])
+  @@map("decks")
+}
+
+// =============================================================
+// 6. VOCABULARIES
+// =============================================================
+
+model Vocabulary {
+  id      String  @id @default(uuid()) @db.Char(36)
+  deckId  String  @map("deck_id") @db.Char(36)
+
+  sourceVocabularyId String? @map("source_vocabulary_id") @db.Char(36)
+
+  word           String  @db.VarChar(150)
+  normalizedWord String  @map("normalized_word") @db.VarChar(150)
+
+  pronunciation String? @db.VarChar(255)
+
+  meaning           String @db.Text
+  normalizedMeaning String @map("normalized_meaning") @db.VarChar(500)
+
+  descriptionEn String? @map("description_en") @db.Text
+  example       String? @db.Text
+  collocation   String? @db.Text
+  relatedWords  String? @map("related_words") @db.Text
+  note          String? @db.Text
+
+  audioUrl  String? @map("audio_url") @db.Text
+  imageUrl  String? @map("image_url") @db.Text
+
+  difficulty    VocabularyDifficulty?
+  partOfSpeech  String?               @map("part_of_speech") @db.VarChar(50)
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt DateTime? @map("deleted_at") @db.DateTime(3)
+
+  // Relations
+  deck               Deck         @relation(fields: [deckId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  sourceVocabulary   Vocabulary?  @relation("VocabularySource", fields: [sourceVocabularyId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  copiedVocabularies Vocabulary[] @relation("VocabularySource")
+  reviewCards        ReviewCard[]
+  reviewLogs         ReviewLog[]
+  practiceAnswers    PracticeAnswer[]
+
+  @@index([deckId])
+  @@index([sourceVocabularyId])
+  @@index([word])
+  @@index([normalizedWord])
+  @@index([deletedAt])
+  @@map("vocabularies")
+}
+
+// =============================================================
+// 7. REVIEW CARDS (SM-2 SRS state per user per vocabulary)
+// =============================================================
+
+model ReviewCard {
+  id           String           @id @default(uuid()) @db.Char(36)
+  userId       String           @map("user_id") @db.Char(36)
+  vocabularyId String           @map("vocabulary_id") @db.Char(36)
+
+  status       ReviewCardStatus @default(NEW)
+
+  repetition    Int     @default(0)
+  intervalDays  Int     @default(0) @map("interval_days")
+  easeFactor    Decimal @default(2.50) @map("ease_factor") @db.Decimal(4, 2)
+
+  dueAt          DateTime  @default(now()) @map("due_at") @db.DateTime(3)
+  lastReviewedAt DateTime? @map("last_reviewed_at") @db.DateTime(3)
+  firstLearnedAt DateTime? @map("first_learned_at") @db.DateTime(3)
+
+  lapses        Int @default(0)
+  totalReviews  Int @default(0) @map("total_reviews")
+  correctReviews Int @default(0) @map("correct_reviews")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+
+  // Relations
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  vocabulary Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  reviewLogs ReviewLog[]
+
+  @@unique([userId, vocabularyId])
+  @@index([userId, dueAt])
+  @@index([userId, status])
+  @@index([vocabularyId])
+  @@map("review_cards")
+}
+
+// =============================================================
+// 8. REVIEW LOGS
+// =============================================================
+
+model ReviewLog {
+  id           String @id @default(uuid()) @db.Char(36)
+  userId       String @map("user_id") @db.Char(36)
+  reviewCardId String @map("review_card_id") @db.Char(36)
+  vocabularyId String @map("vocabulary_id") @db.Char(36)
+
+  rating    ReviewRating
+  quality   Int
+  isCorrect Boolean      @default(true) @map("is_correct")
+
+  oldRepetition Int @default(0) @map("old_repetition")
+  newRepetition Int @default(0) @map("new_repetition")
+
+  oldIntervalDays Int @default(0) @map("old_interval_days")
+  newIntervalDays Int @default(0) @map("new_interval_days")
+
+  oldEaseFactor Decimal @default(2.50) @map("old_ease_factor") @db.Decimal(4, 2)
+  newEaseFactor Decimal @default(2.50) @map("new_ease_factor") @db.Decimal(4, 2)
+
+  oldDueAt DateTime? @map("old_due_at") @db.DateTime(3)
+  newDueAt DateTime  @map("new_due_at") @db.DateTime(3)
+
+  reviewedAt DateTime @map("reviewed_at") @db.DateTime(3)
+  createdAt  DateTime @default(now()) @map("created_at") @db.DateTime(3)
+
+  // Relations
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  reviewCard ReviewCard @relation(fields: [reviewCardId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  vocabulary Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([userId, reviewedAt])
+  @@index([reviewCardId, reviewedAt])
+  @@index([vocabularyId])
+  @@index([rating])
+  @@map("review_logs")
+}
+
+// =============================================================
+// 9. PRACTICE SESSIONS
+// =============================================================
+
+model PracticeSession {
+  id     String  @id @default(uuid()) @db.Char(36)
+  userId String  @map("user_id") @db.Char(36)
+  deckId String? @map("deck_id") @db.Char(36)
+
+  practiceType PracticeType @map("practice_type")
+
+  totalQuestions  Int     @default(0) @map("total_questions")
+  correctAnswers  Int     @default(0) @map("correct_answers")
+  wrongAnswers    Int     @default(0) @map("wrong_answers")
+  accuracy        Decimal @default(0.00) @db.Decimal(5, 2)
+
+  status PracticeSessionStatus @default(IN_PROGRESS)
+
+  startedAt  DateTime  @default(now()) @map("started_at") @db.DateTime(3)
+  finishedAt DateTime? @map("finished_at") @db.DateTime(3)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+
+  // Relations
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  deck            Deck?            @relation(fields: [deckId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  practiceAnswers PracticeAnswer[]
+
+  @@index([userId, startedAt])
+  @@index([deckId])
+  @@index([practiceType])
+  @@index([status])
+  @@map("practice_sessions")
+}
+
+// =============================================================
+// 10. PRACTICE ANSWERS
+// =============================================================
+
+model PracticeAnswer {
+  id           String  @id @default(uuid()) @db.Char(36)
+  sessionId    String  @map("session_id") @db.Char(36)
+  userId       String  @map("user_id") @db.Char(36)
+  vocabularyId String? @map("vocabulary_id") @db.Char(36)
+
+  questionType QuestionType @map("question_type")
+
+  questionText   String  @map("question_text") @db.Text
+  optionsJson    Json?   @map("options_json")
+
+  userAnswer    String? @map("user_answer") @db.Text
+  correctAnswer String  @map("correct_answer") @db.Text
+  isCorrect     Boolean @default(false) @map("is_correct")
+
+  answeredAt DateTime @default(now()) @map("answered_at") @db.DateTime(3)
+  createdAt  DateTime @default(now()) @map("created_at") @db.DateTime(3)
+
+  // Relations
+  session    PracticeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  vocabulary Vocabulary?     @relation(fields: [vocabularyId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([sessionId])
+  @@index([userId, answeredAt])
+  @@index([vocabularyId])
+  @@index([isCorrect])
+  @@map("practice_answers")
+}
+
+// =============================================================
+// 11. DAILY ACTIVITIES
+// =============================================================
+
+model DailyActivity {
+  id           String   @id @default(uuid()) @db.Char(36)
+  userId       String   @map("user_id") @db.Char(36)
+  activityDate DateTime @map("activity_date") @db.Date
+
+  newWordsCount         Int @default(0) @map("new_words_count")
+  reviewWordsCount      Int @default(0) @map("review_words_count")
+  practiceSessionsCount Int @default(0) @map("practice_sessions_count")
+
+  correctCount Int @default(0) @map("correct_count")
+  wrongCount   Int @default(0) @map("wrong_count")
+
+  totalLearningSeconds Int @default(0) @map("total_learning_seconds")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([userId, activityDate])
+  @@index([userId, activityDate])
+  @@map("daily_activities")
+}
+
+// =============================================================
+// 12. NOTIFICATION SETTINGS
+// =============================================================
+
+model NotificationSetting {
+  id     String @id @default(uuid()) @db.Char(36)
+  userId String @unique @map("user_id") @db.Char(36)
+
+  dailyReminderEnabled    Boolean  @default(true) @map("daily_reminder_enabled")
+  dailyReminderTime       DateTime @default(dbgenerated("'1970-01-01 20:00:00.000'")) @map("daily_reminder_time") @db.Time(0)
+
+  dueReviewReminderEnabled Boolean @default(true) @map("due_review_reminder_enabled")
+
+  pushEnabled  Boolean @default(true) @map("push_enabled")
+  emailEnabled Boolean @default(false) @map("email_enabled")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("notification_settings")
+}
+
+// =============================================================
+// 13. DEVICE TOKENS
+// =============================================================
+
+model DeviceToken {
+  id     String @id @default(uuid()) @db.Char(36)
+  userId String @map("user_id") @db.Char(36)
+
+  token      String         @db.Text
+  platform   DevicePlatform @default(ANDROID)
+  deviceName String?        @map("device_name") @db.VarChar(255)
+
+  isActive   Boolean   @default(true) @map("is_active")
+  lastUsedAt DateTime? @map("last_used_at") @db.DateTime(3)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([userId])
+  @@index([platform])
+  @@index([isActive])
+  @@map("device_tokens")
+}
+
+// =============================================================
+// 14. IMPORT JOBS
+// =============================================================
+
+model ImportJob {
+  id     String @id @default(uuid()) @db.Char(36)
+  userId String @map("user_id") @db.Char(36)
+  deckId String @map("deck_id") @db.Char(36)
+
+  fileName String         @map("file_name") @db.VarChar(255)
+  fileType ImportFileType @default(CSV) @map("file_type")
+
+  status ImportStatus @default(PENDING)
+
+  totalRows     Int @default(0) @map("total_rows")
+  successRows   Int @default(0) @map("success_rows")
+  duplicateRows Int @default(0) @map("duplicate_rows")
+  failedRows    Int @default(0) @map("failed_rows")
+
+  errorReportJson Json? @map("error_report_json")
+
+  startedAt  DateTime? @map("started_at") @db.DateTime(3)
+  finishedAt DateTime? @map("finished_at") @db.DateTime(3)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  deck Deck @relation(fields: [deckId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([deckId])
+  @@index([status])
+  @@map("import_jobs")
+}
