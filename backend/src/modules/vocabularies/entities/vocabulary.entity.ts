@@ -27,8 +27,7 @@ export class VocabularyEntity {
   @ApiPropertyOptional({
     example: 'uuid-original-vocab',
     nullable: true,
-    description:
-      'ID vocabulary gốc nếu đây là bản copy/favorite',
+    description: 'ID vocabulary gốc nếu đây là bản copy/favorite',
   })
   @Expose()
   sourceVocabularyId?: string | null;
@@ -59,7 +58,9 @@ export class VocabularyEntity {
   @Expose()
   descriptionEn?: string | null;
 
-  @ApiPropertyOptional({ example: 'I have an appointment with the manager at 9 a.m.' })
+  @ApiPropertyOptional({
+    example: 'I have an appointment with the manager at 9 a.m.',
+  })
   @Expose()
   example?: string | null;
 

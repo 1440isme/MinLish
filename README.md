@@ -15,8 +15,12 @@
 Mở terminal trên máy cá nhân và chạy các lệnh sau:
 
 ```bash
-git clone <URL_KHO_LƯU_TRỮ_CỦA_BẠN>
+git clone [<URL_KHO_LƯU_TRỮ_CỦA_BẠN>](https://github.com/1440isme/MinLish.git)
 cd MinLish/backend
+git fetch origin
+git checkout <ten nhanh>
+git pull origin main
+
 ```
 
 #### **Bước 2: Cài đặt các thư viện phụ thuộc (Dependencies)**
@@ -33,11 +37,7 @@ npm install
    ```bash
    cp .env.example .env
    ```
-2. Mở file `.env` mới tạo lên và cập nhật cấu hình tài khoản/mật khẩu MySQL trên máy cục bộ của lập trình viên đó tại dòng `DATABASE_URL`:
-   ```env
-   DATABASE_URL="mysql://TÊN_USER:MẬT_KHẨU@localhost:3306/minlish"
-   ```
-   _Ví dụ:_ `mysql://root:12345678@localhost:3306/minlish`
+
 
 #### **Bước 4: Tạo Cơ sở dữ liệu trống trên MySQL**
 

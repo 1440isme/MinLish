@@ -1,0 +1,71 @@
+package com.minlish.core.data.model
+
+data class DeckEntity(
+    val id: String,
+    val name: String,
+    val description: String,
+    val tags: String, // Semicolon separated
+    val deckType: String, // SYSTEM, USER
+    val targetLevel: String,
+    val learningGoal: String
+)
+
+data class VocabularyEntity(
+    val id: String,
+    val deckId: String,
+    val word: String,
+    val pronunciation: String,
+    val meaning: String,
+    val descriptionEn: String,
+    val example: String,
+    val collocation: String,
+    val relatedWords: String,
+    val note: String
+)
+
+data class ReviewCardEntity(
+    val id: String,
+    val vocabularyId: String,
+    val repetition: Int,
+    val intervalDays: Int,
+    val easeFactor: Float,
+    val dueAt: Long
+)
+
+data class VocabularyWithReviewCard(
+    val vocabulary: VocabularyEntity,
+    val reviewCard: ReviewCardEntity?
+)
+
+data class PracticeSessionEntity(
+    val id: String,
+    val deckId: String,
+    val practiceType: String,
+    val totalQuestions: Int,
+    val correctAnswers: Int,
+    val finishedAt: Long
+)
+
+data class DashboardAnalyticsDto(
+    val totalLearned: Int,
+    val totalReview: Int,
+    val dueToday: Int,
+    val dailyGoal: Int,
+    val accuracy: Float,
+    val streak: Int,
+    val progressPercent: Int
+)
+
+data class QuizQuestion(
+    val vocabulary: VocabularyEntity,
+    val questionType: String,
+    val questionText: String,
+    val choices: List<String>,
+    val correctAnswer: String
+)
+
+data class ImportCsvResponse(
+    val success: Boolean,
+    val importedCount: Int,
+    val errors: List<String>? = null
+)
