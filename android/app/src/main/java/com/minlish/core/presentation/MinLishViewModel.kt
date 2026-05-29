@@ -31,6 +31,11 @@ class MinLishViewModel(
         started = SharingStarted.Eagerly,
         initialValue = "Guest"
     )
+    val avatarUrl = settingsRepository.avatarUrl.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = ""
+    )
     val email = settingsRepository.email.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
@@ -41,7 +46,16 @@ class MinLishViewModel(
         started = SharingStarted.Eagerly,
         initialValue = "TOEIC"
     )
-    val targetLevel = settingsRepository.targetLevel
+    val targetLevel = settingsRepository.targetLevel.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = "TOEIC 600+"
+    )
+    val targetLevelId = settingsRepository.targetLevelId.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = ""
+    )
     val dailyNewWordsGoal = settingsRepository.dailyNewWordsGoal.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
@@ -201,6 +215,44 @@ class MinLishViewModel(
         viewModelScope.launch {
             try {
                 userRepository.updateDailyNewWordsGoal(goal)
+            } catch (e: Exception) {
+                // Handle or ignore network issue
+            }
+        }
+    }
+
+    fun updateTargetLevel(levelId: String) {
+        viewModelScope.launch {
+            try {
+                userRepository.updateProfile(targetLevelId = levelId)
+            } catch (e: Exception) {
+                // Handle or ignore network issue
+            }
+        }
+    }
+
+    fun updateLearningGoal(goal: String) {
+        viewModelScope.launch {
+            try {
+                val defaultTargetLevelId = if (goal == "TOEIC") {
+                    "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2" // TOEIC 600+
+                } else {
+                    "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3" // IELTS 6.5+
+                }
+                userRepository.updateProfile(
+                    learningGoal = goal,
+                    targetLevelId = defaultTargetLevelId
+                )
+            } catch (e: Exception) {
+                // Handle or ignore network issue
+            }
+        }
+    }
+
+    fun updateProfile(newName: String, newAvatarUrl: String) {
+        viewModelScope.launch {
+            try {
+                userRepository.updateProfile(fullName = newName, avatarUrl = newAvatarUrl)
             } catch (e: Exception) {
                 // Handle or ignore network issue
             }

@@ -135,7 +135,12 @@ export class ImportsService {
     let failedRows = 0;
 
     const errors: { row: number; field: string; message: string }[] = [];
-    const duplicates: { row: number; word: string; meaning: string; reason: string }[] = [];
+    const duplicates: {
+      row: number;
+      word: string;
+      meaning: string;
+      reason: string;
+    }[] = [];
 
     try {
       const records = this.parseCsv(fileBuffer);
@@ -167,7 +172,11 @@ export class ImportsService {
 
         if (!word.trim()) {
           failedRows++;
-          errors.push({ row: rowNumber, field: 'word', message: 'Word is required' });
+          errors.push({
+            row: rowNumber,
+            field: 'word',
+            message: 'Word is required',
+          });
           continue;
         }
         if (!meaning.trim()) {
@@ -200,11 +209,17 @@ export class ImportsService {
           rowNumber,
           word: word.trim(),
           meaning: meaning.trim(),
-          pronunciation: typeof r.pronunciation === 'string' ? r.pronunciation.trim() : null,
-          descriptionEn: typeof r.description_en === 'string' ? r.description_en.trim() : null,
+          pronunciation:
+            typeof r.pronunciation === 'string' ? r.pronunciation.trim() : null,
+          descriptionEn:
+            typeof r.description_en === 'string'
+              ? r.description_en.trim()
+              : null,
           example: typeof r.example === 'string' ? r.example.trim() : null,
-          collocation: typeof r.collocation === 'string' ? r.collocation.trim() : null,
-          relatedWords: typeof r.related_words === 'string' ? r.related_words.trim() : null,
+          collocation:
+            typeof r.collocation === 'string' ? r.collocation.trim() : null,
+          relatedWords:
+            typeof r.related_words === 'string' ? r.related_words.trim() : null,
           note: typeof r.note === 'string' ? r.note.trim() : null,
           normalizedWord,
           normalizedMeaning,
@@ -287,7 +302,9 @@ export class ImportsService {
       await this.recalculateDeckTotalWords(deckId);
 
       const status: 'COMPLETED' | 'PARTIAL_SUCCESS' =
-        failedRows === 0 && duplicateRows === 0 ? 'COMPLETED' : 'PARTIAL_SUCCESS';
+        failedRows === 0 && duplicateRows === 0
+          ? 'COMPLETED'
+          : 'PARTIAL_SUCCESS';
 
       await this.prisma.importJob.update({
         where: { id: importJob.id },
@@ -343,4 +360,3 @@ export class ImportsService {
     });
   }
 }
-

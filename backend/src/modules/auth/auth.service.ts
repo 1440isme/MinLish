@@ -10,8 +10,10 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { UserEntity } from '../users/entities/user.entity';
+import { ErrorCodes } from '../../config/common/errors/error-codes';
 
 @Injectable()
 export class AuthService {
@@ -146,5 +148,93 @@ export class AuthService {
       refreshToken: newRefreshToken,
       user: new UserEntity(storedToken.user),
     };
+  }
+
+  async googleLogin(dto: GoogleLoginDto): Promise<AuthResponseDto> {
+    let email: string;
+    let fullName: string;
+    let providerId: string;
+
+    if (process.env.NODE_ENV !== 'production' && dto.idToken.startsWith('mock_google_token_')) {
+      // Format: mock_google_token_{email}_{fullName}
+      const parts = dto.idToken.split('_');
+      email = parts[3] || 'mock_google_user@gmail.com';
+      fullName = parts[4] || 'Mock Google User';
+      providerId = `mock_google_provider_${email}`;
+    } else {
+      const url = `https://oauth2.googleapis.com/tokeninfo?id_token=${dto.idToken}`;
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new UnauthorizedException({
+            code: ErrorCodes.GOOGLE_AUTH_FAILED,
+            message: 'Xác thực Google ID Token thất bại',
+          });
+        }
+        const payload = (await response.json()) as any;
+        email = payload.email;
+        fullName = payload.name || payload.given_name || 'Google User';
+        providerId = payload.sub;
+      } catch (err) {
+        throw new UnauthorizedException({
+          code: ErrorCodes.GOOGLE_AUTH_FAILED,
+          message: 'Không thể kết nối đến Google Auth API',
+        });
+      }
+    }
+
+    if (!email) {
+      throw new UnauthorizedException({
+        code: ErrorCodes.GOOGLE_AUTH_FAILED,
+        message: 'Google ID Token không chứa email hợp lệ',
+      });
+    }
+
+    let user = await this.prisma.user.findFirst({
+      where: {
+        email,
+        deletedAt: null,
+      },
+    });
+
+    if (user) {
+      if (user.authProvider !== 'GOOGLE') {
+        // Link the existing local account to Google provider
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            authProvider: 'GOOGLE',
+            providerId,
+          },
+        });
+      }
+    } else {
+      // Create a new user with Google provider
+      user = await this.usersService.createGoogleUser({
+        email,
+        fullName,
+        providerId,
+      });
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Tài khoản đã bị vô hiệu hóa');
+    }
+
+    await this.usersService.updateLastLogin(user.id);
+
+    const accessToken = this.generateAccessToken(user.id);
+    const refreshToken = this.generateRefreshToken();
+    await this.storeRefreshToken(user.id, refreshToken);
+
+    return {
+      accessToken,
+      refreshToken,
+      user: new UserEntity(user),
+    };
+  }
+
+  async getProfile(userId: string): Promise<UserEntity> {
+    return this.usersService.getProfile(userId);
   }
 }

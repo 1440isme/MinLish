@@ -48,4 +48,3 @@ export class ListDecksQueryDto {
   @Max(50)
   pageSize?: number;
 }
-

@@ -2,7 +2,14 @@ package com.minlish.feature.auth.presentation.login
 
 import android.widget.Toast
 import androidx.compose.foundation.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.minlish.BuildConfig
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -34,12 +41,40 @@ fun LoginScreen(
     authViewModel: AuthViewModel,
     onRegisterClick: () -> Unit
 ) {
-    var email by remember { mutableStateOf("tester@example.com") }
-    var password by remember { mutableStateOf("Password123") } // Fits validation schema
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val uiState by authViewModel.uiState.collectAsState()
+
+    val googleSignInOptions = remember {
+        GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(BuildConfig.GOOGLE_WEB_CLIENT_ID)
+            .requestEmail()
+            .build()
+    }
+    val googleSignInClient = remember {
+        GoogleSignIn.getClient(context, googleSignInOptions)
+    }
+
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(ApiException::class.java)
+            val idToken = account?.idToken
+            if (idToken != null) {
+                authViewModel.loginWithGoogle(idToken)
+                Toast.makeText(context, "Google Sign-In successful!", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, "Google Sign-In: ID token was null", Toast.LENGTH_LONG).show()
+            }
+        } catch (e: ApiException) {
+            Toast.makeText(context, "Google Sign-In failed: code ${e.statusCode}\nMake sure SHA-1 is registered on GCP!", Toast.LENGTH_LONG).show()
+        }
+    }
 
     // Handle Auth side effects (like showing an error Toast)
     LaunchedEffect(uiState) {
@@ -97,6 +132,13 @@ fun LoginScreen(
                             .fillMaxWidth()
                             .testTag("onboarding_email_input"),
                         singleLine = true,
+                        placeholder = {
+                            Text(
+                                text = stringResource(id = R.string.login_email_placeholder),
+                                style = MinLishTypography.bodyMedium,
+                                color = TextSecondary.copy(alpha = 0.6f)
+                            )
+                        },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color.White,
                             unfocusedContainerColor = Color.White,
@@ -125,6 +167,13 @@ fun LoginScreen(
                             .testTag("onboarding_password_input"),
                         singleLine = true,
                         visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        placeholder = {
+                            Text(
+                                text = stringResource(id = R.string.login_password_placeholder),
+                                style = MinLishTypography.bodyMedium,
+                                color = TextSecondary.copy(alpha = 0.6f)
+                            )
+                        },
                         trailingIcon = {
                             IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
                                 Icon(
@@ -200,7 +249,52 @@ fun LoginScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                HorizontalDivider(modifier = Modifier.weight(1f), color = Color.Black.copy(alpha = 0.08f))
+                Text(
+                    text = " OR ",
+                    fontSize = 12.sp,
+                    color = TextSecondary,
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                    fontWeight = FontWeight.Bold
+                )
+                HorizontalDivider(modifier = Modifier.weight(1f), color = Color.Black.copy(alpha = 0.08f))
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Google sign-in button
+            OutlinedButton(
+                onClick = {
+                    googleSignInClient.signOut().addOnCompleteListener {
+                        googleSignInLauncher.launch(googleSignInClient.signInIntent)
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = ButtonCapsuleShape,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = Color.White,
+                    contentColor = TextPrimary
+                ),
+                border = BorderStroke(1.dp, Color.Black.copy(alpha = 0.1f))
+            ) {
+                GoogleLogo(modifier = Modifier.size(20.dp))
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Sign in with Google",
+                    style = MinLishTypography.labelLarge.copy(fontSize = 16.sp),
+                    color = TextPrimary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(28.dp))
 
             // Mascot Illustrations
             Row(
@@ -233,5 +327,49 @@ fun LoginScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+fun GoogleLogo(modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+        val r = w / 2
+
+        // Red sector (top):
+        drawArc(
+            color = Color(0xFFEA4335),
+            startAngle = 180f,
+            sweepAngle = 90f,
+            useCenter = true
+        )
+        // Yellow sector (left):
+        drawArc(
+            color = Color(0xFFFBBC05),
+            startAngle = 90f,
+            sweepAngle = 90f,
+            useCenter = true
+        )
+        // Green sector (bottom):
+        drawArc(
+            color = Color(0xFF34A853),
+            startAngle = 0f,
+            sweepAngle = 90f,
+            useCenter = true
+        )
+        // Blue sector (right):
+        drawArc(
+            color = Color(0xFF4285F4),
+            startAngle = 270f,
+            sweepAngle = 90f,
+            useCenter = true
+        )
+
+        // Draw inner white circle to make it a donut G shape
+        drawCircle(
+            color = Color.White,
+            radius = r * 0.45f
+        )
     }
 }

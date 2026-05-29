@@ -82,4 +82,3 @@ export class CreateVocabularyDto {
   @IsBoolean()
   allowSameWordDifferentMeaning?: boolean;
 }
-
