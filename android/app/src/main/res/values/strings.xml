@@ -1,3 +1,23 @@
 <resources>
     <string name="app_name">MinLish</string>
+    <string name="login_welcome_back">Welcome Back\nto MinLish</string>
+    <string name="login_email_label" translatable="false">E-mail</string>
+    <string name="login_password_label">Password</string>
+    <string name="login_forgot_password">Forgot password?</string>
+    <string name="login_button_text">Log in</string>
+    <string name="login_new_to_minlish">New to MinLish? </string>
+    <string name="login_sign_up">Sign up</string>
+    <string name="login_toggle_password_visibility" translatable="false">Toggle password visibility</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">Dashboard</string>
+    <string name="dashboard_streak_label">Streak</string>
+    <string name="dashboard_streak_days">%1$d days used</string>
+    <string name="dashboard_popular_topics">Popular Topics</string>
+    <string name="dashboard_see_all">See all</string>
+
+    <string name="bottom_nav_home">Home</string>
+    <string name="bottom_nav_explore">Explore</string>
+    <string name="bottom_nav_search">Search</string>
+    <string name="bottom_nav_settings">Settings</string>
 </resources>

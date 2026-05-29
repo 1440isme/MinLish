@@ -1,0 +1,966 @@
+{
+  "info": {
+    "_postman_id": "7f8c6db2-3e28-4bc2-8815-4fa793d56b82",
+    "name": "MinLish API",
+    "description": "Postman Collection for testing MinLish backend API endpoints.\n\n**Dev B flow:** Auth Register → Dev B > Step 1 Login → Steps 2–5 (Decks, Vocabularies, Favorites, Imports). Cần `npm run db:seed` và user đã register (tester@example.com).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "1.1 Register (Success Case)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"tester@example.com\",\n  \"password\": \"Password123\",\n  \"fullName\": \"MinLish Tester\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.2 Register (Invalid Email - 400)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"invalid-email-format\",\n  \"password\": \"Password123\",\n  \"fullName\": \"MinLish Tester\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.3 Login (Auto-saves Tokens)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.accessToken) {",
+                  "        pm.collectionVariables.set(\"accessToken\", jsonData.accessToken);",
+                  "    }",
+                  "    if (jsonData.refreshToken) {",
+                  "        pm.collectionVariables.set(\"refreshToken\", jsonData.refreshToken);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"tester@example.com\",\n  \"password\": \"Password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.4 Refresh Token (Auto-updates Tokens)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.accessToken) {",
+                  "        pm.collectionVariables.set(\"accessToken\", jsonData.accessToken);",
+                  "    }",
+                  "    if (jsonData.refreshToken) {",
+                  "        pm.collectionVariables.set(\"refreshToken\", jsonData.refreshToken);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "2.1 Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.2 Update Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"MinLish Tester Updated\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dev B - Content (run after Login)",
+      "description": "Luồng test Dev B: chạy **Step 1 - Login** trước (lưu accessToken), sau đó chạy lần lượt Decks → Vocabularies → Favorites → Imports.\n\nBiến seed mặc định (sau db:seed): systemDeckId, systemVocabularyId, levelId.",
+      "item": [
+        {
+          "name": "Step 1 - Auth",
+          "item": [
+            {
+              "name": "B0.1 Login (required – saves accessToken)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Login success', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "if (pm.response.code === 200 || pm.response.code === 201) {",
+                      "    var jsonData = pm.response.json();",
+                      "    if (jsonData.accessToken) {",
+                      "        pm.collectionVariables.set('accessToken', jsonData.accessToken);",
+                      "    }",
+                      "    if (jsonData.refreshToken) {",
+                      "        pm.collectionVariables.set('refreshToken', jsonData.refreshToken);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"tester@example.com\",\n  \"password\": \"Password123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                },
+                "description": "Chạy request này trước khi test Dev B. Dùng cùng user đã Register (Auth > 1.1) hoặc đổi email/password."
+              },
+              "response": []
+            },
+            {
+              "name": "B0.2 Verify token (GET /users/me)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/users/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["users", "me"]
+                },
+                "description": "Xác nhận accessToken hợp lệ trước khi gọi API Dev B."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Step 2 - Decks",
+          "item": [
+            {
+              "name": "B2.1 List decks (ALL)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/decks?type=ALL&page=1&pageSize=20",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["decks"],
+                  "query": [
+                    { "key": "type", "value": "ALL" },
+                    { "key": "page", "value": "1" },
+                    { "key": "pageSize", "value": "20" }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "B2.2 List system decks by level",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/decks?type=SYSTEM&levelId={{levelId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["decks"],
+                  "query": [
+                    { "key": "type", "value": "SYSTEM" },
+                    { "key": "levelId", "value": "{{levelId}}" }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "B2.3 List my user decks",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/decks?type=USER",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["decks"],
+                  "query": [{ "key": "type", "value": "USER" }]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "B2.4 Get Favorites deck",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    var json = pm.response.json();",
+                      "    if (json.id) pm.collectionVariables.set('favoritesDeckId', json.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/decks/favorites",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["decks", "favorites"]
+                },
+                "description": "Cần Dev A tạo Favorites deck khi register. Nếu 404 FAVORITES_DECK_NOT_FOUND → đăng ký user mới hoặc bổ sung side-effect register."
+              },
+              "response": []
+            },
+            {
+              "name": "B2.5 Create user deck",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201 || pm.response.code === 200) {",
+                      "    var json = pm.response.json();",
+                      "    if (json.id) pm.collectionVariables.set('userDeckId', json.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"My Test Deck\",\n  \"description\": \"Deck tạo từ Postman Dev B\",\n  \"tags\": [\"Postman\", \"DevB\"]\n}",
+                  "options": {
+                    "raw": { "language": "json" }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/decks",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["decks"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "B2.6 Get deck detail",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/decks/{{userDeckId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["decks", "{{userDeckId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "B2.7 Get system deck detail",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/decks/{{systemDeckId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["decks", "{{systemDeckId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "B2.8 Update user deck",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"description\": \"Updated from Postman\"\n}",
+                  "options": {
+                    "raw": { "language": "json" }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/decks/{{userDeckId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["decks", "{{userDeckId}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Step 3 - Vocabularies",
+          "item": [
+            {
+              "name": "B3.1 List vocabularies in user deck",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/decks/{{userDeckId}}/vocabularies?page=1&pageSize=20",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["decks", "{{userDeckId}}", "vocabularies"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "pageSize", "value": "20" }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "B3.2 List vocabularies in system deck",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/decks/{{systemDeckId}}/vocabularies",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["decks", "{{systemDeckId}}", "vocabularies"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "B3.3 Add vocabulary (manual)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201 || pm.response.code === 200) {",
+                      "    var json = pm.response.json();",
+                      "    if (json.id) pm.collectionVariables.set('vocabularyId', json.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"word\": \"charge\",\n  \"pronunciation\": \"/tʃɑːrdʒ/\",\n  \"meaning\": \"tính phí\",\n  \"descriptionEn\": \"To ask an amount of money for a service.\",\n  \"example\": \"The hotel will charge an extra fee.\",\n  \"allowSameWordDifferentMeaning\": false\n}",
+                  "options": {
+                    "raw": { "language": "json" }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/decks/{{userDeckId}}/vocabularies",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["decks", "{{userDeckId}}", "vocabularies"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "B3.4 Add same word different meaning (warning)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"word\": \"charge\",\n  \"meaning\": \"buộc tội\",\n  \"allowSameWordDifferentMeaning\": false\n}",
+                  "options": {
+                    "raw": { "language": "json" }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/decks/{{userDeckId}}/vocabularies",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["decks", "{{userDeckId}}", "vocabularies"]
+                },
+                "description": "Kỳ vọng 400 WORD_EXISTS_WITH_DIFFERENT_MEANING + existingItems."
+              },
+              "response": []
+            },
+            {
+              "name": "B3.5 Add same word different meaning (confirm)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"word\": \"charge\",\n  \"meaning\": \"buộc tội\",\n  \"allowSameWordDifferentMeaning\": true\n}",
+                  "options": {
+                    "raw": { "language": "json" }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/decks/{{userDeckId}}/vocabularies",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["decks", "{{userDeckId}}", "vocabularies"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "B3.6 Update vocabulary",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"note\": \"Updated via Postman\"\n}",
+                  "options": {
+                    "raw": { "language": "json" }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/vocabularies/{{vocabularyId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["vocabularies", "{{vocabularyId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "B3.7 Delete vocabulary",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/vocabularies/{{vocabularyId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["vocabularies", "{{vocabularyId}}"]
+                },
+                "description": "Soft delete. Chạy sau khi đã test favorite/import nếu cần giữ vocabulary."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Step 4 - Favorites",
+          "item": [
+            {
+              "name": "B4.1 Favorite system vocabulary",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    var json = pm.response.json();",
+                      "    if (json.favoriteVocabularyId) {",
+                      "        pm.collectionVariables.set('favoriteVocabularyId', json.favoriteVocabularyId);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/vocabularies/{{systemVocabularyId}}/favorite",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["vocabularies", "{{systemVocabularyId}}", "favorite"]
+                },
+                "description": "Copy từ system deck vào Favorites. Dùng vocabulary id từ seed."
+              },
+              "response": []
+            },
+            {
+              "name": "B4.2 Favorite again (already_favorited)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/vocabularies/{{systemVocabularyId}}/favorite",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["vocabularies", "{{systemVocabularyId}}", "favorite"]
+                },
+                "description": "Kỳ vọng status already_favorited."
+              },
+              "response": []
+            },
+            {
+              "name": "B4.3 List vocabularies in Favorites deck",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/decks/{{favoritesDeckId}}/vocabularies",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["decks", "{{favoritesDeckId}}", "vocabularies"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "B4.4 Unfavorite",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/vocabularies/{{systemVocabularyId}}/favorite",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["vocabularies", "{{systemVocabularyId}}", "favorite"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Step 5 - Imports",
+          "item": [
+            {
+              "name": "B5.1 Import CSV into user deck",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": "fixtures/sample-import.csv",
+                      "description": "Chọn file fixtures/sample-import.csv trong thư mục backend (hoặc file CSV của bạn)."
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/decks/{{userDeckId}}/import-csv",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["decks", "{{userDeckId}}", "import-csv"]
+                },
+                "description": "Partial success: trả totalRows, successRows, duplicateRows, failedRows, duplicates[], errors[]."
+              },
+              "response": []
+            },
+            {
+              "name": "B5.2 Import CSV again (duplicates)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": "fixtures/sample-import.csv"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/decks/{{userDeckId}}/import-csv",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["decks", "{{userDeckId}}", "import-csv"]
+                },
+                "description": "Chạy lại để kiểm tra duplicateRows tăng."
+              },
+              "response": []
+            },
+            {
+              "name": "B5.3 Import to Favorites (forbidden)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": "fixtures/sample-import.csv"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/decks/{{favoritesDeckId}}/import-csv",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["decks", "{{favoritesDeckId}}", "import-csv"]
+                },
+                "description": "Kỳ vọng 403 IMPORT_FAVORITES_FORBIDDEN."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Step 6 - Cleanup (optional)",
+          "item": [
+            {
+              "name": "B6.1 Delete user deck",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/decks/{{userDeckId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["decks", "{{userDeckId}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userDeckId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "favoritesDeckId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "vocabularyId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "favoriteVocabularyId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "systemDeckId",
+      "value": "dddddddd-dddd-dddd-dddd-dddddddddd01",
+      "type": "string"
+    },
+    {
+      "key": "systemVocabularyId",
+      "value": "vvvvvvvv-vvvv-vvvv-vvvv-vvvvvvvvv001",
+      "type": "string"
+    },
+    {
+      "key": "levelId",
+      "value": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1",
+      "type": "string"
+    }
+  ]
+}
