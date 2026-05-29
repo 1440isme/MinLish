@@ -11,6 +11,7 @@ import com.minlish.core.data.repository.SettingsRepository
 import com.minlish.core.data.repository.VocabularyRepository
 import com.minlish.core.data.repository.AuthRepository
 import com.minlish.core.data.repository.UserRepository
+import com.minlish.core.network.dto.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -84,8 +85,8 @@ class MinLishViewModel(
     private val _practiceSessions = MutableStateFlow<List<PracticeSessionEntity>>(emptyList())
     val practiceSessions: StateFlow<List<PracticeSessionEntity>> = _practiceSessions
 
-    private val _quizQuestions = MutableStateFlow<List<QuizQuestion>>(emptyList())
-    val quizQuestions: StateFlow<List<QuizQuestion>> = _quizQuestions
+    private val _quizQuestions = MutableStateFlow<List<PracticeQuestionDto>>(emptyList())
+    val quizQuestions: StateFlow<List<PracticeQuestionDto>> = _quizQuestions
 
     private val _currentQuizIndex = MutableStateFlow(0)
     val currentQuizIndex: StateFlow<Int> = _currentQuizIndex
@@ -95,6 +96,18 @@ class MinLishViewModel(
 
     private val _quizFinished = MutableStateFlow(false)
     val quizFinished: StateFlow<Boolean> = _quizFinished
+
+    private val _activeSession = MutableStateFlow<PracticeSessionDto?>(null)
+    val activeSession: StateFlow<PracticeSessionDto?> = _activeSession
+
+    private val _lastSubmitResult = MutableStateFlow<PracticeAnswerDto?>(null)
+    val lastSubmitResult: StateFlow<PracticeAnswerDto?> = _lastSubmitResult
+
+    private val _finishSummary = MutableStateFlow<PracticeSessionSummaryDto?>(null)
+    val finishSummary: StateFlow<PracticeSessionSummaryDto?> = _finishSummary
+
+    private val _practiceError = MutableStateFlow<String?>(null)
+    val practiceError: StateFlow<String?> = _practiceError
 
     // Dashboard Statistics
     private val _dashboardAnalytics = MutableStateFlow(
@@ -324,81 +337,112 @@ class MinLishViewModel(
     }
 
     // MINI PRACTICE QUIZ ENGINE
-    fun startQuizPractice(deckId: String, type: String) {
+    fun checkForActiveSession(deckId: String, onResult: (CreateSessionResponse?) -> Unit) {
         viewModelScope.launch {
-            val vocabs = vocabularyRepository.getVocabulariesInDeck(deckId)
-            if (vocabs.isEmpty()) {
-                _quizQuestions.value = emptyList()
-                return@launch
+            try {
+                _practiceError.value = null
+                val response = vocabularyRepository.getActivePracticeSession(deckId)
+                onResult(response)
+            } catch (e: Exception) {
+                _practiceError.value = e.localizedMessage
+                onResult(null)
             }
-
-            // Generate questions
-            val quizList = mutableListOf<QuizQuestion>()
-            val allMeanings = vocabs.map { it.meaning }
-
-            vocabs.shuffled().take(10).forEach { item ->
-                if (type == "MULTIPLE_CHOICE") {
-                    // Random choices
-                    val distractors = allMeanings.filter { it != item.meaning }.shuffled().take(3)
-                    val choices = (distractors + item.meaning).shuffled()
-                    quizList.add(
-                        QuizQuestion(
-                            vocabulary = item,
-                            questionType = "WORD_TO_MEANING",
-                            questionText = "What is the meaning of the word '${item.word}'?",
-                            choices = choices,
-                            correctAnswer = item.meaning
-                        )
-                    )
-                } else {
-                    // Cloze Test
-                    val textQuestion = if (item.example.isNotEmpty() && item.example.contains(item.word, ignoreCase = true)) {
-                        // Hide word in example
-                        item.example.replace(item.word, "________", ignoreCase = true)
-                    } else {
-                        "Complete the English vocabulary definition: ${item.descriptionEn.ifEmpty { "A key term meaning: " + item.meaning }}"
-                    }
-                    quizList.add(
-                        QuizQuestion(
-                            vocabulary = item,
-                            questionType = "FILL_IN_BLANK",
-                            questionText = textQuestion,
-                            choices = emptyList(),
-                            correctAnswer = item.word
-                        )
-                    )
-                }
-            }
-
-            _quizQuestions.value = quizList
-            _currentQuizIndex.value = 0
-            _quizCorrectCount.value = 0
-            _quizFinished.value = false
         }
     }
 
-    fun submitQuizAnswer(deckId: String, type: String, userAnswer: String) {
-        val currentQuestion = _quizQuestions.value.getOrNull(_currentQuizIndex.value) ?: return
-        val isCorrect = userAnswer.trim().equals(currentQuestion.correctAnswer.trim(), ignoreCase = true)
-
-        if (isCorrect) {
-            _quizCorrectCount.value += 1
-        }
-
-        if (_currentQuizIndex.value < _quizQuestions.value.size - 1) {
-            _currentQuizIndex.value += 1
-        } else {
-            // Last question complete! Save practice session statistics to DB.
-            _quizFinished.value = true
-            viewModelScope.launch {
-                vocabularyRepository.savePracticeSession(
-                    deckId = deckId,
-                    type = type,
-                    total = _quizQuestions.value.size,
-                    correct = _quizCorrectCount.value
-                )
+    fun startNewPracticeSession(deckId: String, practiceTypes: List<String>, totalQuestions: Int) {
+        viewModelScope.launch {
+            try {
+                _practiceError.value = null
+                val response = vocabularyRepository.createPracticeSession(deckId, practiceTypes, totalQuestions)
+                _activeSession.value = response.session
+                _quizQuestions.value = response.questions
+                _currentQuizIndex.value = 0
+                _quizCorrectCount.value = 0
+                _quizFinished.value = false
+                _lastSubmitResult.value = null
+                _finishSummary.value = null
+            } catch (e: Exception) {
+                _practiceError.value = "Failed to start practice session: ${e.localizedMessage}"
             }
         }
+    }
+
+    fun resumeActiveSession(response: CreateSessionResponse) {
+        _activeSession.value = response.session
+        _quizQuestions.value = response.questions
+        val unansweredIndex = response.questions.indexOfFirst { !it.answered }
+        _currentQuizIndex.value = if (unansweredIndex != -1) unansweredIndex else 0
+        _quizCorrectCount.value = response.session.correctAnswers
+        _quizFinished.value = false
+        _lastSubmitResult.value = null
+        _finishSummary.value = null
+    }
+
+    fun cancelActiveSession(sessionId: String, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                _practiceError.value = null
+                vocabularyRepository.cancelPracticeSession(sessionId)
+                _activeSession.value = null
+                _quizQuestions.value = emptyList()
+                _currentQuizIndex.value = 0
+                _quizCorrectCount.value = 0
+                _quizFinished.value = false
+                _lastSubmitResult.value = null
+                _finishSummary.value = null
+                onComplete()
+            } catch (e: Exception) {
+                _practiceError.value = "Failed to cancel session: ${e.localizedMessage}"
+            }
+        }
+    }
+
+    fun submitPracticeAnswer(userAnswer: String?) {
+        val session = _activeSession.value ?: return
+        val index = _currentQuizIndex.value
+        viewModelScope.launch {
+            try {
+                _practiceError.value = null
+                val result = vocabularyRepository.submitPracticeAnswer(session.id, index, userAnswer)
+                _lastSubmitResult.value = result
+                if (result.isCorrect) {
+                    _quizCorrectCount.value += 1
+                }
+            } catch (e: Exception) {
+                _practiceError.value = "Failed to submit answer: ${e.localizedMessage}"
+            }
+        }
+    }
+
+    fun advanceToNextQuestion() {
+        val questions = _quizQuestions.value
+        val currentIndex = _currentQuizIndex.value
+        _lastSubmitResult.value = null
+        
+        if (currentIndex < questions.size - 1) {
+            _currentQuizIndex.value += 1
+        } else {
+            finishCurrentSession()
+        }
+    }
+
+    fun finishCurrentSession() {
+        val session = _activeSession.value ?: return
+        viewModelScope.launch {
+            try {
+                _practiceError.value = null
+                val response = vocabularyRepository.finishPracticeSession(session.id)
+                _finishSummary.value = response.summary
+                _quizFinished.value = true
+            } catch (e: Exception) {
+                _practiceError.value = "Failed to finish session: ${e.localizedMessage}"
+            }
+        }
+    }
+
+    fun clearPracticeError() {
+        _practiceError.value = null
     }
 }
 

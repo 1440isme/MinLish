@@ -1,11 +1,12 @@
 package com.minlish.core.data.repository
 
 import com.minlish.core.data.model.*
+import com.minlish.core.network.PracticeApiService
+import com.minlish.core.network.dto.*
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 
-class VocabularyRepository {
+class VocabularyRepository(private val practiceApiService: PracticeApiService) {
     fun getDecksByGoalFlow(goal: String): Flow<List<DeckEntity>> = flowOf(emptyList())
     
     fun getDueCountFlow(): Flow<Int> = flowOf(0)
@@ -49,4 +50,43 @@ class VocabularyRepository {
     suspend fun getVocabulariesInDeck(deckId: String): List<VocabularyEntity> = emptyList()
     
     suspend fun savePracticeSession(deckId: String, type: String, total: Int, correct: Int) {}
+
+    // Practice Remote API Integrations
+    suspend fun createPracticeSession(
+        deckId: String,
+        practiceTypes: List<String>?,
+        totalQuestions: Int?
+    ): CreateSessionResponse {
+        return practiceApiService.createSession(
+            CreatePracticeSessionRequest(deckId, practiceTypes, totalQuestions)
+        )
+    }
+
+    suspend fun getActivePracticeSession(deckId: String): CreateSessionResponse? {
+        return try {
+            practiceApiService.getActiveSession(deckId)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    suspend fun getPracticeQuestions(sessionId: String): List<PracticeQuestionDto> {
+        return practiceApiService.getQuestions(sessionId)
+    }
+
+    suspend fun submitPracticeAnswer(
+        sessionId: String,
+        questionIndex: Int,
+        userAnswer: String?
+    ): PracticeAnswerDto {
+        return practiceApiService.submitAnswer(sessionId, SubmitAnswerRequest(questionIndex, userAnswer))
+    }
+
+    suspend fun finishPracticeSession(sessionId: String): FinishSessionResponse {
+        return practiceApiService.finishSession(sessionId)
+    }
+
+    suspend fun cancelPracticeSession(sessionId: String): PracticeSessionDto {
+        return practiceApiService.cancelSession(sessionId)
+    }
 }
