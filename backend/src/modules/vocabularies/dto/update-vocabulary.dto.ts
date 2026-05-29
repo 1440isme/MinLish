@@ -1,11 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import {
-  IsEnum,
-  IsOptional,
-  IsString,
-  MaxLength,
-} from 'class-validator';
+import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
 import { VocabularyDifficulty } from '../entities/vocabulary.entity';
 
 export class UpdateVocabularyDto {
@@ -74,4 +69,3 @@ export class UpdateVocabularyDto {
   @MaxLength(50)
   partOfSpeech?: string;
 }
-

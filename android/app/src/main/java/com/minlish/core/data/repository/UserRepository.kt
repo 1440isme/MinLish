@@ -18,7 +18,10 @@ class UserRepository(
             email = userDto.email,
             learningGoal = userDto.learningGoal,
             dailyGoal = userDto.dailyNewWordsGoal,
-            isOnboarded = true
+            isOnboarded = true,
+            currentLevelId = userDto.currentLevelId,
+            targetLevelId = userDto.targetLevelId,
+            avatarUrl = userDto.avatarUrl
         )
         return userDto
     }
@@ -29,15 +32,27 @@ class UserRepository(
         return userDto
     }
 
-    suspend fun updateProfile(fullName: String?, learningGoal: String?): UserDto {
+    suspend fun updateProfile(
+        fullName: String? = null,
+        avatarUrl: String? = null,
+        learningGoal: String? = null,
+        currentLevelId: String? = null,
+        targetLevelId: String? = null
+    ): UserDto {
         val userDto = userApiService.updateProfile(
             UpdateProfileRequest(
-                fullName = fullName,
-                learningGoal = learningGoal
+                fullName = if (fullName.isNullOrBlank()) null else fullName,
+                avatarUrl = if (avatarUrl.isNullOrBlank()) null else avatarUrl,
+                learningGoal = if (learningGoal.isNullOrBlank()) null else learningGoal,
+                currentLevelId = if (currentLevelId.isNullOrBlank()) null else currentLevelId,
+                targetLevelId = if (targetLevelId.isNullOrBlank()) null else targetLevelId
             )
         )
-        fullName?.let { tokenManager.updateFullName(it) }
-        learningGoal?.let { tokenManager.updateLearningGoal(it) }
+        fullName?.let { if (it.isNotBlank()) tokenManager.updateFullName(it) }
+        avatarUrl?.let { tokenManager.updateAvatarUrl(it) }
+        learningGoal?.let { if (it.isNotBlank()) tokenManager.updateLearningGoal(it) }
+        currentLevelId?.let { if (it.isNotBlank()) tokenManager.updateCurrentLevelId(it) }
+        targetLevelId?.let { if (it.isNotBlank()) tokenManager.updateTargetLevelId(it) }
         return userDto
     }
 }

@@ -59,4 +59,20 @@ export class UpdateProfileDto {
   @Min(1, { message: 'Số từ mới mỗi ngày phải ít nhất 1' })
   @Max(100, { message: 'Số từ mới mỗi ngày không được quá 100' })
   dailyNewWordsGoal?: number;
+
+  @ApiPropertyOptional({
+    example: 'uuid-level-current',
+    description: 'ID level hiện tại của người học (TOEIC/IELTS)',
+  })
+  @IsOptional()
+  @IsString()
+  currentLevelId?: string;
+
+  @ApiPropertyOptional({
+    example: 'uuid-level-target',
+    description: 'ID level mục tiêu của người học (TOEIC/IELTS)',
+  })
+  @IsOptional()
+  @IsString()
+  targetLevelId?: string;
 }

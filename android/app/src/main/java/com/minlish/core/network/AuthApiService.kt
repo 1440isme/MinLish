@@ -12,6 +12,9 @@ interface AuthApiService {
     @POST("auth/login")
     suspend fun login(@Body request: LoginRequest): AuthResponse
 
+    @POST("auth/google")
+    suspend fun loginWithGoogle(@Body request: GoogleLoginRequest): AuthResponse
+
     @POST("auth/refresh")
     fun refreshSync(@Body request: RefreshTokenRequest): Call<AuthResponse>
 }

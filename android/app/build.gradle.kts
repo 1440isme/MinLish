@@ -30,6 +30,9 @@ android {
         }
         val apiBaseUrl = localProperties.getProperty("api.baseUrl") ?: "http://10.0.2.2:3000/"
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+
+        val googleWebClientId = localProperties.getProperty("google.webClientId") ?: "YOUR_GOOGLE_WEB_CLIENT_ID_PLACEHOLDER"
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
     }
 
     buildTypes {
@@ -72,6 +75,9 @@ dependencies {
 
     // Local Storage (Preferences DataStore)
     implementation(libs.androidx.datastore.preferences)
+
+    // Google Sign-In SDK
+    implementation(libs.play.services.auth)
 
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
