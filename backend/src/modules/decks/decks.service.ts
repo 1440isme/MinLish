@@ -23,7 +23,12 @@ export class DecksService {
   async listDecks(
     currentUserId: string,
     query: ListDecksQueryDto,
-  ): Promise<{ items: DeckEntity[]; total: number; page: number; pageSize: number }> {
+  ): Promise<{
+    items: DeckEntity[];
+    total: number;
+    page: number;
+    pageSize: number;
+  }> {
     const type = query.type ?? DeckListType.ALL;
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
@@ -83,7 +88,10 @@ export class DecksService {
     };
   }
 
-  async getDeckById(currentUserId: string, deckId: string): Promise<DeckEntity> {
+  async getDeckById(
+    currentUserId: string,
+    deckId: string,
+  ): Promise<DeckEntity> {
     const deck = await this.prisma.deck.findFirst({
       where: {
         id: deckId,
@@ -125,7 +133,10 @@ export class DecksService {
     return new DeckEntity(deck as any);
   }
 
-  async createUserDeck(currentUserId: string, dto: CreateDeckDto): Promise<DeckEntity> {
+  async createUserDeck(
+    currentUserId: string,
+    dto: CreateDeckDto,
+  ): Promise<DeckEntity> {
     const normalizedName = normalizeText(dto.name);
 
     const existing = await this.prisma.deck.findFirst({
@@ -235,7 +246,10 @@ export class DecksService {
     return new DeckEntity(updated as any);
   }
 
-  async softDeleteUserDeck(currentUserId: string, deckId: string): Promise<void> {
+  async softDeleteUserDeck(
+    currentUserId: string,
+    deckId: string,
+  ): Promise<void> {
     const deck = await this.prisma.deck.findFirst({
       where: {
         id: deckId,
@@ -273,4 +287,3 @@ export class DecksService {
     await this.prisma.softDelete(this.prisma.deck, deckId);
   }
 }
-

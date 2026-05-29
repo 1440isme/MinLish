@@ -7,7 +7,12 @@ import {
   Post,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { User } from '@prisma/client';
 import { CurrentUser } from '../../config/common/decorators/current-user.decorator';
 import { FavoritesService } from './favorites.service';
@@ -32,10 +37,14 @@ export class FavoritesController {
 
   @Delete(':id/favorite')
   @HttpCode(204)
-  @ApiOperation({ summary: 'Unfavorite a vocabulary (soft delete copy in Favorites)' })
+  @ApiOperation({
+    summary: 'Unfavorite a vocabulary (soft delete copy in Favorites)',
+  })
   @ApiResponse({ status: 204 })
-  async unfavorite(@CurrentUser() user: User, @Param('id') id: string): Promise<void> {
+  async unfavorite(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+  ): Promise<void> {
     return this.favoritesService.unfavorite(user.id, id);
   }
 }
-

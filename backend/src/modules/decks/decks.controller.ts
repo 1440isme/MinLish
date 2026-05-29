@@ -11,7 +11,12 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { User } from '@prisma/client';
 import { CurrentUser } from '../../config/common/decorators/current-user.decorator';
 import { DecksService } from './decks.service';
@@ -69,7 +74,10 @@ export class DecksController {
   @Get(':id')
   @ApiOperation({ summary: 'Get deck detail' })
   @ApiResponse({ status: 200, type: DeckEntity })
-  async getDeck(@CurrentUser() user: User, @Param('id') id: string): Promise<DeckEntity> {
+  async getDeck(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+  ): Promise<DeckEntity> {
     return this.decksService.getDeckById(user.id, id);
   }
 
@@ -88,8 +96,10 @@ export class DecksController {
   @HttpCode(204)
   @ApiOperation({ summary: 'Soft delete user deck' })
   @ApiResponse({ status: 204 })
-  async deleteDeck(@CurrentUser() user: User, @Param('id') id: string): Promise<void> {
+  async deleteDeck(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+  ): Promise<void> {
     return this.decksService.softDeleteUserDeck(user.id, id);
   }
 }
-

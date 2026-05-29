@@ -1,5 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PaginatedResponseDto, PaginationMetaDto } from '../../../config/common/dto/pagination.dto';
+import {
+  PaginatedResponseDto,
+  PaginationMetaDto,
+} from '../../../config/common/dto/pagination.dto';
 import { DeckEntity } from '../entities/deck.entity';
 
 export class DeckListResponseDto extends PaginatedResponseDto<DeckEntity> {
@@ -14,4 +17,3 @@ export class DeckListResponseDto extends PaginatedResponseDto<DeckEntity> {
   })
   declare items: DeckEntity[];
 }
-

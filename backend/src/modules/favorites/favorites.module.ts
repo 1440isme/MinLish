@@ -7,4 +7,3 @@ import { FavoritesService } from './favorites.service';
   providers: [FavoritesService],
 })
 export class FavoritesModule {}
-

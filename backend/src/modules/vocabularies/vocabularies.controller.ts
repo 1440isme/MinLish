@@ -11,7 +11,12 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { User } from '@prisma/client';
 import { CurrentUser } from '../../config/common/decorators/current-user.decorator';
 import { PaginatedResponseDto } from '../../config/common/dto/pagination.dto';
@@ -41,7 +46,11 @@ export class VocabulariesController {
     @Param('deckId') deckId: string,
     @Query() query: ListVocabulariesQueryDto,
   ): Promise<VocabularyListResponseDto> {
-    const result = await this.vocabulariesService.listByDeck(user.id, deckId, query);
+    const result = await this.vocabulariesService.listByDeck(
+      user.id,
+      deckId,
+      query,
+    );
     return {
       meta: {
         page: result.page,
@@ -78,8 +87,10 @@ export class VocabulariesController {
   @HttpCode(204)
   @ApiOperation({ summary: 'Soft delete a vocabulary (user deck only)' })
   @ApiResponse({ status: 204 })
-  async delete(@CurrentUser() user: User, @Param('id') id: string): Promise<void> {
+  async delete(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+  ): Promise<void> {
     return this.vocabulariesService.softDelete(user.id, id);
   }
 }
-

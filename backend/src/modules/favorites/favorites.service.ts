@@ -29,7 +29,10 @@ export class FavoritesService {
     return deck;
   }
 
-  async favorite(currentUserId: string, originalVocabularyId: string): Promise<FavoriteResponseDto> {
+  async favorite(
+    currentUserId: string,
+    originalVocabularyId: string,
+  ): Promise<FavoriteResponseDto> {
     const original = await this.prisma.vocabulary.findFirst({
       where: {
         id: originalVocabularyId,
@@ -88,7 +91,10 @@ export class FavoritesService {
     };
   }
 
-  async unfavorite(currentUserId: string, originalVocabularyId: string): Promise<void> {
+  async unfavorite(
+    currentUserId: string,
+    originalVocabularyId: string,
+  ): Promise<void> {
     const favoritesDeck = await this.getFavoritesDeckOrThrow(currentUserId);
 
     const copy = await this.prisma.vocabulary.findFirst({
@@ -119,4 +125,3 @@ export class FavoritesService {
     });
   }
 }
-

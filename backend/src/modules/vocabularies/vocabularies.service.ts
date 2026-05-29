@@ -220,7 +220,9 @@ export class VocabulariesService {
 
     const nextWord = dto.word?.trim();
     const nextMeaning = dto.meaning?.trim();
-    const normalizedWord = nextWord ? normalizeText(nextWord) : vocab.normalizedWord;
+    const normalizedWord = nextWord
+      ? normalizeText(nextWord)
+      : vocab.normalizedWord;
     const normalizedMeaning = nextMeaning
       ? normalizeText(nextMeaning)
       : vocab.normalizedMeaning;
@@ -246,16 +248,33 @@ export class VocabulariesService {
       data: {
         word: nextWord ?? undefined,
         normalizedWord: dto.word ? normalizedWord : undefined,
-        pronunciation: dto.pronunciation !== undefined ? dto.pronunciation?.trim() ?? null : undefined,
+        pronunciation:
+          dto.pronunciation !== undefined
+            ? (dto.pronunciation?.trim() ?? null)
+            : undefined,
         meaning: nextMeaning ?? undefined,
         normalizedMeaning: dto.meaning ? normalizedMeaning : undefined,
-        descriptionEn: dto.descriptionEn !== undefined ? dto.descriptionEn?.trim() ?? null : undefined,
-        example: dto.example !== undefined ? dto.example?.trim() ?? null : undefined,
-        collocation: dto.collocation !== undefined ? dto.collocation?.trim() ?? null : undefined,
-        relatedWords: dto.relatedWords !== undefined ? dto.relatedWords?.trim() ?? null : undefined,
-        note: dto.note !== undefined ? dto.note?.trim() ?? null : undefined,
-        difficulty: dto.difficulty !== undefined ? dto.difficulty ?? null : undefined,
-        partOfSpeech: dto.partOfSpeech !== undefined ? dto.partOfSpeech?.trim() ?? null : undefined,
+        descriptionEn:
+          dto.descriptionEn !== undefined
+            ? (dto.descriptionEn?.trim() ?? null)
+            : undefined,
+        example:
+          dto.example !== undefined ? (dto.example?.trim() ?? null) : undefined,
+        collocation:
+          dto.collocation !== undefined
+            ? (dto.collocation?.trim() ?? null)
+            : undefined,
+        relatedWords:
+          dto.relatedWords !== undefined
+            ? (dto.relatedWords?.trim() ?? null)
+            : undefined,
+        note: dto.note !== undefined ? (dto.note?.trim() ?? null) : undefined,
+        difficulty:
+          dto.difficulty !== undefined ? (dto.difficulty ?? null) : undefined,
+        partOfSpeech:
+          dto.partOfSpeech !== undefined
+            ? (dto.partOfSpeech?.trim() ?? null)
+            : undefined,
       },
     });
 
@@ -293,4 +312,3 @@ export class VocabulariesService {
     });
   }
 }
-

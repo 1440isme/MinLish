@@ -27,4 +27,3 @@ export class WordExistsWithDifferentMeaningDetailsDto {
   })
   existingItems: ExistingVocabularyItemDto[];
 }
-
