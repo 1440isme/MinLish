@@ -9,6 +9,7 @@ import { DecksModule } from './modules/decks/decks.module';
 import { VocabulariesModule } from './modules/vocabularies/vocabularies.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
 import { ImportsModule } from './modules/imports/imports.module';
+import { LearningModule } from './modules/learning/learning.module';
 import { JwtAuthGuard } from './config/common/guards/jwt-auth.guard';
 
 @Module({
@@ -20,6 +21,7 @@ import { JwtAuthGuard } from './config/common/guards/jwt-auth.guard';
     VocabulariesModule,
     FavoritesModule,
     ImportsModule,
+    LearningModule,
   ],
   controllers: [AppController],
   providers: [
