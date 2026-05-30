@@ -36,8 +36,13 @@ fun DecksScreen(
     onDeckClick: (String) -> Unit
 ) {
     val decks by viewModel.decksList.collectAsState()
+    val isLoading by viewModel.isLoadingDecks.collectAsState()
     var searchKey by remember { mutableStateOf("") }
     var showCreateDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        viewModel.refreshDecks()
+    }
 
     val accentTeal = Color(0xFF0D9488)
 
@@ -86,6 +91,15 @@ fun DecksScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        if (isLoading && decks.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(24.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
+        }
+
         // Separate System & User decks
         val filteredDecks = decks.filter {
             it.name.contains(searchKey, ignoreCase = true) ||
@@ -93,7 +107,10 @@ fun DecksScreen(
         }
 
         val systemDecks = filteredDecks.filter { it.deckType == "SYSTEM" }
-        val userDecks = filteredDecks.filter { it.deckType == "USER" }
+        val userDecks = filteredDecks.filter {
+            it.deckType == "USER" && !it.isFavoritesDeck
+        }
+        val favoritesDeck = filteredDecks.filter { it.isFavoritesDeck }
 
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -110,6 +127,21 @@ fun DecksScreen(
                 }
                 items(systemDecks) { deck ->
                     DeckItemCard(deck = deck, onClick = { onDeckClick(deck.id) }, accentColor = accentTeal)
+                }
+            }
+
+            if (favoritesDeck.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "Favorites",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFE11D48),
+                        modifier = Modifier.padding(top = 16.dp),
+                    )
+                }
+                items(favoritesDeck) { deck ->
+                    DeckItemCard(deck = deck, onClick = { onDeckClick(deck.id) }, accentColor = Color(0xFFE11D48))
                 }
             }
 

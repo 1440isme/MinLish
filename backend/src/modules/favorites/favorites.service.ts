@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -38,11 +39,24 @@ export class FavoritesService {
         id: originalVocabularyId,
         deletedAt: null,
       },
+      include: {
+        deck: true,
+      },
     });
     if (!original) {
       throw new NotFoundException({
         code: ErrorCodes.VOCABULARY_NOT_FOUND,
         message: 'Vocabulary không tồn tại',
+      });
+    }
+
+    if (
+      original.deck.deckType === 'USER' &&
+      original.deck.ownerUserId !== currentUserId
+    ) {
+      throw new ForbiddenException({
+        code: ErrorCodes.VOCABULARY_FORBIDDEN,
+        message: 'Bạn không có quyền favorite vocabulary này',
       });
     }
 

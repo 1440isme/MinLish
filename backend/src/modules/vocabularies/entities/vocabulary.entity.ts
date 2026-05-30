@@ -11,6 +11,19 @@ export enum VocabularyDifficulty {
   HARD = 'HARD',
 }
 
+export enum VocabularyPartOfSpeech {
+  NOUN = 'noun',
+  VERB = 'verb',
+  ADJECTIVE = 'adjective',
+  ADVERB = 'adverb',
+  PRONOUN = 'pronoun',
+  PREPOSITION = 'preposition',
+  CONJUNCTION = 'conjunction',
+  INTERJECTION = 'interjection',
+  PHRASE = 'phrase',
+  OTHER = 'other',
+}
+
 // ----------------------------------------------------------------
 // Vocabulary Entity
 // ----------------------------------------------------------------
@@ -94,9 +107,12 @@ export class VocabularyEntity {
   @Expose()
   difficulty?: VocabularyDifficulty | null;
 
-  @ApiPropertyOptional({ example: 'noun' })
+  @ApiPropertyOptional({
+    enum: VocabularyPartOfSpeech,
+    example: VocabularyPartOfSpeech.NOUN,
+  })
   @Expose()
-  partOfSpeech?: string | null;
+  partOfSpeech?: VocabularyPartOfSpeech | null;
 
   @ApiProperty({ type: Date })
   @Expose()
