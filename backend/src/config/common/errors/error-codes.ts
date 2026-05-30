@@ -24,7 +24,9 @@ export const ErrorCodes = {
   IMPORT_FILE_REQUIRED: 'IMPORT_FILE_REQUIRED',
   IMPORT_INVALID_CSV: 'IMPORT_INVALID_CSV',
   IMPORT_FAVORITES_FORBIDDEN: 'IMPORT_FAVORITES_FORBIDDEN',
+
+  // Google Auth
+  GOOGLE_AUTH_FAILED: 'GOOGLE_AUTH_FAILED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
-

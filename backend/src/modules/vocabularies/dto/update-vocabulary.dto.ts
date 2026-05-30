@@ -79,4 +79,3 @@ export class UpdateVocabularyDto {
   @IsEnum(VocabularyPartOfSpeech)
   partOfSpeech?: VocabularyPartOfSpeech;
 }
-

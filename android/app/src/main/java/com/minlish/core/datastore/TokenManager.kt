@@ -19,6 +19,9 @@ class TokenManager(private val context: Context) {
         val LEARNING_GOAL = stringPreferencesKey("learning_goal")
         val DAILY_GOAL = intPreferencesKey("daily_goal")
         val IS_ONBOARDED = booleanPreferencesKey("is_onboarded")
+        val CURRENT_LEVEL_ID = stringPreferencesKey("current_level_id")
+        val TARGET_LEVEL_ID = stringPreferencesKey("target_level_id")
+        val AVATAR_URL = stringPreferencesKey("avatar_url")
     }
 
     val accessToken: Flow<String?> = context.dataStore.data.map { preferences ->
@@ -49,6 +52,18 @@ class TokenManager(private val context: Context) {
         preferences[IS_ONBOARDED] ?: false
     }
 
+    val currentLevelId: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[CURRENT_LEVEL_ID] ?: ""
+    }
+
+    val targetLevelId: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[TARGET_LEVEL_ID] ?: ""
+    }
+
+    val avatarUrl: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[AVATAR_URL] ?: ""
+    }
+
     suspend fun getAccessTokenBlocking(): String? {
         return context.dataStore.data.first()[ACCESS_TOKEN]
     }
@@ -64,7 +79,10 @@ class TokenManager(private val context: Context) {
         email: String,
         learningGoal: String?,
         dailyGoal: Int,
-        isOnboarded: Boolean
+        isOnboarded: Boolean,
+        currentLevelId: String? = null,
+        targetLevelId: String? = null,
+        avatarUrl: String? = null
     ) {
         context.dataStore.edit { preferences ->
             preferences[ACCESS_TOKEN] = accessToken
@@ -74,6 +92,9 @@ class TokenManager(private val context: Context) {
             preferences[LEARNING_GOAL] = learningGoal ?: "TOEIC"
             preferences[DAILY_GOAL] = dailyGoal
             preferences[IS_ONBOARDED] = isOnboarded
+            preferences[CURRENT_LEVEL_ID] = currentLevelId ?: ""
+            preferences[TARGET_LEVEL_ID] = targetLevelId ?: ""
+            preferences[AVATAR_URL] = avatarUrl ?: ""
         }
     }
 
@@ -89,9 +110,27 @@ class TokenManager(private val context: Context) {
         }
     }
 
+    suspend fun updateAvatarUrl(avatarUrl: String) {
+        context.dataStore.edit { preferences ->
+            preferences[AVATAR_URL] = avatarUrl
+        }
+    }
+
     suspend fun updateLearningGoal(goal: String) {
         context.dataStore.edit { preferences ->
             preferences[LEARNING_GOAL] = goal
+        }
+    }
+
+    suspend fun updateTargetLevelId(levelId: String) {
+        context.dataStore.edit { preferences ->
+            preferences[TARGET_LEVEL_ID] = levelId
+        }
+    }
+
+    suspend fun updateCurrentLevelId(levelId: String) {
+        context.dataStore.edit { preferences ->
+            preferences[CURRENT_LEVEL_ID] = levelId
         }
     }
 
@@ -109,6 +148,9 @@ class TokenManager(private val context: Context) {
             preferences.remove(FULL_NAME)
             preferences.remove(EMAIL)
             preferences.remove(IS_ONBOARDED)
+            preferences.remove(CURRENT_LEVEL_ID)
+            preferences.remove(TARGET_LEVEL_ID)
+            preferences.remove(AVATAR_URL)
         }
     }
 }

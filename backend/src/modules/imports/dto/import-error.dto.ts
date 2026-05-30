@@ -10,4 +10,3 @@ export class ImportErrorDto {
   @ApiProperty({ example: 'Meaning is required' })
   message: string;
 }
-

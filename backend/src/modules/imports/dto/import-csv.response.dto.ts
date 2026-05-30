@@ -38,4 +38,3 @@ export class ImportCsvResponseDto {
   })
   errors: ImportErrorDto[];
 }
-

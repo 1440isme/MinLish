@@ -24,4 +24,3 @@ export class PaginatedResponseDto<TItem> {
   })
   items: TItem[];
 }
-
