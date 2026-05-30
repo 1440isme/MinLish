@@ -34,6 +34,7 @@ import com.minlish.core.data.model.AddVocabularyResult
 import com.minlish.core.data.model.VocabularyEntity
 import com.minlish.core.presentation.MinLishViewModel
 import com.minlish.core.presentation.SameWordWarningState
+import kotlinx.coroutines.launch
 
 private val partOfSpeechOptions = listOf(
     "noun",
@@ -61,6 +62,7 @@ fun DeckDetailScreen(
     val isLoadingDetail by viewModel.isLoadingDeckDetail.collectAsState()
     val sameWordWarning by viewModel.sameWordWarning.collectAsState()
     val favoritedIds by viewModel.favoritedSourceIds.collectAsState()
+    val lastErrorMessage by viewModel.lastErrorMessage.collectAsState()
 
     var showWordDialog by remember { mutableStateOf(false) }
     var showImportDialog by remember { mutableStateOf(false) }
@@ -74,6 +76,8 @@ fun DeckDetailScreen(
     val context = LocalContext.current
     var selectedImportUri by remember { mutableStateOf<Uri?>(null) }
     var selectedImportFileName by remember { mutableStateOf<String?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
     val csvPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -87,6 +91,13 @@ fun DeckDetailScreen(
         viewModel.refreshFavoritedIds()
     }
 
+    LaunchedEffect(lastErrorMessage) {
+        lastErrorMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.clearLastError()
+        }
+    }
+
     val accentTeal = Color(0xFF0D9488)
 
     if (deck == null || isLoadingDetail) {
@@ -98,7 +109,48 @@ fun DeckDetailScreen(
 
     val isFavoritesDeck = deck!!.isFavoritesDeck
     val canManageWords = deck!!.deckType == "USER" && !isFavoritesDeck
+    val emptyDeckMessage = when {
+        canManageWords -> "This deck is empty. Add a word manually or import a CSV file to get started."
+        isFavoritesDeck -> "You have not favorited any vocabulary yet. Tap the heart icon on a word card to save it here."
+        else -> "This deck does not contain any vocabulary yet."
+    }
 
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        containerColor = if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFF4F9F8),
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .background(if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFF4F9F8))
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = deck!!.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+
+                if (deck!!.deckType == "USER" && !isFavoritesDeck) {
+                    IconButton(onClick = { showEditDeckDialog = true }) {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit Deck", tint = accentTeal)
+                    }
+                    IconButton(onClick = { showDeleteDeckConfirm = true }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete Deck", tint = Color.Red)
+                    }
+                }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -157,98 +209,139 @@ fun DeckDetailScreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Practice", fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-        // Grid Action Word / CSV Row
-        if (canManageWords) {
+            Text(
+                text = deck!!.description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                OutlinedButton(
-                    onClick = { showWordDialog = true },
+                Button(
+                    onClick = { onStartQuiz("MULTIPLE_CHOICE") },
                     modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = accentTeal),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Add Manual Word", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                        Icon(Icons.Default.Quiz, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Multi-Choice", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
 
-                OutlinedButton(
-                    onClick = { showImportDialog = true },
+                Button(
+                    onClick = { onStartQuiz("FILL_IN_BLANK") },
                     modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6)),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.UploadFile, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Import CSV", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                        Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Cloze / Fill", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
+
             Spacer(modifier = Modifier.height(16.dp))
-        }
 
-        // List of Vocabs in selected deck
-        Text(
-            text = "Word List (${vocabs.size} words)",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.weight(1f)
-        ) {
-            items(vocabs) { vocab ->
-                val sourceId = vocab.sourceVocabularyId ?: vocab.id
-                val isFavorited = favoritedIds.contains(sourceId)
-                VocabItemCard(
-                    vocab = vocab,
-                    isFavorited = isFavorited,
-                    showFavorite = true,
-                    onClick = { selectedVocabulary = vocab },
-                    onSpeak = { viewModel.speak(vocab.word) },
-                    onToggleFavorite = {
-                        viewModel.toggleFavorite(vocab) { _, error ->
-                            error?.let { msg ->
-                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                            }
+            if (canManageWords) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { showWordDialog = true },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Add Manual Word", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                         }
-                    },
-                )
+                    }
+
+                    OutlinedButton(
+                        onClick = { showImportDialog = true },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.UploadFile, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Import CSV", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
-            if (vocabs.isEmpty()) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(40.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                imageVector = Icons.Default.School,
-                                contentDescription = null,
-                                modifier = Modifier.size(44.dp),
-                                tint = Color.Gray
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "This deck is empty! Please click 'Add Word' or 'Import CSV' to populate English terms.",
-                                color = Color.Gray,
-                                textAlign = TextAlign.Center,
-                                fontSize = 13.sp
-                            )
+            Text(
+                text = "Word List (${vocabs.size} words)",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                items(vocabs) { vocab ->
+                    val sourceId = vocab.sourceVocabularyId ?: vocab.id
+                    val isFavorited = favoritedIds.contains(sourceId)
+                    VocabItemCard(
+                        vocab = vocab,
+                        isFavorited = isFavorited,
+                        showFavorite = true,
+                        onClick = { selectedVocabulary = vocab },
+                        onSpeak = { viewModel.speak(vocab.word) },
+                        onToggleFavorite = {
+                            viewModel.toggleFavorite(vocab) { _, error ->
+                                error?.let { msg ->
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar(msg)
+                                    }
+                                }
+                            }
+                        },
+                    )
+                }
+
+                if (vocabs.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(40.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    imageVector = Icons.Default.School,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(44.dp),
+                                    tint = Color.Gray
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = emptyDeckMessage,
+                                    color = Color.Gray,
+                                    textAlign = TextAlign.Center,
+                                    fontSize = 13.sp
+                                )
+                            }
                         }
                     }
                 }
@@ -512,22 +605,30 @@ fun DeckDetailScreen(
                                     ) { result ->
                                         when (result) {
                                             is AddVocabularyResult.Success -> {
-                                                Toast.makeText(context, "Word added", Toast.LENGTH_SHORT).show()
+                                                coroutineScope.launch {
+                                                    snackbarHostState.showSnackbar("Word added")
+                                                }
                                                 showWordDialog = false
                                             }
                                             is AddVocabularyResult.DuplicateExact -> {
-                                                Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
+                                                coroutineScope.launch {
+                                                    snackbarHostState.showSnackbar(result.message)
+                                                }
                                             }
                                             is AddVocabularyResult.SameWordDifferentMeaning -> {
                                                 showWordDialog = false
                                             }
                                             is AddVocabularyResult.Failure -> {
-                                                Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
+                                                coroutineScope.launch {
+                                                    snackbarHostState.showSnackbar(result.message)
+                                                }
                                             }
                                         }
                                     }
                                 } else {
-                                    Toast.makeText(context, "Word and Meaning are mandatory!", Toast.LENGTH_SHORT).show()
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar("Word and Meaning are mandatory!")
+                                    }
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = accentTeal),
@@ -641,17 +742,17 @@ fun DeckDetailScreen(
                                             selectedImportFileName = null
                                         } else {
                                             val errMsg = formatImportFailureMessage(res)
-                                            Toast.makeText(context, errMsg, Toast.LENGTH_LONG).show()
+                                            coroutineScope.launch {
+                                                snackbarHostState.showSnackbar(errMsg)
+                                            }
                                             selectedImportUri = null
                                             selectedImportFileName = null
                                             showImportDialog = false
                                         }
                                     }
-                                } ?: Toast.makeText(
-                                    context,
-                                    "Please choose a CSV file before importing.",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                } ?: coroutineScope.launch {
+                                    snackbarHostState.showSnackbar("Please choose a CSV file before importing.")
+                                }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = accentTeal),
                             modifier = Modifier.testTag("csv_import_submit"),
@@ -822,7 +923,9 @@ fun DeckDetailScreen(
                                     )
                                     editingVocabulary = null
                                 } else {
-                                    Toast.makeText(context, "Word and Meaning are mandatory!", Toast.LENGTH_SHORT).show()
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar("Word and Meaning are mandatory!")
+                                    }
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = accentTeal)
@@ -843,17 +946,19 @@ fun DeckDetailScreen(
                 viewModel.confirmAddDifferentMeaning { result ->
                     when (result) {
                         is AddVocabularyResult.Success -> {
-                            Toast.makeText(context, "New meaning added", Toast.LENGTH_SHORT).show()
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar("New meaning added")
+                            }
                         }
                         is AddVocabularyResult.DuplicateExact,
                         is AddVocabularyResult.Failure -> {
-                            Toast.makeText(
-                                context,
-                                (result as? AddVocabularyResult.Failure)?.message
-                                    ?: (result as? AddVocabularyResult.DuplicateExact)?.message
-                                    ?: "Could not add word",
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar(
+                                    (result as? AddVocabularyResult.Failure)?.message
+                                        ?: (result as? AddVocabularyResult.DuplicateExact)?.message
+                                        ?: "Could not add word"
+                                )
+                            }
                         }
                         else -> Unit
                     }

@@ -90,11 +90,17 @@ export class DecksService {
     const pageSize = query.pageSize ?? 20;
 
     const search = query.search?.trim();
+    const tagMatchedDeckIds = search
+      ? await this.findDeckIdsMatchingTag(search)
+      : [];
     const searchFilter: Prisma.DeckWhereInput | undefined = search
       ? {
           OR: [
             { name: { contains: search } },
             { description: { contains: search } },
+            ...(tagMatchedDeckIds.length > 0
+              ? [{ id: { in: tagMatchedDeckIds } }]
+              : []),
           ],
         }
       : undefined;
@@ -142,6 +148,18 @@ export class DecksService {
       pageSize,
       items: rows.map((d) => new DeckEntity(d as any)),
     };
+  }
+
+  private async findDeckIdsMatchingTag(search: string): Promise<string[]> {
+    const wildcard = `%${search.toLowerCase()}%`;
+    const rows = await this.prisma.$queryRaw<Array<{ id: string }>>`
+      SELECT id
+      FROM decks
+      WHERE deleted_at IS NULL
+        AND tags IS NOT NULL
+        AND LOWER(CAST(tags AS CHAR)) LIKE ${wildcard}
+    `;
+    return rows.map((row) => row.id);
   }
 
   async getDeckById(

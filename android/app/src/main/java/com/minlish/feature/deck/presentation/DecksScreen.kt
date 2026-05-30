@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -29,6 +30,7 @@ import androidx.compose.ui.window.Dialog
 import com.minlish.core.data.model.DeckEntity
 import com.minlish.core.presentation.MinLishViewModel
 import com.minlish.ui.theme.MinLishTypography
+import kotlinx.coroutines.delay
 
 @Composable
 fun DecksScreen(
@@ -37,15 +39,40 @@ fun DecksScreen(
 ) {
     val decks by viewModel.decksList.collectAsState()
     val isLoading by viewModel.isLoadingDecks.collectAsState()
+    val lastErrorMessage by viewModel.lastErrorMessage.collectAsState()
     var searchKey by remember { mutableStateOf("") }
     var showCreateDialog by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(Unit) {
-        viewModel.refreshDecks()
+    LaunchedEffect(searchKey) {
+        delay(300)
+        viewModel.refreshDecks(searchKey)
+    }
+
+    LaunchedEffect(lastErrorMessage) {
+        lastErrorMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.clearLastError()
+        }
     }
 
     val accentTeal = Color(0xFF0D9488)
 
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        containerColor = if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFF4F9F8),
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .background(if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFF4F9F8))
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -69,115 +96,136 @@ fun DecksScreen(
                 onClick = { showCreateDialog = true },
                 colors = ButtonDefaults.buttonColors(containerColor = accentTeal)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Add, contentDescription = null)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Add Deck", fontWeight = FontWeight.Bold)
-                }
-            }
-        }
+                Text(
+                    text = "Study Decks",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.ExtraBold
+                )
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Search Bar
-        OutlinedTextField(
-            value = searchKey,
-            onValueChange = { searchKey = it },
-            placeholder = { Text("Search by deck name...") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            shape = RoundedCornerShape(12.dp)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (isLoading && decks.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(24.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator()
-            }
-        }
-
-        // Separate System & User decks
-        val filteredDecks = decks.filter {
-            it.name.contains(searchKey, ignoreCase = true) ||
-                    it.description.contains(searchKey, ignoreCase = true)
-        }
-
-        val systemDecks = filteredDecks.filter { it.deckType == "SYSTEM" }
-        val userDecks = filteredDecks.filter {
-            it.deckType == "USER" && !it.isFavoritesDeck
-        }
-        val favoritesDeck = filteredDecks.filter { it.isFavoritesDeck }
-
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            if (systemDecks.isNotEmpty()) {
-                item {
-                    Text(
-                        text = "System Curated Decks",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = accentTeal,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
-                items(systemDecks) { deck ->
-                    DeckItemCard(deck = deck, onClick = { onDeckClick(deck.id) }, accentColor = accentTeal)
+                Button(
+                    onClick = { showCreateDialog = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = accentTeal)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Add, contentDescription = null)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Add Deck", fontWeight = FontWeight.Bold)
+                    }
                 }
             }
 
-            if (favoritesDeck.isNotEmpty()) {
-                item {
-                    Text(
-                        text = "Favorites",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFE11D48),
-                        modifier = Modifier.padding(top = 16.dp),
-                    )
-                }
-                items(favoritesDeck) { deck ->
-                    DeckItemCard(deck = deck, onClick = { onDeckClick(deck.id) }, accentColor = Color(0xFFE11D48))
-                }
-            }
+            Spacer(modifier = Modifier.height(12.dp))
 
-            if (userDecks.isNotEmpty()) {
-                item {
-                    Text(
-                        text = "My Personal Decks",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFA855F7),
-                        modifier = Modifier.padding(top = 16.dp)
-                    )
-                }
-                items(userDecks) { deck ->
-                    DeckItemCard(deck = deck, onClick = { onDeckClick(deck.id) }, accentColor = Color(0xFFA855F7))
-                }
-            }
-
-            if (filteredDecks.isEmpty()) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(40.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            OutlinedTextField(
+                value = searchKey,
+                onValueChange = { searchKey = it },
+                placeholder = { Text("Search decks, tags,...") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                trailingIcon = {
+                    if (searchKey.isNotBlank()) {
+                        IconButton(onClick = { searchKey = "" }) {
                             Icon(
-                                imageVector = Icons.Default.Inbox,
-                                contentDescription = null,
-                                modifier = Modifier.size(48.dp),
-                                tint = Color.Gray
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Clear search"
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text("No decks matches your current filter.", color = Color.Gray)
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (isLoading && decks.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(24.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            val systemDecks = decks.filter { it.deckType == "SYSTEM" }
+            val userDecks = decks.filter {
+                it.deckType == "USER" && !it.isFavoritesDeck
+            }
+            val favoritesDeck = decks.filter { it.isFavoritesDeck }
+
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (systemDecks.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "System Curated Decks",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = accentTeal,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+                    items(systemDecks) { deck ->
+                        DeckItemCard(deck = deck, onClick = { onDeckClick(deck.id) }, accentColor = accentTeal)
+                    }
+                }
+
+                if (favoritesDeck.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "Favorites",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFE11D48),
+                            modifier = Modifier.padding(top = 16.dp),
+                        )
+                    }
+                    items(favoritesDeck) { deck ->
+                        DeckItemCard(deck = deck, onClick = { onDeckClick(deck.id) }, accentColor = Color(0xFFE11D48))
+                    }
+                }
+
+                if (userDecks.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "My Personal Decks",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFA855F7),
+                            modifier = Modifier.padding(top = 16.dp)
+                        )
+                    }
+                    items(userDecks) { deck ->
+                        DeckItemCard(deck = deck, onClick = { onDeckClick(deck.id) }, accentColor = Color(0xFFA855F7))
+                    }
+                }
+
+                if (decks.isEmpty() && !isLoading) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(40.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    imageVector = Icons.Default.Inbox,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(48.dp),
+                                    tint = Color.Gray
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = if (searchKey.isNotBlank()) {
+                                        "No decks found for \"$searchKey\"."
+                                    } else {
+                                        "No decks are available right now."
+                                    },
+                                    color = Color.Gray
+                                )
+                            }
                         }
                     }
                 }
