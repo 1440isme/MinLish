@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { VocabularyEntity } from '../../vocabularies/entities/vocabulary.entity';
 
 // ----------------------------------------------------------------
@@ -69,6 +69,7 @@ export class PracticeSessionEntity {
     description: 'Tỉ lệ đúng (%)',
   })
   @Expose()
+  @Transform(({ value }) => value ? Number(value) : 0)
   accuracy: number;
 
   @ApiProperty({
