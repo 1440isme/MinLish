@@ -8,8 +8,12 @@ import com.minlish.core.data.repository.VocabularyRepository
 import com.minlish.core.datastore.TokenManager
 import com.minlish.core.network.AuthApiService
 import com.minlish.core.network.AuthInterceptor
+import com.minlish.core.network.DecksApiService
+import com.minlish.core.network.FavoritesApiService
+import com.minlish.core.network.ImportsApiService
 import com.minlish.core.network.TokenAuthenticator
 import com.minlish.core.network.UserApiService
+import com.minlish.core.network.VocabulariesApiService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -22,6 +26,14 @@ class MinLishApplication : Application() {
 
     val authApiService: AuthApiService by lazy { retrofit.create(AuthApiService::class.java) }
     val userApiService: UserApiService by lazy { retrofit.create(UserApiService::class.java) }
+    val decksApiService: DecksApiService by lazy { retrofit.create(DecksApiService::class.java) }
+    val vocabulariesApiService: VocabulariesApiService by lazy {
+        retrofit.create(VocabulariesApiService::class.java)
+    }
+    val favoritesApiService: FavoritesApiService by lazy {
+        retrofit.create(FavoritesApiService::class.java)
+    }
+    val importsApiService: ImportsApiService by lazy { retrofit.create(ImportsApiService::class.java) }
 
     private val okHttpClient by lazy {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
@@ -45,7 +57,15 @@ class MinLishApplication : Application() {
             .build()
     }
 
-    val vocabularyRepository by lazy { VocabularyRepository() }
+    val vocabularyRepository by lazy {
+        VocabularyRepository(
+            context = applicationContext,
+            decksApi = decksApiService,
+            vocabulariesApi = vocabulariesApiService,
+            favoritesApi = favoritesApiService,
+            importsApi = importsApiService,
+        )
+    }
     val settingsRepository by lazy { SettingsRepository(tokenManager) }
     val authRepository by lazy { AuthRepository(authApiService, tokenManager) }
     val userRepository by lazy { UserRepository(userApiService, tokenManager) }

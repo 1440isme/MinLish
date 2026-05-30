@@ -1,0 +1,3 @@
+word,pronunciation,meaning,description_en,example,collocation,related_words,note
+imported,/ɪmˈpɔːrtɪd/,được nhập từ CSV,A word added via import,This row was imported successfully.,import data;csv import,upload;batch,
+duplicate,/ˈdjuːplɪkeɪt/,trùng lặp,Duplicate test row,Run import twice to see skip.,,,

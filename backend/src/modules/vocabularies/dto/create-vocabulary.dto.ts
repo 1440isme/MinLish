@@ -7,7 +7,10 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
-import { VocabularyDifficulty } from '../entities/vocabulary.entity';
+import {
+  VocabularyDifficulty,
+  VocabularyPartOfSpeech,
+} from '../entities/vocabulary.entity';
 
 export class CreateVocabularyDto {
   @ApiProperty({ example: 'charge' })
@@ -66,12 +69,14 @@ export class CreateVocabularyDto {
   @IsEnum(VocabularyDifficulty)
   difficulty?: VocabularyDifficulty;
 
-  @ApiPropertyOptional({ example: 'noun' })
+  @ApiPropertyOptional({
+    enum: VocabularyPartOfSpeech,
+    example: VocabularyPartOfSpeech.NOUN,
+  })
   @IsOptional()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  @IsString()
-  @MaxLength(50)
-  partOfSpeech?: string;
+  @IsEnum(VocabularyPartOfSpeech)
+  partOfSpeech?: VocabularyPartOfSpeech;
 
   @ApiPropertyOptional({
     example: false,
