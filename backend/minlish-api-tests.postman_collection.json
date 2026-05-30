@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "7f8c6db2-3e28-4bc2-8815-4fa793d56b82",
     "name": "MinLish API",
-    "description": "Postman Collection for testing MinLish backend API endpoints.\n\n**Dev B flow:** Auth Register → Dev B > Step 1 Login → Steps 2–6 (Decks, Vocabularies, Favorites, Imports, Cleanup). Cần `npm run db:seed` và user đã register (tester@example.com).\n\n**Updated scope:** collection này đã được cập nhật theo các thay đổi mới của Dev B, gồm edit deck/edit vocabulary, `partOfSpeech` dạng enum, và import CSV với 2 fixture rõ ràng cho success/duplicate.",
+    "description": "Postman Collection for testing MinLish backend API endpoints.\n\n**Dev B flow:** Auth Register → Dev B > Step 1 Login → Steps 2–7 (Decks, Vocabularies, Learning, Favorites, Imports, Cleanup). Cần `npm run db:seed` và user đã register (tester@example.com).\n\n**Updated scope:** collection này đã được cập nhật theo các thay đổi mới của Dev B, gồm edit deck/edit vocabulary, flow `learning / flashcard / review / SM-2`, `partOfSpeech` dạng enum, và import CSV với 2 fixture rõ ràng cho success/duplicate.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -690,10 +690,226 @@
           ]
         },
         {
-          "name": "Step 4 - Favorites",
+          "name": "Step 4 - Learning (Flashcard / SM-2)",
+          "description": "Flow test cho module learning. Dùng `systemDeckId` và `systemVocabularyId` từ seed để tránh phụ thuộc vào vocabulary user vừa tạo/xóa ở Step 3.",
           "item": [
             {
-              "name": "B4.1 Favorite system vocabulary",
+              "name": "B4.1 Start learning deck (system deck)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200 || pm.response.code === 201) {",
+                      "    var json = pm.response.json();",
+                      "    if (json.newWords && json.newWords.length > 0 && json.newWords[0].id) {",
+                      "        pm.collectionVariables.set('learningVocabularyId', json.newWords[0].id);",
+                      "    }",
+                      "    if ((!pm.collectionVariables.get('learningVocabularyId')) && json.dueCards && json.dueCards.length > 0 && json.dueCards[0].vocabularyId) {",
+                      "        pm.collectionVariables.set('learningVocabularyId', json.dueCards[0].vocabularyId);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/learning/decks/{{systemDeckId}}/start?limitNewWords=5",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["learning", "decks", "{{systemDeckId}}", "start"],
+                  "query": [
+                    { "key": "limitNewWords", "value": "5" }
+                  ]
+                },
+                "description": "Khởi tạo flow học flashcard cho 1 deck. Response gồm `dueCards` và `newWords`."
+              },
+              "response": []
+            },
+            {
+              "name": "B4.2 Get daily plan (system deck)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/learning/daily-plan?deckId={{systemDeckId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["learning", "daily-plan"],
+                  "query": [
+                    { "key": "deckId", "value": "{{systemDeckId}}" }
+                  ]
+                },
+                "description": "Lấy daily plan cho deck cụ thể. Kiểm tra `newWordsGoal`, `newWordsAvailable`, `dueReviewCount`, `dueCards`, `newWords`."
+              },
+              "response": []
+            },
+            {
+              "name": "B4.3 Start learning vocabulary (system vocabulary)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200 || pm.response.code === 201) {",
+                      "    var json = pm.response.json();",
+                      "    if (json.id) {",
+                      "        pm.collectionVariables.set('reviewCardId', json.id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/learning/vocabularies/{{systemVocabularyId}}/start",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["learning", "vocabularies", "{{systemVocabularyId}}", "start"]
+                },
+                "description": "Find-or-create `review_card` cho `user_id + vocabulary_id`. Lần đầu sẽ tạo card mặc định với `status=NEW`, `dueAt=now`."
+              },
+              "response": []
+            },
+            {
+              "name": "B4.4 Get due cards (global)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/learning/due?limit=10",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["learning", "due"],
+                  "query": [
+                    { "key": "limit", "value": "10" }
+                  ]
+                },
+                "description": "Sau khi start vocabulary, card mới tạo có `due_at <= now` nên sẽ xuất hiện trong danh sách due toàn cục."
+              },
+              "response": []
+            },
+            {
+              "name": "B4.5 Get due cards by deck (system deck)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/learning/due?deckId={{systemDeckId}}&limit=10",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["learning", "due"],
+                  "query": [
+                    { "key": "deckId", "value": "{{systemDeckId}}" },
+                    { "key": "limit", "value": "10" }
+                  ]
+                },
+                "description": "Kiểm tra filter due cards qua `vocabularies.deck_id`, không có `deck_id` trong `review_cards`."
+              },
+              "response": []
+            },
+            {
+              "name": "B4.6 Submit review (GOOD)",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "pm.collectionVariables.set('reviewedAtIso', new Date().toISOString());"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"vocabularyId\": \"{{systemVocabularyId}}\",\n  \"rating\": \"GOOD\",\n  \"reviewedAt\": \"{{reviewedAtIso}}\"\n}",
+                  "options": {
+                    "raw": { "language": "json" }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/learning/review",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["learning", "review"]
+                },
+                "description": "Submit 1 kết quả review flashcard. Backend sẽ map `GOOD -> quality 4`, tính SM-2, update `review_cards`, insert `review_logs`, update `daily_activities`."
+              },
+              "response": []
+            },
+            {
+              "name": "B4.7 Get review history (system vocabulary)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/learning/history?vocabularyId={{systemVocabularyId}}&limit=10",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["learning", "history"],
+                  "query": [
+                    { "key": "vocabularyId", "value": "{{systemVocabularyId}}" },
+                    { "key": "limit", "value": "10" }
+                  ]
+                },
+                "description": "Đọc `review_logs` để xác minh analytics hook của learning flow."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Step 5 - Favorites",
+          "item": [
+            {
+              "name": "B5.1 Favorite system vocabulary",
               "event": [
                 {
                   "listen": "test",
@@ -729,7 +945,7 @@
               "response": []
             },
             {
-              "name": "B4.2 Favorite again (already_favorited)",
+              "name": "B5.2 Favorite again (already_favorited)",
               "request": {
                 "method": "POST",
                 "header": [
@@ -749,7 +965,7 @@
               "response": []
             },
             {
-              "name": "B4.3 List vocabularies in Favorites deck",
+              "name": "B5.3 List vocabularies in Favorites deck",
               "request": {
                 "method": "GET",
                 "header": [
@@ -768,7 +984,7 @@
               "response": []
             },
             {
-              "name": "B4.4 Unfavorite",
+              "name": "B5.4 Unfavorite",
               "request": {
                 "method": "DELETE",
                 "header": [
@@ -789,10 +1005,10 @@
           ]
         },
         {
-          "name": "Step 5 - Imports",
+          "name": "Step 6 - Imports",
           "item": [
             {
-              "name": "B5.1 Import CSV into user deck (5 complete rows)",
+              "name": "B6.1 Import CSV into user deck (5 complete rows)",
               "request": {
                 "method": "POST",
                 "header": [
@@ -823,7 +1039,7 @@
               "response": []
             },
             {
-              "name": "B5.2 Import CSV with duplicates fixture",
+              "name": "B6.2 Import CSV with duplicates fixture",
               "request": {
                 "method": "POST",
                 "header": [
@@ -854,7 +1070,7 @@
               "response": []
             },
             {
-              "name": "B5.3 Import to Favorites (forbidden)",
+              "name": "B6.3 Import to Favorites (forbidden)",
               "request": {
                 "method": "POST",
                 "header": [
@@ -886,10 +1102,10 @@
           ]
         },
         {
-          "name": "Step 6 - Cleanup (optional)",
+          "name": "Step 7 - Cleanup (optional)",
           "item": [
             {
-              "name": "B6.1 Delete user deck",
+              "name": "B7.1 Delete user deck",
               "request": {
                 "method": "DELETE",
                 "header": [
@@ -961,6 +1177,21 @@
     {
       "key": "levelId",
       "value": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1",
+      "type": "string"
+    },
+    {
+      "key": "learningVocabularyId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reviewCardId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reviewedAtIso",
+      "value": "",
       "type": "string"
     }
   ]

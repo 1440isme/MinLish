@@ -121,6 +121,14 @@ class MinLishViewModel(
     private val _isCardFlipped = MutableStateFlow(false)
     val isCardFlipped: StateFlow<Boolean> = _isCardFlipped
 
+    private val _isStudyReplayMode = MutableStateFlow(false)
+    val isStudyReplayMode: StateFlow<Boolean> = _isStudyReplayMode
+
+    private val _canReplayStudySession = MutableStateFlow(false)
+    val canReplayStudySession: StateFlow<Boolean> = _canReplayStudySession
+
+    private var replayableStudyCards: List<VocabularyWithReviewCard> = emptyList()
+
     // Practice Session
     private val _practiceSessions = MutableStateFlow<List<PracticeSessionEntity>>(emptyList())
     val practiceSessions: StateFlow<List<PracticeSessionEntity>> = _practiceSessions
@@ -531,32 +539,112 @@ class MinLishViewModel(
     }
 
     // FLASHCARD LEARNING SESSIONS
-    fun startStudySession() {
+    fun startStudySession(deckId: String? = null) {
         viewModelScope.launch {
-            val words = vocabularyRepository.getDueReviewAndNewWords(dailyNewWordsGoal.value)
-            _activeFlashcards.value = words
-            _currentCardIndex.value = 0
-            _isCardFlipped.value = false
+            try {
+                val words = vocabularyRepository.getDueReviewAndNewWords(
+                    dailyGoal = dailyNewWordsGoal.value,
+                    deckId = deckId,
+                )
+                launchStudyCards(words)
+                _lastErrorMessage.value = null
+            } catch (e: Exception) {
+                clearStudyCards()
+                _lastErrorMessage.value = e.message ?: "Failed to load flashcards"
+            }
         }
+    }
+
+    fun startDailyQuizSession(deckId: String? = null) {
+        viewModelScope.launch {
+            try {
+                val words = vocabularyRepository.getDueReviewWords(
+                    limit = dailyNewWordsGoal.value,
+                    deckId = deckId,
+                )
+                launchStudyCards(words)
+                _lastErrorMessage.value = null
+            } catch (e: Exception) {
+                clearStudyCards()
+                _lastErrorMessage.value = e.message ?: "Failed to load review words"
+            }
+        }
+    }
+
+    fun startDailyNewSession(deckId: String? = null) {
+        viewModelScope.launch {
+            try {
+                val words = vocabularyRepository.getNewWords(
+                    dailyGoal = dailyNewWordsGoal.value,
+                    deckId = deckId,
+                )
+                launchStudyCards(words)
+                _lastErrorMessage.value = null
+            } catch (e: Exception) {
+                clearStudyCards()
+                _lastErrorMessage.value = e.message ?: "Failed to load new words"
+            }
+        }
+    }
+
+    fun replayLastStudySession() {
+        if (replayableStudyCards.isEmpty()) return
+        _activeFlashcards.value = replayableStudyCards
+        _currentCardIndex.value = 0
+        _isCardFlipped.value = false
+        _isStudyReplayMode.value = true
+        _canReplayStudySession.value = true
+        _lastErrorMessage.value = null
     }
 
     fun flipCard() {
         _isCardFlipped.value = !_isCardFlipped.value
     }
 
+    fun goToNextReplayCard() {
+        if (_currentCardIndex.value < _activeFlashcards.value.size - 1) {
+            _currentCardIndex.value += 1
+            _isCardFlipped.value = false
+        } else {
+            _activeFlashcards.value = emptyList()
+            _isCardFlipped.value = false
+            _isStudyReplayMode.value = false
+        }
+    }
+
     fun submitReviewRating(vocabId: String, rating: String) {
         viewModelScope.launch {
-            vocabularyRepository.processVocabReview(vocabId, rating)
-            
-            // Advance to next card or end
-            if (_currentCardIndex.value < _activeFlashcards.value.size - 1) {
-                _currentCardIndex.value += 1
-                _isCardFlipped.value = false
-            } else {
-                // End session
-                _activeFlashcards.value = emptyList()
+            try {
+                vocabularyRepository.processVocabReview(vocabId, rating)
+                if (_currentCardIndex.value < _activeFlashcards.value.size - 1) {
+                    _currentCardIndex.value += 1
+                    _isCardFlipped.value = false
+                } else {
+                    _activeFlashcards.value = emptyList()
+                }
+                _lastErrorMessage.value = null
+            } catch (e: Exception) {
+                _lastErrorMessage.value = e.message ?: "Failed to submit review"
             }
         }
+    }
+
+    private fun launchStudyCards(words: List<VocabularyWithReviewCard>) {
+        _activeFlashcards.value = words
+        _currentCardIndex.value = 0
+        _isCardFlipped.value = false
+        _isStudyReplayMode.value = false
+        replayableStudyCards = words
+        _canReplayStudySession.value = words.isNotEmpty()
+    }
+
+    private fun clearStudyCards() {
+        _activeFlashcards.value = emptyList()
+        _currentCardIndex.value = 0
+        _isCardFlipped.value = false
+        _isStudyReplayMode.value = false
+        replayableStudyCards = emptyList()
+        _canReplayStudySession.value = false
     }
 
     // MINI PRACTICE QUIZ ENGINE

@@ -10,6 +10,7 @@ import { VocabulariesModule } from './modules/vocabularies/vocabularies.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
 import { ImportsModule } from './modules/imports/imports.module';
 import { PracticeModule } from './modules/practice/practice.module';
+import { LearningModule } from './modules/learning/learning.module';
 import { JwtAuthGuard } from './config/common/guards/jwt-auth.guard';
 
 @Module({
@@ -22,6 +23,7 @@ import { JwtAuthGuard } from './config/common/guards/jwt-auth.guard';
     FavoritesModule,
     ImportsModule,
     PracticeModule,
+    LearningModule,
   ],
   controllers: [AppController],
   providers: [

@@ -12,6 +12,7 @@ import com.minlish.core.network.DecksApiService
 import com.minlish.core.network.FavoritesApiService
 import com.minlish.core.network.ImportsApiService
 import com.minlish.core.network.PracticeApiService
+import com.minlish.core.network.LearningApiService
 import com.minlish.core.network.TokenAuthenticator
 import com.minlish.core.network.UserApiService
 import com.minlish.core.network.VocabulariesApiService
@@ -37,6 +38,7 @@ class MinLishApplication : Application() {
     }
     val importsApiService: ImportsApiService by lazy { retrofit.create(ImportsApiService::class.java) }
     val practiceApiService: PracticeApiService by lazy { retrofit.create(PracticeApiService::class.java) }
+    val learningApiService: LearningApiService by lazy { retrofit.create(LearningApiService::class.java) }
 
     private val okHttpClient: OkHttpClient by lazy {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
@@ -69,6 +71,7 @@ class MinLishApplication : Application() {
             favoritesApi = favoritesApiService,
             importsApi = importsApiService,
             practiceApi = practiceApiService,
+            learningApi = learningApiService,
         )
     }
     val settingsRepository by lazy { SettingsRepository(tokenManager) }

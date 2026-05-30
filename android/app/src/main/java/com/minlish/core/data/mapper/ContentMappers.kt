@@ -2,11 +2,16 @@ package com.minlish.core.data.mapper
 
 import com.minlish.core.data.model.DeckEntity
 import com.minlish.core.data.model.ImportCsvResponse
+import com.minlish.core.data.model.ReviewCardEntity
 import com.minlish.core.data.model.VocabularyEntity
+import com.minlish.core.data.model.VocabularyWithReviewCard
 import com.minlish.core.network.dto.CreateVocabularyRequest
 import com.minlish.core.network.dto.DeckDto
 import com.minlish.core.network.dto.ImportCsvResponseDto
+import com.minlish.core.network.dto.ReviewCardDto
+import com.minlish.core.network.dto.VocabularyPreviewDto
 import com.minlish.core.network.dto.VocabularyDto
+import java.time.Instant
 
 fun DeckDto.toEntity(): DeckEntity {
     val tagString = tags?.joinToString(";") ?: ""
@@ -41,6 +46,42 @@ fun VocabularyDto.toEntity(): VocabularyEntity = VocabularyEntity(
     relatedWords = relatedWords.orEmpty(),
     note = note.orEmpty(),
 )
+
+fun VocabularyPreviewDto.toEntity(): VocabularyEntity = VocabularyEntity(
+    id = id,
+    deckId = deckId,
+    sourceVocabularyId = null,
+    word = word,
+    pronunciation = pronunciation.orEmpty(),
+    partOfSpeech = partOfSpeech.orEmpty(),
+    meaning = meaning,
+    descriptionEn = "",
+    example = "",
+    collocation = "",
+    relatedWords = "",
+    note = "",
+)
+
+fun ReviewCardDto.toEntity(): ReviewCardEntity = ReviewCardEntity(
+    id = id,
+    vocabularyId = vocabularyId,
+    repetition = repetition,
+    intervalDays = intervalDays,
+    easeFactor = easeFactor,
+    dueAt = dueAt.toEpochMillis(),
+)
+
+fun ReviewCardDto.toVocabularyWithReviewCard(): VocabularyWithReviewCard? {
+    val vocabularyDto = vocabulary ?: return null
+    return VocabularyWithReviewCard(
+        vocabulary = vocabularyDto.toEntity(),
+        reviewCard = toEntity(),
+    )
+}
+
+private fun String.toEpochMillis(): Long {
+    return runCatching { Instant.parse(this).toEpochMilli() }.getOrDefault(0L)
+}
 
 fun ImportCsvResponseDto.toEntity(): ImportCsvResponse = ImportCsvResponse(
     success = status == "COMPLETED" || status == "PARTIAL_SUCCESS",
