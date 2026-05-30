@@ -1,21 +1,26 @@
 package com.minlish.core.presentation
 
 import android.app.Application
+import android.net.Uri
 import android.speech.tts.TextToSpeech
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.minlish.core.data.model.*
-import com.minlish.core.data.repository.SettingsRepository
-import com.minlish.core.data.repository.VocabularyRepository
 import com.minlish.core.data.repository.AuthRepository
+import com.minlish.core.data.repository.SettingsRepository
 import com.minlish.core.data.repository.UserRepository
-import kotlinx.coroutines.flow.*
+import com.minlish.core.data.repository.VocabularyRepository
+import com.minlish.core.network.dto.ExistingVocabularyItemDto
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class MinLishViewModel(
     application: Application,
     private val vocabularyRepository: VocabularyRepository,
@@ -63,6 +68,21 @@ class MinLishViewModel(
     private val _decksList = MutableStateFlow<List<DeckEntity>>(emptyList())
     val decksList: StateFlow<List<DeckEntity>> = _decksList
 
+    private val _isLoadingDecks = MutableStateFlow(false)
+    val isLoadingDecks: StateFlow<Boolean> = _isLoadingDecks
+
+    private val _isLoadingDeckDetail = MutableStateFlow(false)
+    val isLoadingDeckDetail: StateFlow<Boolean> = _isLoadingDeckDetail
+
+    private val _lastErrorMessage = MutableStateFlow<String?>(null)
+    val lastErrorMessage: StateFlow<String?> = _lastErrorMessage
+
+    private val _sameWordWarning = MutableStateFlow<SameWordWarningState?>(null)
+    val sameWordWarning: StateFlow<SameWordWarningState?> = _sameWordWarning
+
+    private val _favoritedSourceIds = MutableStateFlow<Set<String>>(emptySet())
+    val favoritedSourceIds: StateFlow<Set<String>> = _favoritedSourceIds
+
     // Selected deck detail and words
     private val _selectedDeck = MutableStateFlow<DeckEntity?>(null)
     val selectedDeck: StateFlow<DeckEntity?> = _selectedDeck
@@ -106,15 +126,6 @@ class MinLishViewModel(
         // Initialize TTS
         tts = TextToSpeech(application, this)
 
-        // Sync Decks dynamically based on chosen goal
-        viewModelScope.launch {
-            learningGoal.flatMapLatest { goal ->
-                vocabularyRepository.getDecksByGoalFlow(goal)
-            }.collect { list ->
-                _decksList.value = list
-            }
-        }
-
         // Keep local dashboard aggregates up-to-date
         viewModelScope.launch {
             combine(
@@ -139,7 +150,43 @@ class MinLishViewModel(
             isOnboarded.collect { onboarded ->
                 if (onboarded) {
                     fetchUserProfile()
+                    refreshDecks()
+                    refreshFavoritedIds()
                 }
+            }
+        }
+    }
+
+    fun clearLastError() {
+        _lastErrorMessage.value = null
+    }
+
+    fun dismissSameWordWarning() {
+        _sameWordWarning.value = null
+    }
+
+    fun refreshDecks() {
+        viewModelScope.launch {
+            _isLoadingDecks.value = true
+            try {
+                val decks = vocabularyRepository.listDecks()
+                _decksList.value = decks
+                _lastErrorMessage.value = null
+            } catch (e: Exception) {
+                _lastErrorMessage.value = e.message ?: "Failed to load decks"
+            } finally {
+                _isLoadingDecks.value = false
+            }
+        }
+    }
+
+    fun refreshFavoritedIds() {
+        viewModelScope.launch {
+            try {
+                vocabularyRepository.refreshFavoritedSourceIds()
+                _favoritedSourceIds.value = vocabularyRepository.getFavoritedSourceIds()
+            } catch (_: Exception) {
+                // Favorites deck may not exist until register side-effect is done
             }
         }
     }
@@ -214,26 +261,63 @@ class MinLishViewModel(
     // SELECT DECK
     fun selectDeck(deckId: String) {
         viewModelScope.launch {
-            val deck = vocabularyRepository.getDeckById(deckId)
-            _selectedDeck.value = deck
-            if (deck != null) {
-                vocabularyRepository.getVocabulariesInDeckFlow(deckId).collect { list ->
+            _isLoadingDeckDetail.value = true
+            try {
+                val deck = vocabularyRepository.getDeckById(deckId)
+                _selectedDeck.value = deck
+                if (deck != null) {
+                    val list = vocabularyRepository.getVocabulariesInDeck(deckId)
                     _vocabulariesInSelectedDeck.value = list
                 }
+                vocabularyRepository.refreshFavoritedSourceIds()
+                _favoritedSourceIds.value = vocabularyRepository.getFavoritedSourceIds()
+                _lastErrorMessage.value = null
+            } catch (e: Exception) {
+                _lastErrorMessage.value = e.message ?: "Failed to load deck"
+            } finally {
+                _isLoadingDeckDetail.value = false
             }
         }
+    }
+
+    fun isVocabFavorited(vocab: VocabularyEntity): Boolean {
+        val sourceId = vocabularyRepository.favoriteSourceIdFor(vocab)
+        return favoritedSourceIds.value.contains(sourceId) ||
+            vocabularyRepository.isFavorited(sourceId)
     }
 
     // SYSTEM / USER DECK ACTIONS
     fun createCustomDeck(name: String, description: String, tags: List<String>) {
         viewModelScope.launch {
-            vocabularyRepository.createDeck(name, description, tags, learningGoal.value, targetLevel.value)
+            try {
+                vocabularyRepository.createDeck(name, description, tags)
+                refreshDecks()
+            } catch (e: Exception) {
+                _lastErrorMessage.value = e.message ?: "Failed to create deck"
+            }
         }
     }
 
     fun deleteCustomDeck(deckId: String) {
         viewModelScope.launch {
-            vocabularyRepository.deleteDeck(deckId)
+            try {
+                vocabularyRepository.deleteDeck(deckId)
+                refreshDecks()
+            } catch (e: Exception) {
+                _lastErrorMessage.value = e.message ?: "Failed to delete deck"
+            }
+        }
+    }
+
+    fun updateCustomDeck(deckId: String, name: String, description: String, tags: List<String>) {
+        viewModelScope.launch {
+            try {
+                vocabularyRepository.updateDeck(deckId, name, description, tags)
+                refreshDecks()
+                selectDeck(deckId)
+            } catch (e: Exception) {
+                _lastErrorMessage.value = e.message ?: "Failed to update deck"
+            }
         }
     }
 
@@ -242,26 +326,90 @@ class MinLishViewModel(
         deckId: String,
         word: String,
         pronunciation: String,
+        partOfSpeech: String,
         meaning: String,
         descEn: String,
         example: String,
         collocation: String,
         related: String,
-        note: String
+        note: String,
+        onResult: (AddVocabularyResult) -> Unit,
     ) {
         viewModelScope.launch {
-            vocabularyRepository.addVocabularyToDeck(
-                deckId, word, pronunciation, meaning, descEn, example, collocation, related, note
+            val result = vocabularyRepository.addVocabularyToDeck(
+                deckId, word, pronunciation, partOfSpeech, meaning, descEn, example, collocation, related, note,
             )
-            // Trigger selection update
-            selectDeck(deckId)
+            when (result) {
+                is AddVocabularyResult.Success -> {
+                    selectDeck(deckId)
+                    _sameWordWarning.value = null
+                }
+                is AddVocabularyResult.SameWordDifferentMeaning -> {
+                    _sameWordWarning.value = SameWordWarningState(
+                        message = result.message,
+                        existingItems = result.existingItems,
+                        pending = result.pendingRequest,
+                    )
+                }
+                else -> Unit
+            }
+            onResult(result)
+        }
+    }
+
+    fun confirmAddDifferentMeaning(onResult: (AddVocabularyResult) -> Unit) {
+        val warning = _sameWordWarning.value ?: return
+        viewModelScope.launch {
+            val result = vocabularyRepository.confirmAddVocabularyWithDifferentMeaning(warning.pending)
+            when (result) {
+                is AddVocabularyResult.Success -> {
+                    selectDeck(warning.pending.deckId)
+                    _sameWordWarning.value = null
+                }
+                is AddVocabularyResult.SameWordDifferentMeaning -> {
+                    _sameWordWarning.value = SameWordWarningState(
+                        message = result.message,
+                        existingItems = result.existingItems,
+                        pending = result.pendingRequest,
+                    )
+                }
+                else -> Unit
+            }
+            onResult(result)
+        }
+    }
+
+    fun toggleFavorite(vocab: VocabularyEntity, onResult: (Boolean, String?) -> Unit) {
+        val sourceId = vocabularyRepository.favoriteSourceIdFor(vocab)
+        viewModelScope.launch {
+            val isCurrentlyFavorited = isVocabFavorited(vocab)
+            val result = if (isCurrentlyFavorited) {
+                vocabularyRepository.unfavoriteVocabulary(sourceId)
+            } else {
+                vocabularyRepository.favoriteVocabulary(sourceId)
+            }
+            when (result) {
+                is FavoriteResult.Success -> {
+                    _favoritedSourceIds.value = vocabularyRepository.getFavoritedSourceIds()
+                    _selectedDeck.value?.let { deck ->
+                        if (deck.isFavoritesDeck) selectDeck(deck.id)
+                    }
+                    onResult(!isCurrentlyFavorited, null)
+                }
+                is FavoriteResult.Failure -> onResult(isCurrentlyFavorited, result.message)
+            }
         }
     }
 
     fun deleteCustomVocabulary(vocabId: String, deckId: String) {
         viewModelScope.launch {
-            vocabularyRepository.deleteVocabulary(vocabId)
-            selectDeck(deckId)
+            try {
+                vocabularyRepository.deleteVocabulary(vocabId)
+                selectDeck(deckId)
+                refreshDecks()
+            } catch (e: Exception) {
+                _lastErrorMessage.value = e.message ?: "Failed to delete vocabulary"
+            }
         }
     }
 
@@ -270,6 +418,7 @@ class MinLishViewModel(
         deckId: String,
         word: String,
         pronunciation: String,
+        partOfSpeech: String,
         meaning: String,
         descEn: String,
         example: String,
@@ -278,19 +427,34 @@ class MinLishViewModel(
         note: String
     ) {
         viewModelScope.launch {
-            vocabularyRepository.updateVocabulary(
-                id, word, pronunciation, meaning, descEn, example, collocation, related, note
-            )
-            selectDeck(deckId)
+            try {
+                vocabularyRepository.updateVocabulary(
+                    id, word, pronunciation, partOfSpeech, meaning, descEn, example, collocation, related, note
+                )
+                selectDeck(deckId)
+            } catch (e: Exception) {
+                _lastErrorMessage.value = e.message ?: "Failed to update vocabulary"
+            }
         }
     }
 
     // CSV IMPORT TRIGGER
-    fun importCsv(deckId: String, csvContent: String, onComplete: (ImportCsvResponse) -> Unit) {
+    fun importCsv(deckId: String, fileUri: Uri, onComplete: (ImportCsvResponse) -> Unit) {
         viewModelScope.launch {
-            val response = vocabularyRepository.importCsvContent(deckId, csvContent)
-            selectDeck(deckId)
-            onComplete(response)
+            try {
+                val response = vocabularyRepository.importCsvFile(deckId, fileUri)
+                selectDeck(deckId)
+                refreshDecks()
+                onComplete(response)
+            } catch (e: Exception) {
+                onComplete(
+                    ImportCsvResponse(
+                        success = false,
+                        importedCount = 0,
+                        errors = listOf(e.message ?: "Import failed"),
+                    )
+                )
+            }
         }
     }
 
@@ -401,6 +565,12 @@ class MinLishViewModel(
         }
     }
 }
+
+data class SameWordWarningState(
+    val message: String,
+    val existingItems: List<ExistingVocabularyItemDto>,
+    val pending: PendingVocabularyRequest,
+)
 
 class MinLishViewModelFactory(
     private val application: Application,

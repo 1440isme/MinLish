@@ -16,9 +16,65 @@ function normalizeText(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
+/** Path is derived via learningLevel.learningPath — not stored on deck. */
+const deckWithLearningLevelInclude = {
+  learningLevel: {
+    include: {
+      learningPath: true,
+    },
+  },
+} as const;
+
 @Injectable()
 export class DecksService {
   constructor(private prisma: PrismaService) {}
+
+  private async assertActiveLearningLevelExists(levelId: string): Promise<void> {
+    const level = await this.prisma.learningLevel.findFirst({
+      where: {
+        id: levelId,
+        isActive: true,
+      },
+    });
+    if (!level) {
+      throw new BadRequestException({
+        code: ErrorCodes.LEARNING_LEVEL_NOT_FOUND,
+        message: 'Learning level không tồn tại hoặc không khả dụng',
+      });
+    }
+  }
+
+  /** Resolve optional level id for create (null = no level). */
+  private async resolveLearningLevelIdForCreate(
+    learningLevelId?: string,
+  ): Promise<string | null> {
+    if (!learningLevelId) {
+      return null;
+    }
+    await this.assertActiveLearningLevelExists(learningLevelId);
+    return learningLevelId;
+  }
+
+  /**
+   * Resolve level for update.
+   * undefined = do not change; null = clear; string = set (validated).
+   */
+  private async resolveLearningLevelIdForUpdate(
+    learningLevelId: string | null | undefined,
+  ): Promise<string | null | undefined> {
+    if (learningLevelId === undefined) {
+      return undefined;
+    }
+    if (learningLevelId === null) {
+      return null;
+    }
+    await this.assertActiveLearningLevelExists(learningLevelId);
+    return learningLevelId;
+  }
+
+  private toDeckEntity(deck: Record<string, unknown>): DeckEntity {
+    return new DeckEntity(deck as any);
+  }
 
   async listDecks(
     currentUserId: string,
@@ -89,6 +145,7 @@ export class DecksService {
         id: deckId,
         deletedAt: null,
       },
+      include: deckWithLearningLevelInclude,
     });
     if (!deck) {
       throw new NotFoundException({
@@ -104,7 +161,7 @@ export class DecksService {
       });
     }
 
-    return new DeckEntity(deck as any);
+    return this.toDeckEntity(deck);
   }
 
   async getFavoritesDeck(currentUserId: string): Promise<DeckEntity> {
@@ -115,6 +172,7 @@ export class DecksService {
         isDefault: true,
         deletedAt: null,
       },
+      include: deckWithLearningLevelInclude,
     });
     if (!deck) {
       throw new NotFoundException({
@@ -122,7 +180,7 @@ export class DecksService {
         message: 'Favorites deck không tồn tại (cần được tạo khi đăng ký)',
       });
     }
-    return new DeckEntity(deck as any);
+    return this.toDeckEntity(deck);
   }
 
   async createUserDeck(currentUserId: string, dto: CreateDeckDto): Promise<DeckEntity> {
@@ -143,10 +201,14 @@ export class DecksService {
       });
     }
 
+    const learningLevelId = await this.resolveLearningLevelIdForCreate(
+      dto.learningLevelId,
+    );
+
     const created = await this.prisma.deck.create({
       data: {
         ownerUserId: currentUserId,
-        learningLevelId: dto.learningLevelId ?? null,
+        learningLevelId,
         deckType: 'USER',
         visibility: 'PRIVATE',
         name: dto.name.trim(),
@@ -158,9 +220,10 @@ export class DecksService {
         totalWords: 0,
         isDefault: false,
       },
+      include: deckWithLearningLevelInclude,
     });
 
-    return new DeckEntity(created as any);
+    return this.toDeckEntity(created);
   }
 
   async updateUserDeck(
@@ -196,12 +259,15 @@ export class DecksService {
     }
 
     if (deck.isDefault) {
-      // MVP: keep Favorites stable (avoid rename/patch)
       throw new ForbiddenException({
         code: ErrorCodes.DECK_CANNOT_DELETE_FAVORITES,
         message: 'Không thể sửa Favorites deck trong MVP',
       });
     }
+
+    const learningLevelId = await this.resolveLearningLevelIdForUpdate(
+      dto.learningLevelId,
+    );
 
     const normalizedName = dto.name ? normalizeText(dto.name) : undefined;
     if (normalizedName) {
@@ -229,10 +295,14 @@ export class DecksService {
         normalizedName,
         description: dto.description ? dto.description.trim() : undefined,
         tags: dto.tags ? dto.tags : undefined,
+        ...(learningLevelId !== undefined
+          ? { learningLevelId }
+          : {}),
       },
+      include: deckWithLearningLevelInclude,
     });
 
-    return new DeckEntity(updated as any);
+    return this.toDeckEntity(updated);
   }
 
   async softDeleteUserDeck(currentUserId: string, deckId: string): Promise<void> {

@@ -33,8 +33,9 @@ export class CreateDeckDto {
   tags?: string[];
 
   @ApiPropertyOptional({
-    example: 'uuid-level',
-    description: 'Optional learning level for user deck',
+    example: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2',
+    description:
+      'Learning level tùy chọn. Path (TOEIC/IELTS) suy ra từ level — không gửi learningPathId.',
   })
   @IsOptional()
   @IsString()
