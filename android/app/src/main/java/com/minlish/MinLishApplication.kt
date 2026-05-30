@@ -11,6 +11,7 @@ import com.minlish.core.network.AuthInterceptor
 import com.minlish.core.network.DecksApiService
 import com.minlish.core.network.FavoritesApiService
 import com.minlish.core.network.ImportsApiService
+import com.minlish.core.network.PracticeApiService
 import com.minlish.core.network.TokenAuthenticator
 import com.minlish.core.network.UserApiService
 import com.minlish.core.network.VocabulariesApiService
@@ -19,10 +20,11 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
+import kotlin.getValue
 
 class MinLishApplication : Application() {
     
-    val tokenManager by lazy { TokenManager(this) }
+    val tokenManager: TokenManager by lazy { TokenManager(this) }
 
     val authApiService: AuthApiService by lazy { retrofit.create(AuthApiService::class.java) }
     val userApiService: UserApiService by lazy { retrofit.create(UserApiService::class.java) }
@@ -34,8 +36,9 @@ class MinLishApplication : Application() {
         retrofit.create(FavoritesApiService::class.java)
     }
     val importsApiService: ImportsApiService by lazy { retrofit.create(ImportsApiService::class.java) }
+    val practiceApiService: PracticeApiService by lazy { retrofit.create(PracticeApiService::class.java) }
 
-    private val okHttpClient by lazy {
+    private val okHttpClient: OkHttpClient by lazy {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
@@ -49,11 +52,12 @@ class MinLishApplication : Application() {
             .build()
     }
 
-    private val retrofit by lazy {
+    private val retrofit: Retrofit by lazy {
+        val baseUrl = BuildConfig.API_BASE_URL
         Retrofit.Builder()
-            .baseUrl(BuildConfig.API_BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
+            .baseUrl(baseUrl)
             .build()
     }
 
@@ -64,6 +68,7 @@ class MinLishApplication : Application() {
             vocabulariesApi = vocabulariesApiService,
             favoritesApi = favoritesApiService,
             importsApi = importsApiService,
+            practiceApi = practiceApiService,
         )
     }
     val settingsRepository by lazy { SettingsRepository(tokenManager) }

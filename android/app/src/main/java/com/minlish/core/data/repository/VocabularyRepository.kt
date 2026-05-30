@@ -18,11 +18,18 @@ import com.minlish.core.network.ApiErrorParser
 import com.minlish.core.network.DecksApiService
 import com.minlish.core.network.FavoritesApiService
 import com.minlish.core.network.ImportsApiService
+import com.minlish.core.network.PracticeApiService
 import com.minlish.core.network.VocabulariesApiService
 import com.minlish.core.network.dto.CreateDeckRequest
+import com.minlish.core.network.dto.CreatePracticeSessionRequest
+import com.minlish.core.network.dto.CreateSessionResponse
+import com.minlish.core.network.dto.FinishSessionResponse
+import com.minlish.core.network.dto.PracticeAnswerDto
+import com.minlish.core.network.dto.PracticeQuestionDto
+import com.minlish.core.network.dto.PracticeSessionDto
+import com.minlish.core.network.dto.SubmitAnswerRequest
 import com.minlish.core.network.dto.UpdateDeckRequest
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -35,6 +42,7 @@ class VocabularyRepository(
     private val vocabulariesApi: VocabulariesApiService,
     private val favoritesApi: FavoritesApiService,
     private val importsApi: ImportsApiService,
+    private val practiceApi: PracticeApiService,
 ) {
     private var favoritesDeckId: String? = null
     private val favoritedSourceIds = mutableSetOf<String>()
@@ -339,4 +347,43 @@ class VocabularyRepository(
     suspend fun processVocabReview(vocabId: String, rating: String) {}
 
     suspend fun savePracticeSession(deckId: String, type: String, total: Int, correct: Int) {}
+
+    // Practice Remote API Integrations
+    suspend fun createPracticeSession(
+        deckId: String,
+        practiceTypes: List<String>?,
+        totalQuestions: Int?
+    ): CreateSessionResponse {
+        return practiceApi.createSession(
+            CreatePracticeSessionRequest(deckId, practiceTypes, totalQuestions)
+        )
+    }
+
+    suspend fun getActivePracticeSession(deckId: String): CreateSessionResponse? {
+        return try {
+            practiceApi.getActiveSession(deckId)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    suspend fun getPracticeQuestions(sessionId: String): List<PracticeQuestionDto> {
+        return practiceApi.getQuestions(sessionId)
+    }
+
+    suspend fun submitPracticeAnswer(
+        sessionId: String,
+        questionIndex: Int,
+        userAnswer: String?
+    ): PracticeAnswerDto {
+        return practiceApi.submitAnswer(sessionId, SubmitAnswerRequest(questionIndex, userAnswer))
+    }
+
+    suspend fun finishPracticeSession(sessionId: String): FinishSessionResponse {
+        return practiceApi.finishSession(sessionId)
+    }
+
+    suspend fun cancelPracticeSession(sessionId: String): PracticeSessionDto {
+        return practiceApi.cancelSession(sessionId)
+    }
 }

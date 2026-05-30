@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { VocabularyEntity } from '../../vocabularies/entities/vocabulary.entity';
 
 // ----------------------------------------------------------------
@@ -65,6 +65,7 @@ export class ReviewCardEntity {
     description: 'Hệ số dễ SM-2 (min 1.3)',
   })
   @Expose()
+  @Transform(({ value }) => value ? Number(value) : 2.5)
   easeFactor: number;
 
   @ApiProperty({
@@ -179,10 +180,12 @@ export class ReviewLogEntity {
 
   @ApiProperty({ example: 2.5 })
   @Expose()
+  @Transform(({ value }) => value ? Number(value) : 2.5)
   oldEaseFactor: number;
 
   @ApiProperty({ example: 2.5 })
   @Expose()
+  @Transform(({ value }) => value ? Number(value) : 2.5)
   newEaseFactor: number;
 
   @ApiPropertyOptional({

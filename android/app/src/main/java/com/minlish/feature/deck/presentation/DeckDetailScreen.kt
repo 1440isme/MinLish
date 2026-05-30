@@ -151,6 +151,63 @@ fun DeckDetailScreen(
                         Icon(Icons.Default.Delete, contentDescription = "Delete Deck", tint = Color.Red)
                     }
                 }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFF4F9F8))
+            .padding(16.dp)
+    ) {
+        // Back Header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = deck!!.name,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+
+            if (deck!!.deckType == "USER" && !isFavoritesDeck) {
+                IconButton(onClick = { showEditDeckDialog = true }) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit Deck", tint = accentTeal)
+                }
+                IconButton(onClick = { showDeleteDeckConfirm = true }) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete Deck", tint = Color.Red)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = deck!!.description,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Practice Button — single entry point, setup dialog handles type/count config
+        Button(
+            onClick = { onStartQuiz(deckId) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1C1C1A)),
+            shape = RoundedCornerShape(32.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(22.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Practice", fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
