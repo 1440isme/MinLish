@@ -13,7 +13,12 @@ import com.minlish.core.data.repository.SettingsRepository
 import com.minlish.core.data.repository.UserRepository
 import com.minlish.core.data.repository.VocabularyRepository
 import com.minlish.core.network.ApiErrorParser
+import com.minlish.core.network.dto.CreateSessionResponse
 import com.minlish.core.network.dto.ExistingVocabularyItemDto
+import com.minlish.core.network.dto.PracticeAnswerDto
+import com.minlish.core.network.dto.PracticeQuestionDto
+import com.minlish.core.network.dto.PracticeSessionDto
+import com.minlish.core.network.dto.PracticeSessionSummaryDto
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
