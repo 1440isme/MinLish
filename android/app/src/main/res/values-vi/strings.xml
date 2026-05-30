@@ -7,6 +7,8 @@
     <string name="login_button_text">Đăng nhập</string>
     <string name="login_new_to_minlish">Chưa có tài khoản?</string>
     <string name="login_sign_up">Đăng ký</string>
+    <string name="login_email_placeholder">Nhập email của bạn</string>
+    <string name="login_password_placeholder">Nhập mật khẩu của bạn</string>
 
     <!-- Dashboard -->
     <string name="dashboard_title">Bảng điều khiển</string>

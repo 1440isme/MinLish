@@ -22,7 +22,9 @@ data class UserDto(
     @SerializedName("learningGoal") val learningGoal: String?,
     @SerializedName("dailyNewWordsGoal") val dailyNewWordsGoal: Int,
     @SerializedName("timezone") val timezone: String,
-    @SerializedName("isActive") val isActive: Boolean
+    @SerializedName("isActive") val isActive: Boolean,
+    @SerializedName("currentLevelId") val currentLevelId: String?,
+    @SerializedName("targetLevelId") val targetLevelId: String?
 )
 
 data class AuthResponse(
@@ -37,7 +39,14 @@ data class RefreshTokenRequest(
 
 data class UpdateProfileRequest(
     @SerializedName("fullName") val fullName: String? = null,
+    @SerializedName("avatarUrl") val avatarUrl: String? = null,
     @SerializedName("learningGoal") val learningGoal: String? = null,
     @SerializedName("dailyNewWordsGoal") val dailyNewWordsGoal: Int? = null,
-    @SerializedName("timezone") val timezone: String? = null
+    @SerializedName("timezone") val timezone: String? = null,
+    @SerializedName("currentLevelId") val currentLevelId: String? = null,
+    @SerializedName("targetLevelId") val targetLevelId: String? = null
+)
+
+data class GoogleLoginRequest(
+    @SerializedName("idToken") val idToken: String
 )

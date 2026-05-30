@@ -4,6 +4,7 @@ import com.minlish.core.datastore.TokenManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 
 class SettingsRepository(private val tokenManager: TokenManager) {
     val fullName: Flow<String> = tokenManager.fullName
@@ -11,9 +12,22 @@ class SettingsRepository(private val tokenManager: TokenManager) {
     val learningGoal: Flow<String> = tokenManager.learningGoal
     val dailyNewWordsGoal: Flow<Int> = tokenManager.dailyNewWordsGoal
     val isOnboarded: Flow<Boolean> = tokenManager.isOnboarded
+    val avatarUrl: Flow<String> = tokenManager.avatarUrl
 
-    private val _targetLevel = MutableStateFlow("600")
-    val targetLevel: StateFlow<String> = _targetLevel
+    val targetLevelId: Flow<String> = tokenManager.targetLevelId
+    val targetLevel: Flow<String> = tokenManager.targetLevelId.map { levelId ->
+        when (levelId) {
+            "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1" -> "TOEIC 450+"
+            "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2" -> "TOEIC 600+"
+            "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3" -> "TOEIC 750+"
+            "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4" -> "TOEIC 900+"
+            "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1" -> "IELTS 4.0+"
+            "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2" -> "IELTS 5.5+"
+            "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3" -> "IELTS 6.5+"
+            "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb4" -> "IELTS 7.0+"
+            else -> "TOEIC 600+" // default fallback matching initial mock value
+        }
+    }
 
     private val _dailyReminderTime = MutableStateFlow("20:00")
     val dailyReminderTime: StateFlow<String> = _dailyReminderTime
@@ -32,9 +46,9 @@ class SettingsRepository(private val tokenManager: TokenManager) {
             email = "",
             learningGoal = goal,
             dailyGoal = words,
-            isOnboarded = true
+            isOnboarded = true,
+            targetLevelId = level
         )
-        _targetLevel.value = level
         _dailyReminderTime.value = reminder
     }
 
