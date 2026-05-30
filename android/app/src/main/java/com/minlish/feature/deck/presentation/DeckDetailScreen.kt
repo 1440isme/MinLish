@@ -162,55 +162,39 @@ fun DeckDetailScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-        Button(
-            onClick = onStartStudy,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.AutoStories, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Learn Flashcards", fontSize = 13.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Practice Triggers Options
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Button(
-                onClick = { onStartQuiz("MULTIPLE_CHOICE") },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = accentTeal),
-                shape = RoundedCornerShape(12.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Quiz, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Multi-Choice", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Button(
+                    onClick = onStartStudy,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(52.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = accentTeal),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.AutoStories, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Learn", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
-            }
 
-            // Practice Button — single entry point, setup dialog handles type/count config
-            Button(
-                onClick = { onStartQuiz(deckId) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1C1C1A)),
-                shape = RoundedCornerShape(32.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(22.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Practice", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                // Practice Button — single entry point, setup dialog handles type/count config
+                Button(
+                    onClick = { onStartQuiz(deckId) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(52.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1C1C1A)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(22.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Practice", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
 

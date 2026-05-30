@@ -121,96 +121,67 @@ private fun playCorrectSound() {
     }
 }
 
+private data class TromboneNote(
+    val startTime: Double,
+    val endTime: Double,
+    val startFreq: Double,
+    val endFreq: Double,
+    val hasVibrato: Boolean = false
+)
+
 private fun playIncorrectSound() {
     try {
         val sampleRate = 44100
-        val noteLen = (250 * sampleRate) / 1000  // 250ms for each "womp"
-        val gapLen = (50 * sampleRate) / 1000   // 50ms silence gap between notes
-        val lastNoteLen = (550 * sampleRate) / 1000 // 550ms for the final "wooooomp"
-        
-        val totalSamples = (3 * (noteLen + gapLen)) + lastNoteLen
+        val totalDurationSeconds = 1.5
+        val totalSamples = (totalDurationSeconds * sampleRate).toInt()
         val soundData = ShortArray(totalSamples)
         
-        var phase = 0.0
+        // Classic "Sad Trombone" Chromatic Descent: Bb4 -> A4 -> Ab4 -> G4 (with slide to Eb4 / C4)
+        val notes = listOf(
+            TromboneNote(0.00, 0.22, 466.16, 440.00), // Bb4 to A4
+            TromboneNote(0.28, 0.50, 440.00, 415.30), // A4 to Ab4
+            TromboneNote(0.56, 0.78, 415.30, 392.00), // Ab4 to G4
+            TromboneNote(0.84, 1.45, 392.00, 261.63, hasVibrato = true) // G4 sliding way down to C4 with wobbly vibrato
+        )
         
         for (i in 0 until totalSamples) {
-            // Determine note segment
-            val noteIndex: Int
-            val sampleInNote: Int
-            val currentNoteLen: Int
-            val startFreq: Double
-            val endFreq: Double
+            val t = i.toDouble() / sampleRate
+            var sampleValue = 0.0
             
-            if (i < noteLen) {
-                noteIndex = 0
-                sampleInNote = i
-                currentNoteLen = noteLen
-                startFreq = 290.0
-                endFreq = 260.0
-            } else if (i < noteLen + gapLen) {
-                noteIndex = -1 // gap
-                sampleInNote = 0
-                currentNoteLen = gapLen
-                startFreq = 0.0
-                endFreq = 0.0
-            } else if (i < 2 * noteLen + gapLen) {
-                noteIndex = 1
-                sampleInNote = i - (noteLen + gapLen)
-                currentNoteLen = noteLen
-                startFreq = 270.0
-                endFreq = 240.0
-            } else if (i < 2 * (noteLen + gapLen)) {
-                noteIndex = -1 // gap
-                sampleInNote = 0
-                currentNoteLen = gapLen
-                startFreq = 0.0
-                endFreq = 0.0
-            } else if (i < 3 * noteLen + 2 * gapLen) {
-                noteIndex = 2
-                sampleInNote = i - 2 * (noteLen + gapLen)
-                currentNoteLen = noteLen
-                startFreq = 250.0
-                endFreq = 220.0
-            } else if (i < 3 * (noteLen + gapLen)) {
-                noteIndex = -1 // gap
-                sampleInNote = 0
-                currentNoteLen = gapLen
-                startFreq = 0.0
-                endFreq = 0.0
-            } else {
-                noteIndex = 3
-                sampleInNote = i - 3 * (noteLen + gapLen)
-                currentNoteLen = lastNoteLen
-                startFreq = 220.0
-                endFreq = 160.0
-            }
-            
-            if (noteIndex == -1) {
-                soundData[i] = 0
-                phase = 0.0 // reset phase for clean attack on next note
-            } else {
-                val progress = sampleInNote.toDouble() / currentNoteLen
-                // Slide frequency down slightly inside each note for the "wah" trombone filter simulation
-                val freq = startFreq + (endFreq - startFreq) * progress
-                
-                // Synthesize trombone brassy texture by combining fundamental with 2nd and 3rd harmonics
-                val wave = Math.sin(phase) + 0.35 * Math.sin(2.0 * phase) + 0.15 * Math.sin(3.0 * phase)
-                
-                // Volume envelope (attack + decay) for wind instrument tonguing
-                val attackSamples = (30 * sampleRate) / 1000 // 30ms attack
-                val envelope = if (sampleInNote < attackSamples) {
-                    sampleInNote.toDouble() / attackSamples
-                } else {
-                    1.0 - 0.45 * (sampleInNote - attackSamples).toDouble() / (currentNoteLen - attackSamples)
-                }
-                
-                soundData[i] = (wave * Short.MAX_VALUE * 0.38 * envelope).toInt().toShort()
-                
-                phase += 2.0 * Math.PI * freq / sampleRate
-                if (phase > 2.0 * Math.PI) {
-                    phase -= 2.0 * Math.PI
+            for (note in notes) {
+                if (t >= note.startTime && t <= note.endTime) {
+                    val x = t - note.startTime
+                    val d = note.endTime - note.startTime
+                    
+                    // Closed-form exact phase for linear frequency sweep
+                    var phase = 2.0 * Math.PI * x * (note.startFreq + 0.5 * (note.endFreq - note.startFreq) * (x / d))
+                    
+                    // Add shaky sad vibrato to the final note
+                    if (note.hasVibrato) {
+                        phase += 0.55 * Math.sin(2.0 * Math.PI * 6.5 * x)
+                    }
+                    
+                    // Brassy trombone wave: fundamental + 2nd harmonic (50%) + 3rd harmonic (25%) + 4th harmonic (10%)
+                    val wave = Math.sin(phase) + 
+                               0.50 * Math.sin(2.0 * phase) + 
+                               0.25 * Math.sin(3.0 * phase) + 
+                               0.10 * Math.sin(4.0 * phase)
+                    
+                    // Envelope with fast attack (25ms) and fade out exactly to 0
+                    val attackTime = 0.025
+                    val envelope = if (x < attackTime) {
+                        x / attackTime
+                    } else {
+                        1.0 - (x - attackTime) / (d - attackTime)
+                    }
+                    
+                    sampleValue = wave * envelope * 0.35
+                    break
                 }
             }
+            
+            val scaled = (sampleValue * Short.MAX_VALUE).toInt()
+            soundData[i] = scaled.coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
         }
         
         val audioTrack = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
@@ -249,7 +220,7 @@ private fun playIncorrectSound() {
                 audioTrack.stop()
                 audioTrack.release()
             } catch (_: Exception) {}
-        }, totalDurationMs + 150L)
+        }, totalDurationMs + 100L)
     } catch (e: Exception) {
         e.printStackTrace()
     }

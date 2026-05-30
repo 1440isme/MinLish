@@ -655,7 +655,17 @@ class MinLishViewModel(
                 val response = vocabularyRepository.getActivePracticeSession(deckId)
                 onResult(response)
             } catch (e: Exception) {
-                _practiceError.value = e.localizedMessage
+                e.printStackTrace()
+                val apiError = ApiErrorParser.parse(e)
+                val errorMsg = apiError?.message ?: apiError?.code
+                val msg = when (errorMsg) {
+                    "PRACTICE_NOT_ENOUGH_VOCABULARY", "deckId must be a UUID" ->
+                        "This deck does not have enough vocabulary to start this practice mode. (Minimum 4 words needed)."
+                    "PRACTICE_DECK_NOT_FOUND" ->
+                        "The selected deck was not found or has been deleted."
+                    else -> apiError?.message ?: e.localizedMessage ?: "Failed to check active session"
+                }
+                _practiceError.value = msg
                 onResult(null)
             }
         }
@@ -675,7 +685,17 @@ class MinLishViewModel(
                 _lastSubmitResult.value = null
                 _finishSummary.value = null
             } catch (e: Exception) {
-                _practiceError.value = "Failed to start practice session: ${e.localizedMessage}"
+                e.printStackTrace()
+                val apiError = ApiErrorParser.parse(e)
+                val errorMsg = apiError?.message ?: apiError?.code
+                val msg = when (errorMsg) {
+                    "PRACTICE_NOT_ENOUGH_VOCABULARY", "deckId must be a UUID" ->
+                        "This deck does not have enough vocabulary to start this practice mode. (Minimum 4 words needed )."
+                    "PRACTICE_DECK_NOT_FOUND" ->
+                        "The selected deck was not found or has been deleted."
+                    else -> apiError?.message ?: e.localizedMessage ?: "Failed to start practice session"
+                }
+                _practiceError.value = msg
             }
         }
     }
@@ -705,7 +725,9 @@ class MinLishViewModel(
                 _finishSummary.value = null
                 onComplete()
             } catch (e: Exception) {
-                _practiceError.value = "Failed to cancel session: ${e.localizedMessage}"
+                e.printStackTrace()
+                val apiError = ApiErrorParser.parse(e)
+                _practiceError.value = apiError?.message ?: e.localizedMessage ?: "Failed to cancel session"
             }
         }
     }
@@ -722,7 +744,9 @@ class MinLishViewModel(
                     _quizCorrectCount.value += 1
                 }
             } catch (e: Exception) {
-                _practiceError.value = "Failed to submit answer: ${e.localizedMessage}"
+                e.printStackTrace()
+                val apiError = ApiErrorParser.parse(e)
+                _practiceError.value = apiError?.message ?: e.localizedMessage ?: "Failed to submit answer"
             }
         }
     }
@@ -731,7 +755,7 @@ class MinLishViewModel(
         val questions = _quizQuestions.value
         val currentIndex = _currentQuizIndex.value
         _lastSubmitResult.value = null
-        
+
         if (currentIndex < questions.size - 1) {
             _currentQuizIndex.value += 1
         } else {
@@ -748,7 +772,9 @@ class MinLishViewModel(
                 _finishSummary.value = response.summary
                 _quizFinished.value = true
             } catch (e: Exception) {
-                _practiceError.value = "Failed to finish session: ${e.localizedMessage}"
+                e.printStackTrace()
+                val apiError = ApiErrorParser.parse(e)
+                _practiceError.value = apiError?.message ?: e.localizedMessage ?: "Failed to finish session"
             }
         }
     }

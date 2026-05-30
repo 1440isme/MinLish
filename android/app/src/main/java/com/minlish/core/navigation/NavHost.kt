@@ -353,26 +353,28 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                                     deckId = deckId,
                                     viewModel = viewModel,
                                     onBack = { currentScreen = "decks"; detailDeckId = null },
-                                    onStartQuiz = { _ ->
-                                        viewModel.checkForActiveSession(deckId) { activeResponse ->
-                                            if (activeResponse != null) {
-                                                activeSessionResponse = activeResponse
-                                                showResumeDialog = true
-                                            } else {
-                                                targetSetupDeckId = deckId
-                                                showSetupDialog = true
-                                            }
-                                        }
                                     onStartStudy = {
                                         activeStudyDeckId = deckId
                                         viewModel.startStudySession(deckId)
                                         currentScreen = "study"
                                     },
                                     onStartQuiz = { qType ->
-                                        activeQuizDeckId = deckId
-                                        activeQuizType = qType
-                                        viewModel.startQuizPractice(deckId, qType)
-                                        currentScreen = "practice_quiz"
+                                        if (qType == deckId) {
+                                            viewModel.checkForActiveSession(deckId) { activeResponse ->
+                                                if (activeResponse != null) {
+                                                    activeSessionResponse = activeResponse
+                                                    showResumeDialog = true
+                                                } else {
+                                                    targetSetupDeckId = deckId
+                                                    showSetupDialog = true
+                                                }
+                                            }
+                                        } else {
+                                            activeQuizDeckId = deckId
+                                            activeQuizType = qType
+                                            viewModel.startNewPracticeSession(deckId, listOf(qType), 10)
+                                            currentScreen = "practice_quiz"
+                                        }
                                     }
                                 )
                             } ?: run { currentScreen = "decks" }
