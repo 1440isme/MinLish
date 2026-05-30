@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 import com.minlish.core.data.mapper.buildCreateVocabularyRequest
+import com.minlish.core.data.mapper.toVocabularyWithReviewCard
 import com.minlish.core.data.mapper.toEntity
 import com.minlish.core.data.model.AddVocabularyResult
 import com.minlish.core.data.model.DashboardAnalyticsDto
@@ -18,6 +19,7 @@ import com.minlish.core.network.ApiErrorParser
 import com.minlish.core.network.DecksApiService
 import com.minlish.core.network.FavoritesApiService
 import com.minlish.core.network.ImportsApiService
+import com.minlish.core.network.LearningApiService
 import com.minlish.core.network.VocabulariesApiService
 import com.minlish.core.network.dto.CreateDeckRequest
 import com.minlish.core.network.dto.UpdateDeckRequest
@@ -35,13 +37,15 @@ class VocabularyRepository(
     private val vocabulariesApi: VocabulariesApiService,
     private val favoritesApi: FavoritesApiService,
     private val importsApi: ImportsApiService,
+    private val learningApi: LearningApiService,
 ) {
     private var favoritesDeckId: String? = null
     private val favoritedSourceIds = mutableSetOf<String>()
+    private val dueCountState = MutableStateFlow(0)
 
     fun getDecksByGoalFlow(goal: String): Flow<List<DeckEntity>> = flowOf(emptyList())
 
-    fun getDueCountFlow(): Flow<Int> = flowOf(0)
+    fun getDueCountFlow(): Flow<Int> = dueCountState
 
     fun getLocalDashboardAnalytics(dailyGoal: Int): DashboardAnalyticsDto {
         return DashboardAnalyticsDto(0, 0, 0, dailyGoal, 0f, 0, 0)
@@ -329,9 +333,74 @@ class VocabularyRepository(
         return "import.csv"
     }
 
-    suspend fun getDueReviewAndNewWords(dailyGoal: Int): List<VocabularyWithReviewCard> = emptyList()
+    suspend fun getDueReviewAndNewWords(
+        dailyGoal: Int,
+        deckId: String? = null,
+    ): List<VocabularyWithReviewCard> {
+        val response = if (deckId.isNullOrBlank()) {
+            learningApi.getDailyPlan()
+        } else {
+            learningApi.startDeck(deckId, dailyGoal)
+        }
 
-    suspend fun processVocabReview(vocabId: String, rating: String) {}
+        dueCountState.value = response.dueReviewCount
+
+        val dueCards = response.dueCards.mapNotNull { it.toVocabularyWithReviewCard() }
+        val dueIds = dueCards.map { it.vocabulary.id }.toSet()
+        val newCards = response.newWords
+            .filterNot { it.id in dueIds }
+            .map { vocabulary ->
+                VocabularyWithReviewCard(
+                    vocabulary = vocabulary.toEntity(),
+                    reviewCard = null,
+                )
+            }
+
+        return dueCards + newCards
+    }
+
+    suspend fun getDueReviewWords(
+        limit: Int,
+        deckId: String? = null,
+    ): List<VocabularyWithReviewCard> {
+        val response = learningApi.getDueCards(
+            deckId = deckId,
+            limit = limit,
+        )
+        dueCountState.value = response.count
+        return response.items.mapNotNull { it.toVocabularyWithReviewCard() }
+    }
+
+    suspend fun getNewWords(
+        dailyGoal: Int,
+        deckId: String? = null,
+    ): List<VocabularyWithReviewCard> {
+        val response = if (deckId.isNullOrBlank()) {
+            learningApi.getDailyPlan()
+        } else {
+            learningApi.startDeck(deckId, dailyGoal)
+        }
+
+        dueCountState.value = response.dueReviewCount
+
+        return response.newWords.map { vocabulary ->
+            VocabularyWithReviewCard(
+                vocabulary = vocabulary.toEntity(),
+                reviewCard = null,
+            )
+        }
+    }
+
+    suspend fun processVocabReview(vocabId: String, rating: String) {
+        learningApi.submitReview(
+            body = com.minlish.core.network.dto.SubmitReviewRequest(
+                vocabularyId = vocabId,
+                rating = rating,
+                reviewedAt = java.time.Instant.now().toString(),
+            ),
+        )
+        dueCountState.value = (dueCountState.value - 1).coerceAtLeast(0)
+    }
 
     suspend fun savePracticeSession(deckId: String, type: String, total: Int, correct: Int) {}
 }

@@ -33,6 +33,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
     var detailDeckId by remember { mutableStateOf<String?>(null) }
     var activeQuizDeckId by remember { mutableStateOf<String?>(null) }
     var activeQuizType by remember { mutableStateOf("MULTIPLE_CHOICE") }
+    var activeStudyDeckId by remember { mutableStateOf<String?>(null) }
 
     // Toggle register and login states when unauthenticated
     var isRegisterMode by remember { mutableStateOf(false) }
@@ -101,8 +102,14 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                     when (currentScreen) {
                         "home" -> DashboardScreen(
                             viewModel = viewModel,
-                            onStartStudy = {
-                                viewModel.startStudySession()
+                            onStartDailyQuiz = {
+                                activeStudyDeckId = null
+                                viewModel.startDailyQuizSession()
+                                currentScreen = "study"
+                            },
+                            onStartDailyNew = {
+                                activeStudyDeckId = null
+                                viewModel.startDailyNewSession()
                                 currentScreen = "study"
                             },
                             onNavigateToDecks = {
@@ -123,6 +130,11 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                                     deckId = deckId,
                                     viewModel = viewModel,
                                     onBack = { currentScreen = "decks"; detailDeckId = null },
+                                    onStartStudy = {
+                                        activeStudyDeckId = deckId
+                                        viewModel.startStudySession(deckId)
+                                        currentScreen = "study"
+                                    },
                                     onStartQuiz = { qType ->
                                         activeQuizDeckId = deckId
                                         activeQuizType = qType
@@ -147,7 +159,11 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                         "study" -> StudyFlashcardsScreen(
                             viewModel = viewModel,
                             onFinish = {
-                                currentScreen = "home"
+                                currentScreen = if (activeStudyDeckId != null) {
+                                    "deck_detail"
+                                } else {
+                                    "home"
+                                }
                             }
                         )
                         "analytics" -> AnalyticsScreen(

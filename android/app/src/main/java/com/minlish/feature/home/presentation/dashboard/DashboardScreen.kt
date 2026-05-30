@@ -24,7 +24,8 @@ import com.minlish.ui.theme.MinLishTheme
 @Composable
 fun DashboardScreen(
     viewModel: MinLishViewModel,
-    onStartStudy: () -> Unit,
+    onStartDailyQuiz: () -> Unit,
+    onStartDailyNew: () -> Unit,
     onNavigateToDecks: () -> Unit,
 ) {
     val name by viewModel.fullName.collectAsState()
@@ -54,7 +55,8 @@ fun DashboardScreen(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 24.dp),
+                .padding(bottom = 24.dp)
+                .clickable { onStartDailyQuiz() },
             shape = RoundedCornerShape(32.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
             border = BorderStroke(1.dp, Color(0xFF000000).copy(alpha = 0.05f))
@@ -97,7 +99,7 @@ fun DashboardScreen(
                             .size(46.dp)
                             .clip(CircleShape)
                             .background(Color.Black)
-                            .clickable { onStartStudy() },
+                            .clickable { onStartDailyQuiz() },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -136,7 +138,9 @@ fun DashboardScreen(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Card(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onStartDailyNew() },
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 border = BorderStroke(1.dp, Color(0xFF000000).copy(alpha = 0.05f))
