@@ -286,7 +286,7 @@ export class PracticeService {
       const normCorrect = normalizeText(answer.correctAnswer);
       isCorrect = normUser === normCorrect;
     } else {
-      normalizedUserAnswer = '';
+      normalizedUserAnswer = null;
       isCorrect = false;
     }
 

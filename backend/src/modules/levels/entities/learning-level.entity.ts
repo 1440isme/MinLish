@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { LearningPathEntity } from '../../learning-paths/entities/learning-path.entity';
 
 export class LearningLevelEntity {
@@ -28,6 +28,7 @@ export class LearningLevelEntity {
     type: Number,
   })
   @Expose()
+  @Transform(({ value }) => value ? Number(value) : null)
   minScore?: number | null;
 
   @ApiPropertyOptional({
@@ -35,6 +36,7 @@ export class LearningLevelEntity {
     type: Number,
   })
   @Expose()
+  @Transform(({ value }) => value ? Number(value) : null)
   maxScore?: number | null;
 
   @ApiProperty({ example: 2 })

@@ -47,6 +47,8 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
     var showSetupDialog by remember { mutableStateOf(false) }
     var targetSetupDeckId by remember { mutableStateOf<String?>(null) }
 
+
+
     // Toggle register and login states when unauthenticated
     var isRegisterMode by remember { mutableStateOf(false) }
 
@@ -62,14 +64,14 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
             onDismissRequest = { showResumeDialog = false },
             title = {
                 Text(
-                    "Tiếp tục học?",
+                    "Resume practice?",
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
             },
             text = {
                 Text(
-                    "Bạn đang có một phiên luyện tập chưa hoàn thành trong bộ từ này. Bạn muốn tiếp tục hay làm bài mới?",
+                    "You have an incomplete practice session in this deck. Would you like to resume it or start a new one?",
                     fontSize = 14.sp,
                     color = Color(0xFF4B5563)
                 )
@@ -85,7 +87,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
                 ) {
-                    Text("Tiếp tục")
+                    Text("Resume")
                 }
             },
             dismissButton = {
@@ -103,14 +105,14 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444)),
                         border = BorderStroke(1.dp, Color(0xFFEF4444))
                     ) {
-                        Text("Làm bài mới")
+                        Text("Start New")
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     OutlinedButton(
                         onClick = { showResumeDialog = false },
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Gray)
                     ) {
-                        Text("Hủy")
+                        Text("Cancel")
                     }
                 }
             },
@@ -135,7 +137,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
             onDismissRequest = { showSetupDialog = false },
             title = {
                 Text(
-                    "Cấu hình luyện tập",
+                    "Practice Settings",
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
@@ -143,7 +145,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
             text = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        "Chọn số lượng câu hỏi:",
+                        "Number of questions:",
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp
                     )
@@ -168,7 +170,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "$questionCount câu",
+                            text = "$questionCount questions",
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
                             color = Color.Black
@@ -178,7 +180,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        "Chọn dạng câu hỏi:",
+                        "Question types:",
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp
                     )
@@ -193,7 +195,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                             onCheckedChange = { isMultipleChoiceChecked = it },
                             colors = CheckboxDefaults.colors(checkedColor = Color(0xFFFBBF24))
                         )
-                        Text("Trắc nghiệm (Từ/Nghĩa)", fontSize = 14.sp)
+                        Text("Multiple Choice (Word/Meaning)", fontSize = 14.sp)
                     }
                     
                     Row(
@@ -205,7 +207,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                             onCheckedChange = { isFillInBlankChecked = it },
                             colors = CheckboxDefaults.colors(checkedColor = Color(0xFFFBBF24))
                         )
-                        Text("Điền từ vào ô trống", fontSize = 14.sp)
+                        Text("Fill in the Blank", fontSize = 14.sp)
                     }
                     
                     Row(
@@ -217,7 +219,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                             onCheckedChange = { isListeningChecked = it },
                             colors = CheckboxDefaults.colors(checkedColor = Color(0xFFFBBF24))
                         )
-                        Text("Luyện nghe phát âm", fontSize = 14.sp)
+                        Text("Listening Practice", fontSize = 14.sp)
                     }
                 }
             },
@@ -231,6 +233,15 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                         if (isListeningChecked) types.add("LISTENING")
 
                         targetSetupDeckId?.let { deckId ->
+                            if (totalWordsInDeck == 0) {
+                                showSetupDialog = false
+                                android.widget.Toast.makeText(
+                                    context,
+                                    "This deck has no words yet. Please add words before practicing!",
+                                    android.widget.Toast.LENGTH_LONG
+                                ).show()
+                                return@let
+                            }
                             viewModel.startNewPracticeSession(deckId, types, questionCount)
                             showSetupDialog = false
                             currentScreen = "practice_quiz"
@@ -239,7 +250,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                     enabled = isAnyChecked,
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
                 ) {
-                    Text("Bắt đầu")
+                    Text("Start")
                 }
             },
             dismissButton = {
@@ -247,7 +258,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                     onClick = { showSetupDialog = false },
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Gray)
                 ) {
-                    Text("Hủy")
+                    Text("Cancel")
                 }
             },
             shape = RoundedCornerShape(24.dp),

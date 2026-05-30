@@ -569,6 +569,7 @@ class MinLishViewModel(
         viewModelScope.launch {
             try {
                 _practiceError.value = null
+                _quizQuestions.value = emptyList()
                 val response = vocabularyRepository.createPracticeSession(deckId, practiceTypes, totalQuestions)
                 _activeSession.value = response.session
                 _quizQuestions.value = response.questions
