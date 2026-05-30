@@ -7,14 +7,20 @@ data class DeckEntity(
     val tags: String, // Semicolon separated
     val deckType: String, // SYSTEM, USER
     val targetLevel: String,
-    val learningGoal: String
-)
+    val learningGoal: String,
+    val isDefault: Boolean = false,
+    val totalWords: Int = 0,
+) {
+    val isFavoritesDeck: Boolean get() = isDefault && name.equals("Favorites", ignoreCase = true)
+}
 
 data class VocabularyEntity(
     val id: String,
     val deckId: String,
+    val sourceVocabularyId: String? = null,
     val word: String,
     val pronunciation: String,
+    val partOfSpeech: String,
     val meaning: String,
     val descriptionEn: String,
     val example: String,
@@ -67,5 +73,10 @@ data class QuizQuestion(
 data class ImportCsvResponse(
     val success: Boolean,
     val importedCount: Int,
-    val errors: List<String>? = null
+    val duplicateCount: Int = 0,
+    val failedCount: Int = 0,
+    val totalRows: Int = 0,
+    val status: String = "",
+    val errors: List<String>? = null,
+    val duplicateSamples: List<String>? = null,
 )

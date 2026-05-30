@@ -1,8 +1,8 @@
 package com.minlish.feature.deck.presentation
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -36,16 +36,21 @@ fun DecksScreen(
     onDeckClick: (String) -> Unit
 ) {
     val decks by viewModel.decksList.collectAsState()
+    val isLoading by viewModel.isLoadingDecks.collectAsState()
     var searchKey by remember { mutableStateOf("") }
     var showCreateDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        viewModel.refreshDecks()
+    }
 
     val accentTeal = Color(0xFF0D9488)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFF4F9F8))
-            .padding(16.dp)
+            .background(Color(0xFFF9F6EE))
+            .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -55,7 +60,8 @@ fun DecksScreen(
             Text(
                 text = "Study Decks",
                 style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.ExtraBold
+                fontWeight = FontWeight.ExtraBold,
+                color = Color(0xFF1C1C1A)
             )
 
             // Create Deck FAB
@@ -86,6 +92,15 @@ fun DecksScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        if (isLoading && decks.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(24.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
+        }
+
         // Separate System & User decks
         val filteredDecks = decks.filter {
             it.name.contains(searchKey, ignoreCase = true) ||
@@ -93,7 +108,10 @@ fun DecksScreen(
         }
 
         val systemDecks = filteredDecks.filter { it.deckType == "SYSTEM" }
-        val userDecks = filteredDecks.filter { it.deckType == "USER" }
+        val userDecks = filteredDecks.filter {
+            it.deckType == "USER" && !it.isFavoritesDeck
+        }
+        val favoritesDeck = filteredDecks.filter { it.isFavoritesDeck }
 
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -110,6 +128,21 @@ fun DecksScreen(
                 }
                 items(systemDecks) { deck ->
                     DeckItemCard(deck = deck, onClick = { onDeckClick(deck.id) }, accentColor = accentTeal)
+                }
+            }
+
+            if (favoritesDeck.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "Favorites",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFE11D48),
+                        modifier = Modifier.padding(top = 16.dp),
+                    )
+                }
+                items(favoritesDeck) { deck ->
+                    DeckItemCard(deck = deck, onClick = { onDeckClick(deck.id) }, accentColor = Color(0xFFE11D48))
                 }
             }
 
@@ -233,8 +266,9 @@ fun DeckItemCard(deck: DeckEntity, onClick: () -> Unit, accentColor: Color) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color(0xFF000000).copy(alpha = 0.06f))
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -248,7 +282,7 @@ fun DeckItemCard(deck: DeckEntity, onClick: () -> Unit, accentColor: Color) {
                     text = deck.name,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = Color(0xFF1C1C1A),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
@@ -266,7 +300,7 @@ fun DeckItemCard(deck: DeckEntity, onClick: () -> Unit, accentColor: Color) {
             Text(
                 text = deck.description,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color(0xFF7C776E),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )

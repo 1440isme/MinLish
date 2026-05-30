@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   MaxLength,
+  ValidateIf,
 } from 'class-validator';
 
 export class UpdateDeckDto {
@@ -32,4 +33,15 @@ export class UpdateDeckDto {
   @ArrayMaxSize(30)
   @IsString({ each: true })
   tags?: string[];
+
+  @ApiPropertyOptional({
+    example: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2',
+    description:
+      'Gắn deck với learning level. Gửi null để bỏ gắn level. Path suy ra từ level (không gửi learningPathId).',
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null && value !== undefined)
+  @IsString()
+  learningLevelId?: string | null;
 }

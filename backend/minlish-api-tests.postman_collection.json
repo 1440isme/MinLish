@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "7f8c6db2-3e28-4bc2-8815-4fa793d56b82",
     "name": "MinLish API",
-    "description": "Postman Collection for testing MinLish backend API endpoints.\n\n**Dev B flow:** Auth Register → Dev B > Step 1 Login → Steps 2–5 (Decks, Vocabularies, Favorites, Imports). Cần `npm run db:seed` và user đã register (tester@example.com).",
+    "description": "Postman Collection for testing MinLish backend API endpoints.\n\n**Dev B flow:** Auth Register → Dev B > Step 1 Login → Steps 2–6 (Decks, Vocabularies, Favorites, Imports, Cleanup). Cần `npm run db:seed` và user đã register (tester@example.com).\n\n**Updated scope:** collection này đã được cập nhật theo các thay đổi mới của Dev B, gồm edit deck/edit vocabulary, `partOfSpeech` dạng enum, và import CSV với 2 fixture rõ ràng cho success/duplicate.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -424,7 +424,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"My Test Deck\",\n  \"description\": \"Deck tạo từ Postman Dev B\",\n  \"tags\": [\"Postman\", \"DevB\"]\n}",
+                  "raw": "{\n  \"name\": \"My Test Deck\",\n  \"description\": \"Deck tạo từ Postman Dev B\",\n  \"tags\": [\"Postman\", \"DevB\"],\n  \"learningLevelId\": \"{{levelId}}\"\n}",
                   "options": {
                     "raw": { "language": "json" }
                   }
@@ -488,7 +488,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"description\": \"Updated from Postman\"\n}",
+                  "raw": "{\n  \"name\": \"Updated Postman Deck\",\n  \"description\": \"Updated from Postman\",\n  \"tags\": [\"postman\", \"dev-b\"],\n  \"learningLevelId\": \"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2\"\n}",
                   "options": {
                     "raw": { "language": "json" }
                   }
@@ -575,7 +575,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"word\": \"charge\",\n  \"pronunciation\": \"/tʃɑːrdʒ/\",\n  \"meaning\": \"tính phí\",\n  \"descriptionEn\": \"To ask an amount of money for a service.\",\n  \"example\": \"The hotel will charge an extra fee.\",\n  \"allowSameWordDifferentMeaning\": false\n}",
+                  "raw": "{\n  \"word\": \"charge\",\n  \"pronunciation\": \"/tʃɑːrdʒ/\",\n  \"meaning\": \"tính phí\",\n  \"descriptionEn\": \"To ask an amount of money for a service.\",\n  \"example\": \"The hotel will charge an extra fee.\",\n  \"partOfSpeech\": \"verb\",\n  \"allowSameWordDifferentMeaning\": false\n}",
                   "options": {
                     "raw": { "language": "json" }
                   }
@@ -601,7 +601,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"word\": \"charge\",\n  \"meaning\": \"buộc tội\",\n  \"allowSameWordDifferentMeaning\": false\n}",
+                  "raw": "{\n  \"word\": \"charge\",\n  \"meaning\": \"buộc tội\",\n  \"partOfSpeech\": \"verb\",\n  \"allowSameWordDifferentMeaning\": false\n}",
                   "options": {
                     "raw": { "language": "json" }
                   }
@@ -628,7 +628,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"word\": \"charge\",\n  \"meaning\": \"buộc tội\",\n  \"allowSameWordDifferentMeaning\": true\n}",
+                  "raw": "{\n  \"word\": \"charge\",\n  \"meaning\": \"buộc tội\",\n  \"partOfSpeech\": \"verb\",\n  \"allowSameWordDifferentMeaning\": true\n}",
                   "options": {
                     "raw": { "language": "json" }
                   }
@@ -654,7 +654,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"note\": \"Updated via Postman\"\n}",
+                  "raw": "{\n  \"partOfSpeech\": \"noun\",\n  \"note\": \"Updated via Postman\"\n}",
                   "options": {
                     "raw": { "language": "json" }
                   }
@@ -792,7 +792,7 @@
           "name": "Step 5 - Imports",
           "item": [
             {
-              "name": "B5.1 Import CSV into user deck",
+              "name": "B5.1 Import CSV into user deck (5 complete rows)",
               "request": {
                 "method": "POST",
                 "header": [
@@ -808,8 +808,8 @@
                     {
                       "key": "file",
                       "type": "file",
-                      "src": "fixtures/sample-import.csv",
-                      "description": "Chọn file fixtures/sample-import.csv trong thư mục backend (hoặc file CSV của bạn)."
+                      "src": "fixtures/sample-import-5-words.csv",
+                      "description": "Chọn file fixtures/sample-import-5-words.csv trong thư mục backend. Kỳ vọng import thành công 5 dòng hợp lệ có đủ part_of_speech."
                     }
                   ]
                 },
@@ -818,12 +818,12 @@
                   "host": ["{{baseUrl}}"],
                   "path": ["decks", "{{userDeckId}}", "import-csv"]
                 },
-                "description": "Partial success: trả totalRows, successRows, duplicateRows, failedRows, duplicates[], errors[]."
+                "description": "Kỳ vọng successRows = 5, duplicateRows = 0, failedRows = 0. Response partial success vẫn phải trả totalRows, successRows, duplicateRows, failedRows, duplicates[], errors[]."
               },
               "response": []
             },
             {
-              "name": "B5.2 Import CSV again (duplicates)",
+              "name": "B5.2 Import CSV with duplicates fixture",
               "request": {
                 "method": "POST",
                 "header": [
@@ -839,7 +839,8 @@
                     {
                       "key": "file",
                       "type": "file",
-                      "src": "fixtures/sample-import.csv"
+                      "src": "fixtures/sample-import-duplicates.csv",
+                      "description": "Dùng file fixtures/sample-import-duplicates.csv. Lần import đầu vào deck mới: kỳ vọng successRows = 3, duplicateRows = 2, failedRows = 0."
                     }
                   ]
                 },
@@ -848,7 +849,7 @@
                   "host": ["{{baseUrl}}"],
                   "path": ["decks", "{{userDeckId}}", "import-csv"]
                 },
-                "description": "Chạy lại để kiểm tra duplicateRows tăng."
+                "description": "Case test duplicate chuẩn: exact duplicate trong cùng file phải bị skip, còn same word + different meaning vẫn được phép."
               },
               "response": []
             },
@@ -869,7 +870,7 @@
                     {
                       "key": "file",
                       "type": "file",
-                      "src": "fixtures/sample-import.csv"
+                      "src": "fixtures/sample-import-5-words.csv"
                     }
                   ]
                 },
