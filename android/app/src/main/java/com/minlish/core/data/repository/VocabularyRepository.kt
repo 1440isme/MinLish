@@ -51,8 +51,13 @@ class VocabularyRepository(
 
     suspend fun seedDatabaseAsNecessary() {}
 
-    suspend fun listDecks(): List<DeckEntity> {
-        val response = decksApi.listDecks(type = "ALL", page = 1, pageSize = 50)
+    suspend fun listDecks(search: String? = null): List<DeckEntity> {
+        val response = decksApi.listDecks(
+            type = "ALL",
+            search = search?.takeIf { it.isNotBlank() },
+            page = 1,
+            pageSize = 50,
+        )
         return response.items.map { it.toEntity() }
     }
 

@@ -8,10 +8,15 @@ import type { Deck } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ErrorCodes } from '../../config/common/errors/error-codes';
 import { ImportCsvResponseDto } from './dto/import-csv.response.dto';
+import { VocabularyPartOfSpeech } from '../vocabularies/entities/vocabulary.entity';
 
 function normalizeText(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, ' ');
 }
+
+const VALID_PARTS_OF_SPEECH = new Set<string>(
+  Object.values(VocabularyPartOfSpeech),
+);
 
 type CsvRow = Record<string, unknown>;
 
@@ -77,6 +82,19 @@ export class ImportsService {
       });
     }
     return deck;
+  }
+
+  private parsePartOfSpeech(value: unknown): string | null | 'INVALID' {
+    if (typeof value !== 'string') {
+      return null;
+    }
+
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) {
+      return null;
+    }
+
+    return VALID_PARTS_OF_SPEECH.has(normalized) ? normalized : 'INVALID';
   }
 
   private assertDeckImportable(currentUserId: string, deck: Deck): void {
@@ -159,6 +177,7 @@ export class ImportsService {
         collocation?: string | null;
         relatedWords?: string | null;
         note?: string | null;
+        partOfSpeech?: string | null;
         normalizedWord: string;
         normalizedMeaning: string;
       }> = [];
@@ -185,6 +204,17 @@ export class ImportsService {
             row: rowNumber,
             field: 'meaning',
             message: 'Meaning is required',
+          });
+          continue;
+        }
+
+        const partOfSpeech = this.parsePartOfSpeech(r.part_of_speech);
+        if (partOfSpeech === 'INVALID') {
+          failedRows++;
+          errors.push({
+            row: rowNumber,
+            field: 'part_of_speech',
+            message: `part_of_speech must be one of: ${Array.from(VALID_PARTS_OF_SPEECH).join(', ')}`,
           });
           continue;
         }
@@ -221,6 +251,7 @@ export class ImportsService {
           relatedWords:
             typeof r.related_words === 'string' ? r.related_words.trim() : null,
           note: typeof r.note === 'string' ? r.note.trim() : null,
+          partOfSpeech,
           normalizedWord,
           normalizedMeaning,
         });
@@ -284,7 +315,7 @@ export class ImportsService {
           audioUrl: null,
           imageUrl: null,
           difficulty: null,
-          partOfSpeech: null,
+          partOfSpeech: c.partOfSpeech ?? null,
         });
       }
 

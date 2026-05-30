@@ -12,6 +12,7 @@ import com.minlish.core.data.repository.AuthRepository
 import com.minlish.core.data.repository.SettingsRepository
 import com.minlish.core.data.repository.UserRepository
 import com.minlish.core.data.repository.VocabularyRepository
+import com.minlish.core.network.ApiErrorParser
 import com.minlish.core.network.dto.ExistingVocabularyItemDto
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -84,6 +85,7 @@ class MinLishViewModel(
 
     private val _isLoadingDecks = MutableStateFlow(false)
     val isLoadingDecks: StateFlow<Boolean> = _isLoadingDecks
+    private var currentDeckSearchQuery: String? = null
 
     private val _isLoadingDeckDetail = MutableStateFlow(false)
     val isLoadingDeckDetail: StateFlow<Boolean> = _isLoadingDeckDetail
@@ -179,15 +181,16 @@ class MinLishViewModel(
         _sameWordWarning.value = null
     }
 
-    fun refreshDecks() {
+    fun refreshDecks(searchQuery: String? = currentDeckSearchQuery) {
         viewModelScope.launch {
             _isLoadingDecks.value = true
             try {
-                val decks = vocabularyRepository.listDecks()
+                currentDeckSearchQuery = searchQuery?.trim()?.takeIf { it.isNotEmpty() }
+                val decks = vocabularyRepository.listDecks(currentDeckSearchQuery)
                 _decksList.value = decks
                 _lastErrorMessage.value = null
             } catch (e: Exception) {
-                _lastErrorMessage.value = e.message ?: "Failed to load decks"
+                _lastErrorMessage.value = ApiErrorParser.humanMessage(e, "Failed to load decks")
             } finally {
                 _isLoadingDecks.value = false
             }
@@ -325,7 +328,7 @@ class MinLishViewModel(
                 _favoritedSourceIds.value = vocabularyRepository.getFavoritedSourceIds()
                 _lastErrorMessage.value = null
             } catch (e: Exception) {
-                _lastErrorMessage.value = e.message ?: "Failed to load deck"
+                _lastErrorMessage.value = ApiErrorParser.humanMessage(e, "Failed to load deck")
             } finally {
                 _isLoadingDeckDetail.value = false
             }
@@ -345,7 +348,7 @@ class MinLishViewModel(
                 vocabularyRepository.createDeck(name, description, tags)
                 refreshDecks()
             } catch (e: Exception) {
-                _lastErrorMessage.value = e.message ?: "Failed to create deck"
+                _lastErrorMessage.value = ApiErrorParser.humanMessage(e, "Failed to create deck")
             }
         }
     }
@@ -356,7 +359,7 @@ class MinLishViewModel(
                 vocabularyRepository.deleteDeck(deckId)
                 refreshDecks()
             } catch (e: Exception) {
-                _lastErrorMessage.value = e.message ?: "Failed to delete deck"
+                _lastErrorMessage.value = ApiErrorParser.humanMessage(e, "Failed to delete deck")
             }
         }
     }
@@ -368,7 +371,7 @@ class MinLishViewModel(
                 refreshDecks()
                 selectDeck(deckId)
             } catch (e: Exception) {
-                _lastErrorMessage.value = e.message ?: "Failed to update deck"
+                _lastErrorMessage.value = ApiErrorParser.humanMessage(e, "Failed to update deck")
             }
         }
     }
@@ -460,7 +463,7 @@ class MinLishViewModel(
                 selectDeck(deckId)
                 refreshDecks()
             } catch (e: Exception) {
-                _lastErrorMessage.value = e.message ?: "Failed to delete vocabulary"
+                _lastErrorMessage.value = ApiErrorParser.humanMessage(e, "Failed to delete vocabulary")
             }
         }
     }
@@ -485,7 +488,7 @@ class MinLishViewModel(
                 )
                 selectDeck(deckId)
             } catch (e: Exception) {
-                _lastErrorMessage.value = e.message ?: "Failed to update vocabulary"
+                _lastErrorMessage.value = ApiErrorParser.humanMessage(e, "Failed to update vocabulary")
             }
         }
     }
