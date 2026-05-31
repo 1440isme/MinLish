@@ -1,13 +1,8 @@
 package com.minlish.feature.learning.presentation
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -135,23 +130,17 @@ fun StudyFlashcardsScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        AnimatedVisibility(
-            visible = isFlipped,
-            enter = slideInVertically(initialOffsetY = { it / 3 }) + fadeIn(),
-            exit = slideOutVertically(targetOffsetY = { it / 3 }) + fadeOut(),
-        ) {
-            if (isReplayMode) {
-                ReplayPanel(
-                    isLastCard = index == cards.lastIndex,
-                    onNext = { viewModel.goToNextReplayCard() },
-                )
-            } else {
-                RatingPanel(
-                    onRate = { rating ->
-                        viewModel.submitReviewRating(currentCard.vocabulary.id, rating)
-                    },
-                )
-            }
+        if (isReplayMode) {
+            ReplayPanel(
+                isLastCard = index == cards.lastIndex,
+                onNext = { viewModel.goToNextReplayCard() },
+            )
+        } else {
+            RatingPanel(
+                onRate = { rating ->
+                    viewModel.submitReviewRating(currentCard.vocabulary.id, rating)
+                },
+            )
         }
 
     }
@@ -300,13 +289,15 @@ private fun FlashcardSurface(
         label = "flashcard-rotation",
     )
     val density = LocalDensity.current
+    val cardShape = RoundedCornerShape(36.dp)
 
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .clip(cardShape)
             .clickable(onClick = onFlip)
             .testTag("flashcard_container"),
-        shape = RoundedCornerShape(36.dp),
+        shape = cardShape,
         colors = CardDefaults.cardColors(containerColor = Color.White),
         border = BorderStroke(1.dp, CardBorder),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -460,33 +451,46 @@ private fun FlashcardFront(
 private fun FlashcardBack(vocabulary: VocabularyEntity) {
     Column(
         modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
-            text = vocabulary.word,
-            style = MaterialTheme.typography.headlineLarge,
-            color = TextPrimary,
-        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    text = vocabulary.word,
+                    style = MaterialTheme.typography.displayLarge,
+                    color = TextPrimary,
+                    textAlign = TextAlign.Center,
+                )
 
-        Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
-            text = vocabulary.meaning,
-            color = AccentGreen,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            lineHeight = 28.sp,
-        )
+                Text(
+                    text = vocabulary.meaning,
+                    style = MaterialTheme.typography.displayLarge,
+                    color = AccentGreen,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
 
-        if (vocabulary.descriptionEn.isNotBlank()) {
-            Spacer(modifier = Modifier.height(10.dp))
-            Text(
-                text = vocabulary.descriptionEn,
-                style = MaterialTheme.typography.bodySmall,
-                color = TextPrimary,
-                maxLines = 3,
-            )
+                if (vocabulary.descriptionEn.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = vocabulary.descriptionEn,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextPrimary,
+                        maxLines = 3,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            }
         }
 
         if (vocabulary.example.isNotBlank()) {
