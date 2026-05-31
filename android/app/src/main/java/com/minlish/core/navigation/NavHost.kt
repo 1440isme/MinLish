@@ -87,35 +87,26 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                             currentScreen = "practice_quiz"
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488))
                 ) {
-                    Text("Resume")
+                    Text("Resume", fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                Row {
-                    OutlinedButton(
-                        onClick = {
-                            showResumeDialog = false
-                            activeSessionResponse?.session?.id?.let { sessionId ->
-                                viewModel.cancelActiveSession(sessionId) {
-                                    targetSetupDeckId = detailDeckId
-                                    showSetupDialog = true
-                                }
+                OutlinedButton(
+                    onClick = {
+                        showResumeDialog = false
+                        activeSessionResponse?.session?.id?.let { sessionId ->
+                            viewModel.cancelActiveSession(sessionId) {
+                                targetSetupDeckId = detailDeckId
+                                showSetupDialog = true
                             }
-                        },
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444)),
-                        border = BorderStroke(1.dp, Color(0xFFEF4444))
-                    ) {
-                        Text("Start New")
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    OutlinedButton(
-                        onClick = { showResumeDialog = false },
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Gray)
-                    ) {
-                        Text("Cancel")
-                    }
+                        }
+                    },
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444)),
+                    border = BorderStroke(1.dp, Color(0xFFEF4444))
+                ) {
+                    Text("Start New", fontWeight = FontWeight.Bold)
                 }
             },
             shape = RoundedCornerShape(24.dp),

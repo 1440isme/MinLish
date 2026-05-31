@@ -162,6 +162,11 @@ class MinLishViewModel(
     private val _finishSummary = MutableStateFlow<PracticeSessionSummaryDto?>(null)
     val finishSummary: StateFlow<PracticeSessionSummaryDto?> = _finishSummary
 
+    private val _finishAnswers = MutableStateFlow<List<PracticeAnswerDto>>(emptyList())
+    val finishAnswers: StateFlow<List<PracticeAnswerDto>> = _finishAnswers
+
+    val isPracticeSoundEnabled = MutableStateFlow(true)
+
     private val _practiceError = MutableStateFlow<String?>(null)
     val practiceError: StateFlow<String?> = _practiceError
 
@@ -750,6 +755,7 @@ class MinLishViewModel(
                 _quizFinished.value = false
                 _lastSubmitResult.value = null
                 _finishSummary.value = null
+                _finishAnswers.value = emptyList()
             } catch (e: Exception) {
                 e.printStackTrace()
                 val apiError = ApiErrorParser.parse(e)
@@ -775,6 +781,7 @@ class MinLishViewModel(
         _quizFinished.value = false
         _lastSubmitResult.value = null
         _finishSummary.value = null
+        _finishAnswers.value = emptyList()
     }
 
     fun cancelActiveSession(sessionId: String, onComplete: () -> Unit) {
@@ -789,6 +796,7 @@ class MinLishViewModel(
                 _quizFinished.value = false
                 _lastSubmitResult.value = null
                 _finishSummary.value = null
+                _finishAnswers.value = emptyList()
                 onComplete()
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -836,6 +844,7 @@ class MinLishViewModel(
                 _practiceError.value = null
                 val response = vocabularyRepository.finishPracticeSession(session.id)
                 _finishSummary.value = response.summary
+                _finishAnswers.value = response.answers
                 _quizFinished.value = true
                 fetchDashboardAnalytics() //làm bài xong thì tự động làm mới thống kê
             } catch (e: Exception) {
