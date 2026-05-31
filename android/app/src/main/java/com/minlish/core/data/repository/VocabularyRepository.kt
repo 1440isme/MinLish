@@ -13,6 +13,7 @@ import com.minlish.core.data.model.FavoriteResult
 import com.minlish.core.data.model.ImportCsvResponse
 import com.minlish.core.data.model.PendingVocabularyRequest
 import com.minlish.core.data.model.PracticeSessionEntity
+import com.minlish.core.data.model.RecentStudyDeckEntity
 import com.minlish.core.data.model.VocabularyEntity
 import com.minlish.core.data.model.VocabularyWithReviewCard
 import com.minlish.core.network.ApiErrorParser
@@ -385,6 +386,10 @@ class VocabularyRepository(
         )
         dueCountState.value = response.count
         return response.items.mapNotNull { it.toVocabularyWithReviewCard() }
+    }
+
+    suspend fun getRecentStudyDeck(): RecentStudyDeckEntity? {
+        return learningApi.getRecentDeck().toEntity()
     }
 
     suspend fun getNewWords(

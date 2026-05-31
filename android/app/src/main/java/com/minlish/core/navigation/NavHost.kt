@@ -330,6 +330,13 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                             },
                             onNavigateToDecks = {
                                 currentScreen = "decks"
+                            },
+                            onResumeRecentDeck = { deckId ->
+                                detailDeckId = deckId
+                                activeStudyDeckId = deckId
+                                viewModel.selectDeck(deckId)
+                                viewModel.startStudySession(deckId)
+                                currentScreen = "study"
                             }
                         )
                         "decks" -> DecksScreen(

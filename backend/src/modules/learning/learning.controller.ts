@@ -19,6 +19,7 @@ import { CurrentUser } from '../../config/common/decorators/current-user.decorat
 import { DailyPlanResponseDto } from './dto/daily-plan-response.dto';
 import { DueCardsResponseDto } from './dto/due-cards-response.dto';
 import { GetDueCardsQueryDto } from './dto/get-due-cards-query.dto';
+import { RecentLearningDeckResponseDto } from './dto/recent-learning-deck-response.dto';
 import { ReviewCardResponseDto } from './dto/review-card-response.dto';
 import { ReviewHistoryQueryDto } from './dto/review-history-query.dto';
 import { ReviewHistoryResponseDto } from './dto/review-history-response.dto';
@@ -63,6 +64,15 @@ export class LearningController {
     @Query() query: GetDueCardsQueryDto,
   ): Promise<DailyPlanResponseDto> {
     return this.learningService.getDailyPlan(user, query);
+  }
+
+  @Get('recent-deck')
+  @ApiOperation({ summary: 'Get the most recently studied accessible deck' })
+  @ApiResponse({ status: 200, type: RecentLearningDeckResponseDto })
+  async getRecentDeck(
+    @CurrentUser() user: User,
+  ): Promise<RecentLearningDeckResponseDto> {
+    return this.learningService.getRecentDeck(user);
   }
 
   @Get('due')
