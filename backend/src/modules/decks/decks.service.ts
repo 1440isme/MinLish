@@ -133,6 +133,7 @@ export class DecksService {
       this.prisma.deck.count({ where }),
       this.prisma.deck.findMany({
         where,
+        include: deckWithLearningLevelInclude,
         orderBy:
           type === DeckListType.USER
             ? [{ isDefault: 'desc' }, { updatedAt: 'desc' }]
