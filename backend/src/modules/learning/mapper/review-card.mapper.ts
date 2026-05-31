@@ -29,6 +29,8 @@ export class ReviewCardMapper {
       meaning: vocabulary.meaning,
       pronunciation: vocabulary.pronunciation,
       partOfSpeech: vocabulary.partOfSpeech,
+      descriptionEn: vocabulary.descriptionEn,
+      example: vocabulary.example,
     });
   }
 

@@ -33,6 +33,12 @@ import com.minlish.feature.settings.data.NotificationSettingsResponse
 import com.minlish.feature.settings.data.UpdateSettingsRequest
 import kotlinx.coroutines.delay
 
+private enum class StudySessionMode {
+    MIXED,
+    DAILY_REVIEW,
+    DAILY_NEW,
+}
+
 class MinLishViewModel(
     application: Application,
     private val vocabularyRepository: VocabularyRepository,
@@ -119,6 +125,9 @@ class MinLishViewModel(
     private val _vocabulariesInSelectedDeck = MutableStateFlow<List<VocabularyEntity>>(emptyList())
     val vocabulariesInSelectedDeck: StateFlow<List<VocabularyEntity>> = _vocabulariesInSelectedDeck
 
+    private val _selectedDeckLearningProgress = MutableStateFlow<DeckLearningProgressEntity?>(null)
+    val selectedDeckLearningProgress: StateFlow<DeckLearningProgressEntity?> = _selectedDeckLearningProgress
+
     // Active Study Flashcards
     private val _activeFlashcards = MutableStateFlow<List<VocabularyWithReviewCard>>(emptyList())
     val activeFlashcards: StateFlow<List<VocabularyWithReviewCard>> = _activeFlashcards
@@ -135,7 +144,12 @@ class MinLishViewModel(
     private val _canReplayStudySession = MutableStateFlow(false)
     val canReplayStudySession: StateFlow<Boolean> = _canReplayStudySession
 
+    private val _canContinueStudySession = MutableStateFlow(false)
+    val canContinueStudySession: StateFlow<Boolean> = _canContinueStudySession
+
     private var replayableStudyCards: List<VocabularyWithReviewCard> = emptyList()
+    private var activeStudySessionMode: StudySessionMode? = null
+    private var activeStudySessionDeckId: String? = null
 
     // Practice Session
     private val _practiceSessions = MutableStateFlow<List<PracticeSessionEntity>>(emptyList())
@@ -433,11 +447,16 @@ class MinLishViewModel(
                 if (deck != null) {
                     val list = vocabularyRepository.getVocabulariesInDeck(deckId)
                     _vocabulariesInSelectedDeck.value = list
+                    _selectedDeckLearningProgress.value =
+                        vocabularyRepository.getDeckLearningProgress(deckId)
+                } else {
+                    _selectedDeckLearningProgress.value = null
                 }
                 vocabularyRepository.refreshFavoritedSourceIds()
                 _favoritedSourceIds.value = vocabularyRepository.getFavoritedSourceIds()
                 _lastErrorMessage.value = null
             } catch (e: Exception) {
+                _selectedDeckLearningProgress.value = null
                 _lastErrorMessage.value = ApiErrorParser.humanMessage(e, "Failed to load deck")
             } finally {
                 _isLoadingDeckDetail.value = false
@@ -625,6 +644,8 @@ class MinLishViewModel(
 
     // FLASHCARD LEARNING SESSIONS
     fun startStudySession(deckId: String? = null) {
+        activeStudySessionMode = StudySessionMode.MIXED
+        activeStudySessionDeckId = deckId
         viewModelScope.launch {
             try {
                 val words = vocabularyRepository.getDueReviewAndNewWords(
@@ -632,6 +653,7 @@ class MinLishViewModel(
                     deckId = deckId,
                 )
                 launchStudyCards(words)
+                _canContinueStudySession.value = false
                 _lastErrorMessage.value = null
             } catch (e: Exception) {
                 clearStudyCards()
@@ -641,6 +663,8 @@ class MinLishViewModel(
     }
 
     fun startDailyQuizSession(deckId: String? = null) {
+        activeStudySessionMode = StudySessionMode.DAILY_REVIEW
+        activeStudySessionDeckId = deckId
         viewModelScope.launch {
             try {
                 val words = vocabularyRepository.getDueReviewWords(
@@ -648,6 +672,7 @@ class MinLishViewModel(
                     deckId = deckId,
                 )
                 launchStudyCards(words)
+                _canContinueStudySession.value = false
                 _lastErrorMessage.value = null
             } catch (e: Exception) {
                 clearStudyCards()
@@ -657,6 +682,8 @@ class MinLishViewModel(
     }
 
     fun startDailyNewSession(deckId: String? = null) {
+        activeStudySessionMode = StudySessionMode.DAILY_NEW
+        activeStudySessionDeckId = deckId
         viewModelScope.launch {
             try {
                 val words = vocabularyRepository.getNewWords(
@@ -664,6 +691,7 @@ class MinLishViewModel(
                     deckId = deckId,
                 )
                 launchStudyCards(words)
+                _canContinueStudySession.value = false
                 _lastErrorMessage.value = null
             } catch (e: Exception) {
                 clearStudyCards()
@@ -682,6 +710,15 @@ class MinLishViewModel(
         _lastErrorMessage.value = null
     }
 
+    fun continueCurrentStudySession() {
+        when (activeStudySessionMode) {
+            StudySessionMode.MIXED -> startStudySession(activeStudySessionDeckId)
+            StudySessionMode.DAILY_REVIEW -> startDailyQuizSession(activeStudySessionDeckId)
+            StudySessionMode.DAILY_NEW -> startDailyNewSession(activeStudySessionDeckId)
+            null -> Unit
+        }
+    }
+
     fun flipCard() {
         _isCardFlipped.value = !_isCardFlipped.value
     }
@@ -694,6 +731,7 @@ class MinLishViewModel(
             _activeFlashcards.value = emptyList()
             _isCardFlipped.value = false
             _isStudyReplayMode.value = false
+            refreshStudyContinuationAvailability()
         }
     }
 
@@ -707,6 +745,7 @@ class MinLishViewModel(
                     _isCardFlipped.value = false
                 } else {
                     _activeFlashcards.value = emptyList()
+                    refreshStudyContinuationAvailability()
                 }
                 _lastErrorMessage.value = null
             } catch (e: Exception) {
@@ -731,6 +770,35 @@ class MinLishViewModel(
         _isStudyReplayMode.value = false
         replayableStudyCards = emptyList()
         _canReplayStudySession.value = false
+        _canContinueStudySession.value = false
+    }
+
+    private fun refreshStudyContinuationAvailability() {
+        val mode = activeStudySessionMode ?: run {
+            _canContinueStudySession.value = false
+            return
+        }
+        val deckId = activeStudySessionDeckId
+
+        viewModelScope.launch {
+            _canContinueStudySession.value = try {
+                when (mode) {
+                    StudySessionMode.MIXED -> vocabularyRepository.hasDueOrNewWords(
+                        dailyGoal = dailyNewWordsGoal.value,
+                        deckId = deckId,
+                    )
+                    StudySessionMode.DAILY_REVIEW -> vocabularyRepository.hasDueReviewWords(
+                        deckId = deckId,
+                    )
+                    StudySessionMode.DAILY_NEW -> vocabularyRepository.hasNewWords(
+                        dailyGoal = dailyNewWordsGoal.value,
+                        deckId = deckId,
+                    )
+                }
+            } catch (_: Exception) {
+                false
+            }
+        }
     }
 
     // MINI PRACTICE QUIZ ENGINE

@@ -6,7 +6,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -32,6 +31,7 @@ fun DashboardScreen(
     onStartDailyNew: () -> Unit,
     onNavigateToDecks: () -> Unit,
     onResumeRecentDeck: (String) -> Unit,
+    onOpenRecentDeck: (String) -> Unit,
 ) {
     val name by viewModel.fullName.collectAsState()
     val stats by viewModel.dashboardAnalytics.collectAsState()
@@ -200,6 +200,7 @@ fun DashboardScreen(
             RecentDeckCard(
                 recentDeck = recentDeck,
                 onResume = { onResumeRecentDeck(recentDeck.deck.id) },
+                onOpenDeck = { onOpenRecentDeck(recentDeck.deck.id) },
                 modifier = Modifier.padding(bottom = 20.dp),
             )
         }
@@ -227,10 +228,23 @@ fun DashboardScreen(
 private fun RecentDeckCard(
     recentDeck: RecentStudyDeckEntity,
     onResume: () -> Unit,
+    onOpenDeck: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val totalWords = recentDeck.deck.totalWords
+    val learnedWords = (totalWords - recentDeck.newWordsAvailable).coerceIn(0, totalWords)
+    val isCompleted = recentDeck.dueReviewCount == 0 && recentDeck.newWordsAvailable == 0
+
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .then(
+                if (isCompleted) {
+                    Modifier.clickable(onClick = onOpenDeck)
+                } else {
+                    Modifier
+                }
+            ),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         border = BorderStroke(1.dp, Color(0xFF000000).copy(alpha = 0.05f))
@@ -241,9 +255,9 @@ private fun RecentDeckCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "Học tiếp deck gần nhất",
+                        text = "Deck gần nhất đã học",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1C1C1A)
@@ -257,23 +271,9 @@ private fun RecentDeckCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "${recentDeck.dueReviewCount} thẻ ôn • ${recentDeck.newWordsAvailable} từ mới",
+                        text = "${recentDeck.dueReviewCount} thẻ ôn • $learnedWords/$totalWords đã học",
                         fontSize = 13.sp,
                         color = Color(0xFF7C776E)
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFFFEFBF4)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.RestartAlt,
-                        contentDescription = "Resume recent deck",
-                        tint = Color.Black
                     )
                 }
             }
@@ -281,7 +281,7 @@ private fun RecentDeckCard(
             Spacer(modifier = Modifier.height(14.dp))
 
             Button(
-                onClick = onResume,
+                onClick = if (isCompleted) onOpenDeck else onResume,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
@@ -292,7 +292,7 @@ private fun RecentDeckCard(
                 shape = RoundedCornerShape(20.dp)
             ) {
                 Text(
-                    text = "Học tiếp",
+                    text = if (isCompleted) "Đã hoàn thành" else "Học tiếp",
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp
                 )

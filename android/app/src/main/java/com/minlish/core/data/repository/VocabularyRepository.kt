@@ -7,6 +7,7 @@ import com.minlish.core.data.mapper.buildCreateVocabularyRequest
 import com.minlish.core.data.mapper.toVocabularyWithReviewCard
 import com.minlish.core.data.mapper.toEntity
 import com.minlish.core.data.model.AddVocabularyResult
+import com.minlish.core.data.model.DeckLearningProgressEntity
 import com.minlish.core.data.model.DashboardAnalyticsDto
 import com.minlish.core.data.model.DeckEntity
 import com.minlish.core.data.model.FavoriteResult
@@ -388,6 +389,35 @@ class VocabularyRepository(
         return response.items.mapNotNull { it.toVocabularyWithReviewCard() }
     }
 
+    suspend fun hasDueOrNewWords(
+        dailyGoal: Int,
+        deckId: String? = null,
+    ): Boolean {
+        val response = if (deckId.isNullOrBlank()) {
+            learningApi.getDailyPlan()
+        } else {
+            learningApi.startDeck(deckId, dailyGoal)
+        }
+
+        return response.dueCards.isNotEmpty() || response.newWords.isNotEmpty()
+    }
+
+    suspend fun hasDueReviewWords(deckId: String? = null): Boolean {
+        val response = learningApi.getDueCards(
+            deckId = deckId,
+            limit = 1,
+        )
+        return response.items.isNotEmpty()
+    }
+
+    suspend fun getDeckLearningProgress(deckId: String): DeckLearningProgressEntity {
+        val response = learningApi.getDailyPlan(deckId = deckId)
+        return DeckLearningProgressEntity(
+            newWordsAvailable = response.newWordsAvailable,
+            dueReviewCount = response.dueReviewCount,
+        )
+    }
+
     suspend fun getRecentStudyDeck(): RecentStudyDeckEntity? {
         return learningApi.getRecentDeck().toEntity()
     }
@@ -410,6 +440,19 @@ class VocabularyRepository(
                 reviewCard = null,
             )
         }
+    }
+
+    suspend fun hasNewWords(
+        dailyGoal: Int,
+        deckId: String? = null,
+    ): Boolean {
+        val response = if (deckId.isNullOrBlank()) {
+            learningApi.getDailyPlan()
+        } else {
+            learningApi.startDeck(deckId, dailyGoal)
+        }
+
+        return response.newWords.isNotEmpty()
     }
 
     suspend fun processVocabReview(vocabId: String, rating: String) {

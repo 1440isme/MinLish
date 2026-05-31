@@ -26,6 +26,8 @@ data class VocabularyPreviewDto(
     @SerializedName("meaning") val meaning: String,
     @SerializedName("pronunciation") val pronunciation: String? = null,
     @SerializedName("partOfSpeech") val partOfSpeech: String? = null,
+    @SerializedName("descriptionEn") val descriptionEn: String? = null,
+    @SerializedName("example") val example: String? = null,
 )
 
 data class DailyPlanResponseDto(

@@ -60,6 +60,7 @@ fun DeckDetailScreen(
 ) {
     val deck by viewModel.selectedDeck.collectAsState()
     val vocabs by viewModel.vocabulariesInSelectedDeck.collectAsState()
+    val deckLearningProgress by viewModel.selectedDeckLearningProgress.collectAsState()
     val isLoadingDetail by viewModel.isLoadingDeckDetail.collectAsState()
     val sameWordWarning by viewModel.sameWordWarning.collectAsState()
     val favoritedIds by viewModel.favoritedSourceIds.collectAsState()
@@ -110,6 +111,10 @@ fun DeckDetailScreen(
 
     val isFavoritesDeck = deck!!.isFavoritesDeck
     val canManageWords = deck!!.deckType == "USER" && !isFavoritesDeck
+    val totalWords = vocabs.size
+    val newWordsAvailable = deckLearningProgress?.newWordsAvailable ?: totalWords
+    val learnedWords = (totalWords - newWordsAvailable).coerceIn(0, totalWords)
+    val learnedProgress = if (totalWords == 0) 0f else learnedWords.toFloat() / totalWords.toFloat()
     val emptyDeckMessage = when {
         canManageWords -> "This deck is empty. Add a word manually or import a CSV file to get started."
         isFavoritesDeck -> "You have not favorited any vocabulary yet. Tap the heart icon on a word card to save it here."
@@ -232,11 +237,10 @@ fun DeckDetailScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            Text(
-                text = "Word List (${vocabs.size} words)",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+            DeckLearningProgressHeader(
+                learnedWords = learnedWords,
+                totalWords = totalWords,
+                progress = learnedProgress,
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -968,6 +972,43 @@ fun DeckDetailScreen(
                 }
             )
         }
+    }
+}
+
+@Composable
+private fun DeckLearningProgressHeader(
+    learnedWords: Int,
+    totalWords: Int,
+    progress: Float,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text(
+            text = "Đã học: $learnedWords/$totalWords",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+
+        LinearProgressIndicator(
+            progress = { progress.coerceIn(0f, 1f) },
+            modifier = Modifier
+                .weight(1f)
+                .height(8.dp)
+                .clip(RoundedCornerShape(999.dp)),
+            color = Color(0xFF0D9488),
+            trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+        )
+
+        Text(
+            text = "${(progress.coerceIn(0f, 1f) * 100).toInt()}%",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
