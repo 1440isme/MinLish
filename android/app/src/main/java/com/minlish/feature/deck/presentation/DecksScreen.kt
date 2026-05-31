@@ -4,18 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,15 +19,16 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SelectableChipColors
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -72,11 +62,17 @@ fun DecksScreen(
     val lastErrorMessage by viewModel.lastErrorMessage.collectAsState()
     var searchKey by remember { mutableStateOf("") }
     var showCreateDialog by remember { mutableStateOf(false) }
+    var selectedGoalFilter by remember { mutableStateOf("MY_DECKS") }
+    var showAllSystemDecks by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(searchKey) {
         delay(300)
         viewModel.refreshDecks(searchKey)
+    }
+
+    LaunchedEffect(selectedGoalFilter, searchKey) {
+        showAllSystemDecks = false
     }
 
     LaunchedEffect(lastErrorMessage) {
@@ -88,7 +84,14 @@ fun DecksScreen(
 
     val accentTeal = Color(0xFF0D9488)
     val backgroundColor = if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFF9F6EE)
+    val isMyDecksTab = selectedGoalFilter == "MY_DECKS"
     val systemDecks = decks.filter { it.deckType == "SYSTEM" }
+    val filteredSystemDecks = when (selectedGoalFilter) {
+        "TOEIC" -> systemDecks.filter { it.learningGoal.equals("TOEIC", ignoreCase = true) }
+        "IELTS" -> systemDecks.filter { it.learningGoal.equals("IELTS", ignoreCase = true) }
+        else -> emptyList()
+    }
+    val visibleSystemDecks = if (showAllSystemDecks) filteredSystemDecks else filteredSystemDecks.take(3)
     val favoritesDecks = decks.filter { it.isFavoritesDeck }
     val userDecks = decks.filter { it.deckType == "USER" && !it.isFavoritesDeck }
 
@@ -149,6 +152,32 @@ fun DecksScreen(
                 shape = RoundedCornerShape(12.dp),
             )
 
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                GoalFilterChip(
+                    label = "My Decks",
+                    selected = selectedGoalFilter == "MY_DECKS",
+                    onClick = { selectedGoalFilter = "MY_DECKS" },
+                    accentColor = accentTeal,
+                )
+                GoalFilterChip(
+                    label = "TOEIC",
+                    selected = selectedGoalFilter == "TOEIC",
+                    onClick = { selectedGoalFilter = "TOEIC" },
+                    accentColor = accentTeal,
+                )
+                GoalFilterChip(
+                    label = "IELTS",
+                    selected = selectedGoalFilter == "IELTS",
+                    onClick = { selectedGoalFilter = "IELTS" },
+                    accentColor = accentTeal,
+                )
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             if (isLoading && decks.isEmpty()) {
@@ -162,24 +191,48 @@ fun DecksScreen(
                 }
             } else {
                 LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 16.dp),
                 ) {
-                    if (systemDecks.isNotEmpty()) {
+                    if (filteredSystemDecks.isNotEmpty()) {
                         item {
-                            Text(
-                                text = "System Curated Decks",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = accentTeal,
-                                modifier = Modifier.padding(top = 8.dp),
-                            )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = when (selectedGoalFilter) {
+                                        "TOEIC" -> "TOEIC Curated Decks"
+                                        "IELTS" -> "IELTS Curated Decks"
+                                        else -> "System Curated Decks"
+                                    },
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = accentTeal,
+                                )
+                                if (filteredSystemDecks.size > 3) {
+                                    TextButton(onClick = { showAllSystemDecks = !showAllSystemDecks }) {
+                                        Text(
+                                            text = if (showAllSystemDecks) "Show less" else "See all",
+                                            color = accentTeal,
+                                            fontWeight = FontWeight.SemiBold,
+                                        )
+                                    }
+                                }
+                            }
                         }
-                        items(systemDecks) { deck ->
+                        items(visibleSystemDecks) { deck ->
                             DeckItemCard(deck = deck, onClick = { onDeckClick(deck.id) }, accentColor = accentTeal)
                         }
                     }
 
-                    if (favoritesDecks.isNotEmpty()) {
+                    if (isMyDecksTab && favoritesDecks.isNotEmpty()) {
                         item {
                             Text(
                                 text = "Favorites",
@@ -198,7 +251,7 @@ fun DecksScreen(
                         }
                     }
 
-                    if (userDecks.isNotEmpty()) {
+                    if (isMyDecksTab && userDecks.isNotEmpty()) {
                         item {
                             Text(
                                 text = "My Personal Decks",
@@ -217,7 +270,11 @@ fun DecksScreen(
                         }
                     }
 
-                    if (decks.isEmpty()) {
+                    if (
+                        filteredSystemDecks.isEmpty() &&
+                        (!isMyDecksTab || favoritesDecks.isEmpty()) &&
+                        (!isMyDecksTab || userDecks.isEmpty())
+                    ) {
                         item {
                             Box(
                                 modifier = Modifier
@@ -236,6 +293,12 @@ fun DecksScreen(
                                     Text(
                                         text = if (searchKey.isNotBlank()) {
                                             "No decks found for \"$searchKey\"."
+                                        } else if (isMyDecksTab) {
+                                            "You do not have any saved or personal decks yet."
+                                        } else if (selectedGoalFilter == "TOEIC") {
+                                            "No TOEIC system decks are available right now."
+                                        } else if (selectedGoalFilter == "IELTS") {
+                                            "No IELTS system decks are available right now."
                                         } else {
                                             "No decks are available right now."
                                         },
@@ -328,6 +391,35 @@ fun DecksScreen(
             }
         }
     }
+}
+
+@Composable
+private fun GoalFilterChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    accentColor: Color,
+) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = {
+            Text(
+                text = label,
+                fontWeight = FontWeight.SemiBold,
+            )
+        },
+        colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
+            selectedContainerColor = accentColor,
+            selectedLabelColor = Color.White,
+            containerColor = Color.White,
+            labelColor = Color(0xFF1C1C1A),
+        ),
+        border = BorderStroke(
+            width = 1.dp,
+            color = if (selected) accentColor else Color(0xFFE5E7EB),
+        ),
+    )
 }
 
 @Composable
