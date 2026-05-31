@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.sp
 import com.minlish.core.component.GiraffeMascot
 import com.minlish.core.presentation.MinLishViewModel
 import com.minlish.ui.theme.MinLishTheme
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
 fun DashboardScreen(
@@ -40,7 +42,7 @@ fun DashboardScreen(
             .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
         // Rovio Streak Weekly tracker at the very top!
-        RovioWeeklyTracker()
+        RovioWeeklyTracker(streakCount = stats.streak)
 
         // Greeting Header
         Text(
@@ -177,7 +179,7 @@ fun DashboardScreen(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "${stats.streak} Days",
+                        text = "\uD83D\uDD25${stats.streak} Days",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1C1C1A)
@@ -214,7 +216,7 @@ fun DashboardScreenPreview() {
 }
 
 @Composable
-fun RovioWeeklyTracker() {
+fun RovioWeeklyTracker(streakCount: Int) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -260,12 +262,21 @@ fun RovioWeeklyTracker() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                val daysList = listOf(
-                    Triple("14", "Thu", true),
-                    Triple("15", "Fri", true),
-                    Triple("16", "Sat", false),
-                    Triple("17", "Sun", false)
-                )
+                val daysList = remember(streakCount) {
+                    val list = mutableListOf<Triple<String, String, Boolean>>()
+                    val sdfNum = SimpleDateFormat("dd", Locale.US)
+                    val sdfName = SimpleDateFormat("E", Locale.US)
+
+                    for (i in 3 downTo 0) {
+                        val cal = Calendar.getInstance()
+                        cal.add(Calendar.DAY_OF_YEAR, -i)
+
+                        // Nếu số ngày i nằm trong phạm vi chuỗi ngày streak thật, tự thắp sáng chấm tròn vàng
+                        val finished = i < streakCount
+                        list.add(Triple(sdfNum.format(cal.time), sdfName.format(cal.time), finished))
+                    }
+                    list
+                }
 
                 daysList.forEach { (num, day, finished) ->
                     Column(

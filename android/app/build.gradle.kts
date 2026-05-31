@@ -86,4 +86,7 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    //Notification
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
 }

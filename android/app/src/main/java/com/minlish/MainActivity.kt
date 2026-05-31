@@ -22,7 +22,9 @@ class MainActivity : ComponentActivity() {
                     vocabularyRepository = app.vocabularyRepository,
                     settingsRepository = app.settingsRepository,
                     authRepository = app.authRepository,
-                    userRepository = app.userRepository
+                    userRepository = app.userRepository,
+                    analyticsRepository = app.analyticsRepository,
+                    notificationRepository = app.notificationRepository
                 )
             )
 

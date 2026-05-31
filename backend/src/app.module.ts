@@ -12,6 +12,8 @@ import { ImportsModule } from './modules/imports/imports.module';
 import { PracticeModule } from './modules/practice/practice.module';
 import { LearningModule } from './modules/learning/learning.module';
 import { JwtAuthGuard } from './config/common/guards/jwt-auth.guard';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { JwtAuthGuard } from './config/common/guards/jwt-auth.guard';
     ImportsModule,
     PracticeModule,
     LearningModule,
+    NotificationsModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [

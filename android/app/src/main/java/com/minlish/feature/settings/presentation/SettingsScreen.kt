@@ -1,109 +1,217 @@
 package com.minlish.feature.settings.presentation
 
+import android.Manifest
+import android.app.TimePickerDialog
+import android.content.pm.PackageManager
+import android.os.Build
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
+import androidx.core.content.ContextCompat
 import com.minlish.core.presentation.MinLishViewModel
+import com.minlish.core.notification.NotificationScheduler
+import java.util.Calendar
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(viewModel: MinLishViewModel) {
-    val isMockOn by viewModel.isMockMode.collectAsState()
+fun SettingsScreen(viewModel: MinLishViewModel, onBackClick: () -> Unit) {
+    val notiSettings by viewModel.notificationSettings.collectAsState()
+
     val accentTeal = Color(0xFF0D9488)
+    val context = LocalContext.current
+    val scrollState = rememberScrollState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFF4F9F8))
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "App Settings",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.ExtraBold
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Style Card of Settings options list
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        ) {
-            Column(modifier = Modifier.padding(14.dp)) {
-
-                // Option 1: Mock Server toggle
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.CloudQueue, contentDescription = null, tint = accentTeal)
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text("Mock Offline Sandbox Mode", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                            Text("Maintains SQLite storage without a core backend server", fontSize = 11.sp, color = Color.Gray)
-                        }
-                    }
-                    Switch(
-                        checked = isMockOn,
-                        onCheckedChange = { viewModel.settingsRepository.setMockServiceOn(it) }
-                    )
+    //Xin quyền runtime google compose
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // Nếu người dùng đồng ý cấp quyền, gạt công tắc bật lên mạng Cloud
+            viewModel.updateNotificationToggle(dailyEnabled = true)
+            // Đồng thời đặt luôn lịch giờ mặc định hiện tại vào chip máy di động
+            notiSettings?.dailyReminderTime?.let { timeStr ->
+                val cleanTime = if (timeStr.contains("T")) {
+                    timeStr.substringAfter("T").substringBefore(".")
+                } else {
+                    timeStr.substringBefore(".")
                 }
-
-                HorizontalDivider()
-
-                // Option 2: Full profile reset
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { viewModel.resetAppData() }
-                        .padding(vertical = 14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.Red)
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text("Reset Onboarding Settings", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                            Text("Returns app to initialization flow inputs", fontSize = 11.sp, color = Color.Gray)
-                        }
-                    }
-                    Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
-                }
+                NotificationScheduler.scheduleDailyReminder(context, cleanTime)
             }
+        } else {
+            Toast.makeText(context, "Notification permission denied", Toast.LENGTH_LONG).show()
         }
+    }
 
-        Spacer(modifier = Modifier.height(20.dp))
+    // Tự động kéo cấu hình thông báo mới nhất từ Server khi mở màn hình
+    LaunchedEffect(Unit) {
+        viewModel.fetchNotificationSettings()
+    }
 
-        // App Information Box
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("App Settings", fontWeight = FontWeight.ExtraBold, fontSize = 20.sp) },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back to Profile",
+                            tint = accentTeal
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .background(if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFF4F9F8))
+                .verticalScroll(scrollState)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("MinLish App Blueprint", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "A clean English Vocabulary application using Jetpack Compose, designed around Spaced Repetition (SuperMemo-2 algorithm) matching complete professional and academic requirements.",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            // Tiêu đề hệ thống thông báo
+            Text("Reminders & Notifications", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = accentTeal)
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    if (notiSettings == null) {
+                        Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = accentTeal)
+                        }
+                    } else {
+                        val currentNoti = notiSettings!!
+
+                        // Công tấc 1: Nhắc nhở học tập hằng ngày
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.NotificationsActive, contentDescription = null, tint = accentTeal)
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text("Daily Study Reminder", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                                    Text("Get notified to achieve your daily word goals", fontSize = 11.sp, color = Color.Gray)
+                                }
+                            }
+                            Switch(
+                                checked = currentNoti.dailyReminderEnabled,
+                                //onCheckedChange = { viewModel.updateNotificationToggle(dailyEnabled = it) },
+                                onCheckedChange = { isChecked ->
+                                    if (isChecked) {
+                                        // Kiểm tra quyền : Nếu máy chạy Android 13+ mà chưa cấp quyền thông báo, kích hoạt hộp thoại xin quyền
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                                            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                        } else {
+                                            viewModel.updateNotificationToggle(dailyEnabled = true)
+                                            val cleanTime = currentNoti.dailyReminderTime.substringAfter("T").substringBefore(".")
+                                            NotificationScheduler.scheduleDailyReminder(context, cleanTime)
+                                        }
+                                    } else {
+                                        viewModel.updateNotificationToggle(dailyEnabled = false)
+                                        NotificationScheduler.cancelDailyReminder(context)
+                                    }
+                                },
+                                colors = SwitchDefaults.colors(checkedThumbColor = accentTeal, checkedTrackColor = accentTeal.copy(alpha = 0.3f))
+                            )
+                        }
+
+                        // Thiết lập time_picker dialog để chọn giờ
+                        if (currentNoti.dailyReminderEnabled) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(start = 36.dp, top = 12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Preferred Reminder Time", fontSize = 13.sp, color = Color.DarkGray)
+
+                                val cleanTime = currentNoti.dailyReminderTime.substringAfter("T").substringBeforeLast(":")
+
+                                TextButton(
+                                    onClick = {
+                                        val calendar = Calendar.getInstance()
+                                        val dialog = TimePickerDialog(
+                                            context,
+                                            { _, hourOfDay, minute ->
+                                                val formattedTime = String.format("%02d:%02d:00", hourOfDay, minute)
+                                                // 1. Đẩy lệnh PATCH lên Server Cloud
+                                                viewModel.updateNotificationToggle(timeStr = formattedTime)
+                                                // 2. Đồng bộ đặt lịch báo thức ngầm dưới chip máy di động ngay lập tức
+                                                NotificationScheduler.scheduleDailyReminder(context, formattedTime)
+                                            },
+                                            calendar.get(Calendar.HOUR_OF_DAY),
+                                            calendar.get(Calendar.MINUTE),
+                                            true // Định dạng 24h
+                                        )
+                                        dialog.show()
+                                    }
+                                ) {
+                                    Text(text = cleanTime, fontWeight = FontWeight.Bold, color = accentTeal, fontSize = 15.sp)
+                                }
+                            }
+                        }
+
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color.Black.copy(alpha = 0.05f))
+
+                        // Công tắc 2: Nhắc nhở từ vựng đến hạn ôn tập
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.HourglassEmpty, contentDescription = null, tint = accentTeal)
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text("Review Cards Due", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                                    Text("Smart alerts based on Spaced Repetition interval tracking", fontSize = 11.sp, color = Color.Gray)
+                                }
+                            }
+                            Switch(
+                                checked = currentNoti.dueReviewReminderEnabled,
+                                { isChecked ->
+                                    viewModel.updateNotificationToggle(dueEnabled = isChecked)
+                                    if (isChecked) {
+                                        NotificationScheduler.scheduleReviewCheck(context)
+                                    } else {
+                                        NotificationScheduler.cancelReviewCheck(context)
+                                    }
+                                },
+                                colors = SwitchDefaults.colors(checkedThumbColor = accentTeal, checkedTrackColor = accentTeal.copy(alpha = 0.3f))
+                            )
+                        }
+                    }
+                }
             }
+
         }
     }
 }

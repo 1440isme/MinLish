@@ -27,12 +27,20 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.Locale
 
+import com.minlish.core.data.repository.AnalyticsRepository
+import com.minlish.core.data.repository.NotificationRepository
+import com.minlish.feature.settings.data.NotificationSettingsResponse
+import com.minlish.feature.settings.data.UpdateSettingsRequest
+import kotlinx.coroutines.delay
+
 class MinLishViewModel(
     application: Application,
     private val vocabularyRepository: VocabularyRepository,
     val settingsRepository: SettingsRepository,
     val authRepository: AuthRepository,
-    val userRepository: UserRepository
+    val userRepository: UserRepository,
+    private val analyticsRepository: AnalyticsRepository,
+    private val notificationRepository: NotificationRepository
 ) : AndroidViewModel(application), TextToSpeech.OnInitListener {
 
     // General app states
@@ -159,32 +167,92 @@ class MinLishViewModel(
 
     // Dashboard Statistics
     private val _dashboardAnalytics = MutableStateFlow(
-        DashboardAnalyticsDto(0, 0, 0, 0, 80.0f, 5, 0)
+        DashboardAnalyticsDto(0, 0, 0, 0, 0.0f, 0, 0)
     )
     val dashboardAnalytics: StateFlow<DashboardAnalyticsDto> = _dashboardAnalytics
+
+    //-------------------------
+    //Trạng thái và hàm thông báo, thống kê ( Dev E )
+    private val _notificationSettings = MutableStateFlow<NotificationSettingsResponse?>(null)
+    val notificationSettings: StateFlow<NotificationSettingsResponse?> = _notificationSettings
+
+    // 1. Hàm bốc dữ liệu Analytics thực tế từ Cloud Server NestJS
+    fun fetchDashboardAnalytics() {
+        viewModelScope.launch {
+            try {
+                val stats = analyticsRepository.getDashboardAnalytics()
+                _dashboardAnalytics.value = stats
+                fetchPracticeHistory()
+            } catch (e: Exception) {
+                _lastErrorMessage.value = ApiErrorParser.humanMessage(e, "Mất kết nối dữ liệu thống kê cloud")
+            }
+        }
+    }
+
+    // 2. Hàm lấy cấu hình giờ giấc thông báo từ Cloud Server NestJS
+    fun fetchNotificationSettings() {
+        viewModelScope.launch {
+            try {
+                _notificationSettings.value = notificationRepository.getSettings()
+            } catch (e: Exception) { }//Im lặng bỏ qua nếu mạng lag
+        }
+    }
+
+    // 3. Hàm gạt công tắc cập nhật thông báo (Gửi lệnh PATCH lên Server)
+    fun updateNotificationToggle(
+        dailyEnabled: Boolean? = null,
+        timeStr: String? = null,
+        dueEnabled: Boolean? = null,
+        pushEnabled: Boolean? = null,
+        emailEnabled: Boolean? = null
+    ) {
+        viewModelScope.launch {
+            try {
+                val current = _notificationSettings.value ?: return@launch
+                val request = UpdateSettingsRequest(
+                    dailyReminderEnabled = dailyEnabled ?: current.dailyReminderEnabled,
+                    dailyReminderTime = timeStr ?: current.dailyReminderTime,
+                    dueReviewReminderEnabled = dueEnabled ?: current.dueReviewReminderEnabled,
+                    pushEnabled = pushEnabled ?: current.pushEnabled,
+                    emailEnabled = emailEnabled ?: current.emailEnabled
+                )
+                // Đẩy lên mạng và hứng ngay kết quả mới trả về gán ngược lại giao diện
+                _notificationSettings.value = notificationRepository.updateSettings(request)
+            } catch (e: Exception) { }
+        }
+    }
+
+    // 4. Hàm kéo mảng danh sách lịch sử làm bài
+    fun fetchPracticeHistory() {
+        viewModelScope.launch {
+            try {
+                val remoteHistory = analyticsRepository.getRemoteHistory()
+                _practiceSessions.value = remoteHistory
+                android.util.Log.d("MINLISH_STATS", "Successfully loaded ${remoteHistory.size} remote sessions!")
+            } catch (e: Exception) {
+                android.util.Log.e("MINLISH_STATS", "CRITICAL ERROR FETCHING HISTORY: ", e)
+                _lastErrorMessage.value = "History Sync Error: ${e.localizedMessage}"
+            } // Im lặng bỏ qua nếu mạng lag hoặc chưa làm bài nào
+        }
+    }
+    //----------------------
+
 
     init {
         // Initialize TTS
         tts = TextToSpeech(application, this)
 
+        //Gọi nạp dữ liệu thống kê từ database
+        fetchDashboardAnalytics()
+
         // Keep local dashboard aggregates up-to-date
-        viewModelScope.launch {
-            combine(
-                learningGoal,
-                dailyNewWordsGoal,
-                vocabularyRepository.getDueCountFlow()
-            ) { _, dailyGoal, due ->
-                val stats = vocabularyRepository.getLocalDashboardAnalytics(dailyGoal)
-                _dashboardAnalytics.value = stats.copy(dueToday = due)
-            }
-        }
 
         // Monitor practice sessions
-        viewModelScope.launch {
+        /*viewModelScope.launch {
             vocabularyRepository.getPracticeSessionsFlow().collect { list ->
                 _practiceSessions.value = list
             }
-        }
+        }*/
 
         // Synchronize profile if already onboarded
         viewModelScope.launch {
@@ -193,6 +261,10 @@ class MinLishViewModel(
                     fetchUserProfile()
                     refreshDecks()
                     refreshFavoritedIds()
+
+                    //Khi người dùng mở app và đã onboard, tự động kéo dữ liệu thật về
+                    fetchDashboardAnalytics()
+                    fetchNotificationSettings()
                 }
             }
         }
@@ -331,12 +403,6 @@ class MinLishViewModel(
         settingsRepository.setDarkTheme(!isDarkTheme.value)
     }
 
-    fun resetAppData() {
-        viewModelScope.launch {
-            settingsRepository.clearOnboarding()
-            vocabularyRepository.deleteDeck("") // dummy trigger or can add clean DB trigger
-        }
-    }
 
     // SELECT DECK
     fun selectDeck(deckId: String) {
@@ -771,6 +837,7 @@ class MinLishViewModel(
                 val response = vocabularyRepository.finishPracticeSession(session.id)
                 _finishSummary.value = response.summary
                 _quizFinished.value = true
+                fetchDashboardAnalytics() //làm bài xong thì tự động làm mới thống kê
             } catch (e: Exception) {
                 e.printStackTrace()
                 val apiError = ApiErrorParser.parse(e)
@@ -795,7 +862,9 @@ class MinLishViewModelFactory(
     private val vocabularyRepository: VocabularyRepository,
     private val settingsRepository: SettingsRepository,
     private val authRepository: AuthRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val analyticsRepository: AnalyticsRepository,
+    private val notificationRepository: NotificationRepository
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MinLishViewModel::class.java)) {
@@ -805,7 +874,9 @@ class MinLishViewModelFactory(
                 vocabularyRepository = vocabularyRepository,
                 settingsRepository = settingsRepository,
                 authRepository = authRepository,
-                userRepository = userRepository
+                userRepository = userRepository,
+                analyticsRepository = analyticsRepository,
+                notificationRepository = notificationRepository
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

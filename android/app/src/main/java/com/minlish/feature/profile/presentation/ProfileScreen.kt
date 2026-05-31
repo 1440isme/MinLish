@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,7 +33,8 @@ import com.minlish.core.presentation.MinLishViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(viewModel: MinLishViewModel) {
+fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit ) //lệnh chuyển màn hình từ NavHost truyền vào
+{
     val name by viewModel.fullName.collectAsState()
     val avatarUrl by viewModel.avatarUrl.collectAsState()
     val email by viewModel.email.collectAsState()
@@ -260,6 +262,31 @@ fun ProfileScreen(viewModel: MinLishViewModel) {
                         Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.LightGray)
                     }
                 }
+
+                //Item 4: App setting
+                HorizontalDivider(color = Color.Black.copy(alpha = 0.05f))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onNavigateToSettings() } // Kích hoạt bắn lệnh chuyển đổi vùng màn hình
+                        .padding(vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Settings, contentDescription = null, tint = accentTeal)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "App Settings",
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 14.sp,
+                            color = Color(0xFF1C1C1A)
+                        )
+                    }
+                    Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.LightGray)
+                }
+                //----------
             }
         }
 
