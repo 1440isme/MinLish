@@ -63,16 +63,11 @@ fun DecksScreen(
     var searchKey by remember { mutableStateOf("") }
     var showCreateDialog by remember { mutableStateOf(false) }
     var selectedGoalFilter by remember { mutableStateOf("MY_DECKS") }
-    var showAllSystemDecks by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(searchKey) {
         delay(300)
         viewModel.refreshDecks(searchKey)
-    }
-
-    LaunchedEffect(selectedGoalFilter, searchKey) {
-        showAllSystemDecks = false
     }
 
     LaunchedEffect(lastErrorMessage) {
@@ -91,7 +86,6 @@ fun DecksScreen(
         "IELTS" -> systemDecks.filter { it.learningGoal.equals("IELTS", ignoreCase = true) }
         else -> emptyList()
     }
-    val visibleSystemDecks = if (showAllSystemDecks) filteredSystemDecks else filteredSystemDecks.take(3)
     val favoritesDecks = decks.filter { it.isFavoritesDeck }
     val userDecks = decks.filter { it.deckType == "USER" && !it.isFavoritesDeck }
 
@@ -199,35 +193,19 @@ fun DecksScreen(
                 ) {
                     if (filteredSystemDecks.isNotEmpty()) {
                         item {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    text = when (selectedGoalFilter) {
-                                        "TOEIC" -> "TOEIC Curated Decks"
-                                        "IELTS" -> "IELTS Curated Decks"
-                                        else -> "System Curated Decks"
-                                    },
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = accentTeal,
-                                )
-                                if (filteredSystemDecks.size > 3) {
-                                    TextButton(onClick = { showAllSystemDecks = !showAllSystemDecks }) {
-                                        Text(
-                                            text = if (showAllSystemDecks) "Show less" else "See all",
-                                            color = accentTeal,
-                                            fontWeight = FontWeight.SemiBold,
-                                        )
-                                    }
-                                }
-                            }
+                            Text(
+                                text = when (selectedGoalFilter) {
+                                    "TOEIC" -> "TOEIC Curated Decks"
+                                    "IELTS" -> "IELTS Curated Decks"
+                                    else -> "System Curated Decks"
+                                },
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = accentTeal,
+                                modifier = Modifier.padding(top = 8.dp),
+                            )
                         }
-                        items(visibleSystemDecks) { deck ->
+                        items(filteredSystemDecks) { deck ->
                             DeckItemCard(deck = deck, onClick = { onDeckClick(deck.id) }, accentColor = accentTeal)
                         }
                     }
@@ -424,6 +402,9 @@ private fun GoalFilterChip(
 
 @Composable
 fun DeckItemCard(deck: DeckEntity, onClick: () -> Unit, accentColor: Color) {
+    val tagList = deck.tags.split(";").filter { it.isNotEmpty() }
+    val hasDeckMeta = deck.isFavoritesDeck || tagList.isNotEmpty() || deck.targetLevel.isNotBlank()
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -467,42 +448,63 @@ fun DeckItemCard(deck: DeckEntity, onClick: () -> Unit, accentColor: Color) {
                 overflow = TextOverflow.Ellipsis,
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            if (hasDeckMeta) {
+                Spacer(modifier = Modifier.height(12.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    val tagList = deck.tags.split(";").filter { it.isNotEmpty() }
-                    tagList.take(3).forEach { tag ->
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(accentColor.copy(alpha = 0.12f))
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
-                        ) {
-                            Text(
-                                text = tag,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = accentColor,
-                            )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        if (deck.isFavoritesDeck) {
+                            listOf("Favorites", "Saved words").forEach { badge ->
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(Color(0xFFE11D48).copy(alpha = 0.12f))
+                                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                                ) {
+                                    Text(
+                                        text = badge,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color(0xFFE11D48),
+                                    )
+                                }
+                            }
+                        } else {
+                            tagList.take(3).forEach { tag ->
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(accentColor.copy(alpha = 0.12f))
+                                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                                ) {
+                                    Text(
+                                        text = tag,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = accentColor,
+                                    )
+                                }
+                            }
                         }
                     }
-                }
 
-                Text(
-                    text = deck.targetLevel,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Gray,
-                    modifier = Modifier.padding(start = 8.dp),
-                )
+                    if (!deck.isFavoritesDeck && deck.targetLevel.isNotBlank()) {
+                        Text(
+                            text = deck.targetLevel,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
+                }
             }
         }
     }
