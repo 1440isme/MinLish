@@ -2,12 +2,14 @@ package com.minlish.core.data.mapper
 
 import com.minlish.core.data.model.DeckEntity
 import com.minlish.core.data.model.ImportCsvResponse
+import com.minlish.core.data.model.RecentStudyDeckEntity
 import com.minlish.core.data.model.ReviewCardEntity
 import com.minlish.core.data.model.VocabularyEntity
 import com.minlish.core.data.model.VocabularyWithReviewCard
 import com.minlish.core.network.dto.CreateVocabularyRequest
 import com.minlish.core.network.dto.DeckDto
 import com.minlish.core.network.dto.ImportCsvResponseDto
+import com.minlish.core.network.dto.RecentLearningDeckResponseDto
 import com.minlish.core.network.dto.ReviewCardDto
 import com.minlish.core.network.dto.VocabularyPreviewDto
 import com.minlish.core.network.dto.VocabularyDto
@@ -93,6 +95,18 @@ fun ImportCsvResponseDto.toEntity(): ImportCsvResponse = ImportCsvResponse(
     errors = errors.map { "Row ${it.row} (${it.field}): ${it.message}" },
     duplicateSamples = duplicates.take(5).map { "Row ${it.row}: ${it.word} — ${it.meaning}" },
 )
+
+fun RecentLearningDeckResponseDto.toEntity(): RecentStudyDeckEntity? {
+    val deckDto = deck ?: return null
+    if (!hasRecentDeck) return null
+
+    return RecentStudyDeckEntity(
+        deck = deckDto.toEntity(),
+        dueReviewCount = dueReviewCount,
+        newWordsAvailable = newWordsAvailable,
+        lastStudiedAt = lastStudiedAt?.toEpochMillis() ?: 0L,
+    )
+}
 
 fun buildCreateVocabularyRequest(
     word: String,

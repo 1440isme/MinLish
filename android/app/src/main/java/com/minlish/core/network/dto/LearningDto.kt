@@ -37,6 +37,14 @@ data class DailyPlanResponseDto(
     @SerializedName("newWords") val newWords: List<VocabularyPreviewDto>,
 )
 
+data class RecentLearningDeckResponseDto(
+    @SerializedName("hasRecentDeck") val hasRecentDeck: Boolean,
+    @SerializedName("deck") val deck: DeckDto? = null,
+    @SerializedName("lastStudiedAt") val lastStudiedAt: String? = null,
+    @SerializedName("dueReviewCount") val dueReviewCount: Int = 0,
+    @SerializedName("newWordsAvailable") val newWordsAvailable: Int = 0,
+)
+
 data class DueCardsResponseDto(
     @SerializedName("items") val items: List<ReviewCardDto>,
     @SerializedName("count") val count: Int,

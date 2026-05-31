@@ -2,6 +2,7 @@ package com.minlish.core.network
 
 import com.minlish.core.network.dto.DailyPlanResponseDto
 import com.minlish.core.network.dto.DueCardsResponseDto
+import com.minlish.core.network.dto.RecentLearningDeckResponseDto
 import com.minlish.core.network.dto.SubmitReviewRequest
 import com.minlish.core.network.dto.SubmitReviewResponseDto
 import retrofit2.http.Body
@@ -11,6 +12,9 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface LearningApiService {
+
+    @GET("learning/recent-deck")
+    suspend fun getRecentDeck(): RecentLearningDeckResponseDto
 
     @GET("learning/daily-plan")
     suspend fun getDailyPlan(

@@ -176,6 +176,9 @@ class MinLishViewModel(
     )
     val dashboardAnalytics: StateFlow<DashboardAnalyticsDto> = _dashboardAnalytics
 
+    private val _recentStudyDeck = MutableStateFlow<RecentStudyDeckEntity?>(null)
+    val recentStudyDeck: StateFlow<RecentStudyDeckEntity?> = _recentStudyDeck
+
     //-------------------------
     //Trạng thái và hàm thông báo, thống kê ( Dev E )
     private val _notificationSettings = MutableStateFlow<NotificationSettingsResponse?>(null)
@@ -266,6 +269,7 @@ class MinLishViewModel(
                     fetchUserProfile()
                     refreshDecks()
                     refreshFavoritedIds()
+                    refreshRecentStudyDeck()
 
                     //Khi người dùng mở app và đã onboard, tự động kéo dữ liệu thật về
                     fetchDashboardAnalytics()
@@ -306,6 +310,16 @@ class MinLishViewModel(
                 _favoritedSourceIds.value = vocabularyRepository.getFavoritedSourceIds()
             } catch (_: Exception) {
                 // Favorites deck may not exist until register side-effect is done
+            }
+        }
+    }
+
+    fun refreshRecentStudyDeck() {
+        viewModelScope.launch {
+            try {
+                _recentStudyDeck.value = vocabularyRepository.getRecentStudyDeck()
+            } catch (_: Exception) {
+                _recentStudyDeck.value = null
             }
         }
     }
@@ -687,6 +701,7 @@ class MinLishViewModel(
         viewModelScope.launch {
             try {
                 vocabularyRepository.processVocabReview(vocabId, rating)
+                refreshRecentStudyDeck()
                 if (_currentCardIndex.value < _activeFlashcards.value.size - 1) {
                     _currentCardIndex.value += 1
                     _isCardFlipped.value = false

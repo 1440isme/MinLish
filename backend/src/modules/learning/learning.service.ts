@@ -16,9 +16,11 @@ import {
 } from '@prisma/client';
 import { ErrorCodes } from '../../config/common/errors/error-codes';
 import { PrismaService } from '../../prisma/prisma.service';
+import { DeckEntity } from '../decks/entities/deck.entity';
 import { DailyPlanResponseDto } from './dto/daily-plan-response.dto';
 import { DueCardsResponseDto } from './dto/due-cards-response.dto';
 import { GetDueCardsQueryDto } from './dto/get-due-cards-query.dto';
+import { RecentLearningDeckResponseDto } from './dto/recent-learning-deck-response.dto';
 import { ReviewHistoryQueryDto } from './dto/review-history-query.dto';
 import { ReviewHistoryResponseDto } from './dto/review-history-response.dto';
 import { ReviewSummaryDto } from './dto/review-summary.dto';
@@ -34,6 +36,13 @@ type PrismaTx = Prisma.TransactionClient;
 const DEFAULT_DUE_LIMIT = 20;
 const DEFAULT_HISTORY_LIMIT = 20;
 const FUTURE_REVIEW_GRACE_MS = 5 * 60 * 1000;
+const deckWithLearningLevelInclude = {
+  learningLevel: {
+    include: {
+      learningPath: true,
+    },
+  },
+} as const;
 
 @Injectable()
 export class LearningService {
@@ -109,6 +118,78 @@ export class LearningService {
       items,
       count: items.length,
       limit,
+    });
+  }
+
+  async getRecentDeck(user: User): Promise<RecentLearningDeckResponseDto> {
+    const latestReview = await this.prisma.reviewLog.findFirst({
+      where: {
+        userId: user.id,
+        vocabulary: {
+          deletedAt: null,
+          deck: {
+            deletedAt: null,
+            OR: [
+              { deckType: DeckType.SYSTEM },
+              { deckType: DeckType.USER, ownerUserId: user.id },
+            ],
+          },
+        },
+      },
+      orderBy: [{ reviewedAt: 'desc' }, { id: 'desc' }],
+      select: {
+        reviewedAt: true,
+        vocabulary: {
+          select: {
+            deckId: true,
+          },
+        },
+      },
+    });
+
+    if (!latestReview) {
+      return new RecentLearningDeckResponseDto({
+        hasRecentDeck: false,
+        deck: null,
+        lastStudiedAt: null,
+        dueReviewCount: 0,
+        newWordsAvailable: 0,
+      });
+    }
+
+    const deckId = latestReview.vocabulary.deckId;
+    const [deck, dueReviewCount, newWordsAvailable] = await this.prisma.$transaction([
+      this.prisma.deck.findFirst({
+        where: {
+          id: deckId,
+          deletedAt: null,
+        },
+        include: deckWithLearningLevelInclude,
+      }),
+      this.prisma.reviewCard.count({
+        where: this.buildDueCardsWhere(user.id, deckId),
+      }),
+      this.prisma.vocabulary.count({
+        where: this.buildNewWordsWhere(user.id, deckId),
+      }),
+    ]);
+
+    if (!deck) {
+      return new RecentLearningDeckResponseDto({
+        hasRecentDeck: false,
+        deck: null,
+        lastStudiedAt: null,
+        dueReviewCount: 0,
+        newWordsAvailable: 0,
+      });
+    }
+
+    return new RecentLearningDeckResponseDto({
+      hasRecentDeck: true,
+      deck: new DeckEntity(deck as unknown as Partial<DeckEntity>),
+      lastStudiedAt: latestReview.reviewedAt,
+      dueReviewCount,
+      newWordsAvailable,
     });
   }
 

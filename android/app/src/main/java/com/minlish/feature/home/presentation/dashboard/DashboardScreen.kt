@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.minlish.core.data.model.RecentStudyDeckEntity
 import com.minlish.core.component.GiraffeMascot
 import com.minlish.core.presentation.MinLishViewModel
 import com.minlish.ui.theme.MinLishTheme
@@ -29,10 +31,16 @@ fun DashboardScreen(
     onStartDailyQuiz: () -> Unit,
     onStartDailyNew: () -> Unit,
     onNavigateToDecks: () -> Unit,
+    onResumeRecentDeck: (String) -> Unit,
 ) {
     val name by viewModel.fullName.collectAsState()
     val stats by viewModel.dashboardAnalytics.collectAsState()
     val wordsGoal by viewModel.dailyNewWordsGoal.collectAsState()
+    val recentStudyDeck by viewModel.recentStudyDeck.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.refreshRecentStudyDeck()
+    }
 
     Column(
         modifier = Modifier
@@ -188,6 +196,14 @@ fun DashboardScreen(
             }
         }
 
+        recentStudyDeck?.let { recentDeck ->
+            RecentDeckCard(
+                recentDeck = recentDeck,
+                onResume = { onResumeRecentDeck(recentDeck.deck.id) },
+                modifier = Modifier.padding(bottom = 20.dp),
+            )
+        }
+
         // Return browse decks
         Button(
             onClick = onNavigateToDecks,
@@ -204,6 +220,84 @@ fun DashboardScreen(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+@Composable
+private fun RecentDeckCard(
+    recentDeck: RecentStudyDeckEntity,
+    onResume: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color(0xFF000000).copy(alpha = 0.05f))
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Học tiếp deck gần nhất",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1C1C1A)
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = recentDeck.deck.name,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF1C1C1A)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "${recentDeck.dueReviewCount} thẻ ôn • ${recentDeck.newWordsAvailable} từ mới",
+                        fontSize = 13.sp,
+                        color = Color(0xFF7C776E)
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFFEFBF4)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.RestartAlt,
+                        contentDescription = "Resume recent deck",
+                        tint = Color.Black
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Button(
+                onClick = onResume,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Black,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Text(
+                    text = "Học tiếp",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
+                )
+            }
+        }
     }
 }
 

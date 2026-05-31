@@ -62,6 +62,13 @@ data class DashboardAnalyticsDto(
     val progressPercent: Int
 )
 
+data class RecentStudyDeckEntity(
+    val deck: DeckEntity,
+    val dueReviewCount: Int,
+    val newWordsAvailable: Int,
+    val lastStudiedAt: Long,
+)
+
 data class QuizQuestion(
     val vocabulary: VocabularyEntity,
     val questionType: String,
