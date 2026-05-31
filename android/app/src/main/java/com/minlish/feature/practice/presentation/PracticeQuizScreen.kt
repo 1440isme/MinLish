@@ -1,6 +1,5 @@
 package com.minlish.feature.practice.presentation
 
-import android.widget.Toast
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -8,7 +7,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +25,8 @@ import com.minlish.core.component.BeeMascot
 import com.minlish.core.presentation.MinLishViewModel
 import com.minlish.core.network.dto.PracticeQuestionDto
 import com.minlish.core.network.dto.PracticeAnswerDto
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 
 private data class ChimeNote(
     val freq: Double,
@@ -241,9 +243,11 @@ fun PracticeQuizScreen(
     val finishSummary by viewModel.finishSummary.collectAsState()
     val vocabularies by viewModel.vocabulariesInSelectedDeck.collectAsState()
     val practiceError by viewModel.practiceError.collectAsState()
+    val isSoundEnabled by viewModel.isPracticeSoundEnabled.collectAsState()
 
     var selectedChoice by remember { mutableStateOf("") }
     var clozeAnswer by remember { mutableStateOf("") }
+    var showReviewScreen by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
 
@@ -252,7 +256,9 @@ fun PracticeQuizScreen(
         val result = lastSubmitResult
         if (result != null) {
             if (result.isCorrect) {
-                playCorrectSound()
+                if (isSoundEnabled) {
+                    playCorrectSound()
+                }
                 kotlinx.coroutines.delay(2000L) // 2s delay as requested by user
                 // Ensure we are still looking at the same result before auto-advancing
                 if (viewModel.lastSubmitResult.value == result) {
@@ -261,7 +267,9 @@ fun PracticeQuizScreen(
                     clozeAnswer = ""
                 }
             } else {
-                playIncorrectSound()
+                if (isSoundEnabled) {
+                    playIncorrectSound()
+                }
             }
         }
     }
@@ -326,111 +334,377 @@ fun PracticeQuizScreen(
     }
 
     if (isFinished) {
-        // SUMMARY / RESULTS SCREEN
-        val summary = finishSummary
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFFF9F6EE))
-                .padding(24.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+        if (showReviewScreen) {
+            val finishAnswers by viewModel.finishAnswers.collectAsState()
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFFF9F6EE))
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(24.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.EmojiEvents,
-                    contentDescription = null,
-                    modifier = Modifier.size(80.dp),
-                    tint = Color(0xFFF59E0B)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "Practice completed!",
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1C1C1A)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                summary?.let {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(24.dp),
-                        border = BorderStroke(1.dp, Color(0xFF000000).copy(alpha = 0.05f))
+                Column(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    // Header
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(
-                            modifier = Modifier.padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        Text(
+                            text = "Practice Review",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1C1C1A)
+                        )
+                        
+                        IconButton(
+                            onClick = { showReviewScreen = false },
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(Color.White)
+                                .border(1.dp, Color(0xFF000000).copy(alpha = 0.05f), CircleShape)
                         ) {
-                            Text(
-                                "Accuracy: ${it.accuracy.toInt()}%",
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (it.accuracy >= 80) Color(0xFF10B981) else Color(0xFFEF4444)
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Correct answers:", color = Color(0xFF7C776E))
-                                Text("${it.correctAnswers}", fontWeight = FontWeight.Bold)
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Wrong answers:", color = Color(0xFF7C776E))
-                                Text("${it.wrongAnswers}", fontWeight = FontWeight.Bold)
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Skipped answers:", color = Color(0xFF7C776E))
-                                Text("${it.unanswered}", fontWeight = FontWeight.Bold)
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Icon(Icons.Default.Close, contentDescription = "Close", tint = Color(0xFF1C1C1A))
+                        }
+                    }
 
-                            Row(
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Scrollable list of answers
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        contentPadding = PaddingValues(bottom = 16.dp)
+                    ) {
+                        items(finishAnswers) { answer ->
+                            val isCorrect = answer.isCorrect
+                            val isSkipped = answer.userAnswer.isNullOrBlank()
+                            
+                            Card(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                shape = RoundedCornerShape(24.dp),
+                                border = BorderStroke(1.dp, Color(0xFF000000).copy(alpha = 0.05f))
                             ) {
-                                Text("Time taken:", color = Color(0xFF7C776E))
-                                val minutes = it.timeTakenSeconds / 60
-                                val seconds = it.timeTakenSeconds % 60
-                                Text(String.format("%02d:%02d", minutes, seconds), fontWeight = FontWeight.Bold)
+                                Column(
+                                    modifier = Modifier.padding(20.dp)
+                                ) {
+                                    // Badge row
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        val badgeColor = when {
+                                            isCorrect -> Color(0xFF10B981) // Green
+                                            isSkipped -> Color(0xFF9CA3AF) // Gray
+                                            else -> Color(0xFFEF4444) // Red
+                                        }
+                                        val badgeText = when {
+                                            isCorrect -> "Correct"
+                                            isSkipped -> "Skipped"
+                                            else -> "Incorrect"
+                                        }
+                                        
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(badgeColor.copy(alpha = 0.12f))
+                                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                                        ) {
+                                            Text(
+                                                text = badgeText,
+                                                color = badgeColor,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+
+                                        // Display question type friendly text
+                                        val qTypeText = when (answer.questionType) {
+                                            "WORD_TO_MEANING" -> "Word to Meaning"
+                                            "MEANING_TO_WORD" -> "Meaning to Word"
+                                            "FILL_IN_BLANK" -> "Fill in the Blank"
+                                            "LISTENING_WORD" -> "Listening Word"
+                                            else -> answer.questionType
+                                        }
+                                        Text(
+                                            text = qTypeText,
+                                            fontSize = 11.sp,
+                                            color = Color.Gray,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    // Question text
+                                    Text(
+                                        text = answer.questionText,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF1C1C1A)
+                                    )
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    // Answer choices or fill-in-blank styling
+                                    if (answer.questionType == "FILL_IN_BLANK") {
+                                        Column(
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            // User Answer
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clip(RoundedCornerShape(16.dp))
+                                                    .background(
+                                                        if (isCorrect) Color(0xFFECFDF5)
+                                                        else if (isSkipped) Color(0xFFF3F4F6)
+                                                        else Color(0xFFFEF2F2)
+                                                    )
+                                                    .border(
+                                                        1.dp,
+                                                        if (isCorrect) Color(0xFF10B981)
+                                                        else if (isSkipped) Color(0xFFE5E7EB)
+                                                        else Color(0xFFEF4444),
+                                                        RoundedCornerShape(16.dp)
+                                                    )
+                                                    .padding(14.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(
+                                                        text = "Your Answer: ${answer.userAnswer ?: "(Skipped)"}",
+                                                        fontSize = 14.sp,
+                                                        fontWeight = FontWeight.Medium,
+                                                        color = Color(0xFF1C1C1A)
+                                                    )
+                                                    if (isCorrect) {
+                                                        Text("✓", color = Color(0xFF10B981), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                                    } else if (!isSkipped) {
+                                                        Text("✗", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                                    }
+                                                }
+                                            }
+
+                                            // Correct Answer if user was wrong/skipped
+                                            if (!isCorrect) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .clip(RoundedCornerShape(16.dp))
+                                                        .background(Color(0xFFECFDF5))
+                                                        .border(1.dp, Color(0xFF10B981), RoundedCornerShape(16.dp))
+                                                        .padding(14.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "Correct Answer: ${answer.correctAnswer}",
+                                                        fontSize = 14.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Color(0xFF065F46)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        // Multiple Choice options list
+                                        val options = answer.optionsJson ?: emptyList()
+                                        Column(
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            options.forEach { option ->
+                                                val isUserSelected = answer.userAnswer == option
+                                                val isCorrectOption = answer.correctAnswer == option
+                                                
+                                                val optBgColor = when {
+                                                    isCorrectOption -> Color(0xFFECFDF5) // Green background for correct
+                                                    isUserSelected -> Color(0xFFFEF2F2) // Red background for user's wrong selection
+                                                    else -> Color.White
+                                                }
+                                                val optBorderColor = when {
+                                                    isCorrectOption -> Color(0xFF10B981) // Green border for correct
+                                                    isUserSelected -> Color(0xFFEF4444) // Red border for wrong
+                                                    else -> Color(0xFF000000).copy(alpha = 0.08f)
+                                                }
+                                                val optBorderWidth = if (isCorrectOption || isUserSelected) 2.dp else 1.dp
+
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(48.dp)
+                                                        .clip(RoundedCornerShape(24.dp))
+                                                        .background(optBgColor)
+                                                        .border(optBorderWidth, optBorderColor, RoundedCornerShape(24.dp))
+                                                        .padding(horizontal = 16.dp),
+                                                    contentAlignment = Alignment.CenterStart
+                                                ) {
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Text(
+                                                            text = option,
+                                                            fontSize = 14.sp,
+                                                            fontWeight = FontWeight.Medium,
+                                                            color = Color(0xFF1C1C1A)
+                                                        )
+                                                        if (isCorrectOption) {
+                                                            Text("✓", color = Color(0xFF10B981), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                                        } else if (isUserSelected) {
+                                                            Text("✗", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
-                } ?: run {
-                    CircularProgressIndicator(color = Color(0xFFFBBF24))
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Done Button
+                    Button(
+                        onClick = { showReviewScreen = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
+                        shape = RoundedCornerShape(32.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                    ) {
+                        Text("Done", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
                 }
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                Button(
-                    onClick = onBack,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
-                    shape = RoundedCornerShape(32.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
+            }
+        } else {
+            // SUMMARY / RESULTS SCREEN
+            val summary = finishSummary
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFFF9F6EE))
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Text("Back", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Icon(
+                        imageVector = Icons.Default.EmojiEvents,
+                        contentDescription = null,
+                        modifier = Modifier.size(80.dp),
+                        tint = Color(0xFFF59E0B)
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "Practice completed!",
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1C1C1A)
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    summary?.let {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(24.dp),
+                            border = BorderStroke(1.dp, Color(0xFF000000).copy(alpha = 0.05f))
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    "Accuracy: ${it.accuracy.toInt()}%",
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (it.accuracy >= 80) Color(0xFF10B981) else Color(0xFFEF4444)
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Correct answers:", color = Color(0xFF7C776E))
+                                    Text("${it.correctAnswers}", fontWeight = FontWeight.Bold)
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Wrong answers:", color = Color(0xFF7C776E))
+                                    Text("${it.wrongAnswers}", fontWeight = FontWeight.Bold)
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Skipped answers:", color = Color(0xFF7C776E))
+                                    Text("${it.unanswered}", fontWeight = FontWeight.Bold)
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Time taken:", color = Color(0xFF7C776E))
+                                    val minutes = it.timeTakenSeconds / 60
+                                    val seconds = it.timeTakenSeconds % 60
+                                    Text(String.format("%02d:%02d", minutes, seconds), fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    } ?: run {
+                        CircularProgressIndicator(color = Color(0xFFFBBF24))
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    Button(
+                        onClick = { showReviewScreen = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488)),
+                        shape = RoundedCornerShape(32.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                    ) {
+                        Text("Review Answers", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Button(
+                        onClick = onBack,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
+                        shape = RoundedCornerShape(32.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                    ) {
+                        Text("Back", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
                 }
             }
         }
@@ -462,14 +736,35 @@ fun PracticeQuizScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(
-                onClick = onBack,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(Color.White)
-                    .border(1.dp, Color(0xFF000000).copy(alpha = 0.05f), CircleShape)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(Icons.Default.Close, contentDescription = "Exit", tint = Color(0xFF1C1C1A))
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(Color.White)
+                        .border(1.dp, Color(0xFF000000).copy(alpha = 0.05f), CircleShape)
+                ) {
+                    Icon(Icons.Default.Close, contentDescription = "Exit", tint = Color(0xFF1C1C1A))
+                }
+
+                IconButton(
+                    onClick = {
+                        viewModel.isPracticeSoundEnabled.value = !isSoundEnabled
+                    },
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(Color.White)
+                        .border(1.dp, Color(0xFF000000).copy(alpha = 0.05f), CircleShape)
+                ) {
+                    Icon(
+                        imageVector = if (isSoundEnabled) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
+                        contentDescription = "Toggle Sound",
+                        tint = if (isSoundEnabled) Color(0xFF0D9488) else Color.Gray
+                    )
+                }
             }
 
             Row(
@@ -583,7 +878,7 @@ fun PracticeQuizScreen(
                                 .background(Color(0xFFFEF3C7))
                         ) {
                             Icon(
-                                imageVector = Icons.Default.VolumeUp,
+                                imageVector = Icons.AutoMirrored.Filled.VolumeUp,
                                 contentDescription = "Play Audio",
                                 modifier = Modifier.size(36.dp),
                                 tint = Color(0xFFD97706)
