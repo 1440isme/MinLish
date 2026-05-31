@@ -2,6 +2,7 @@ package com.minlish.feature.analytics.presentation
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -29,7 +30,8 @@ import java.util.*
 @Composable
 fun AnalyticsScreen(
     viewModel: MinLishViewModel,
-    stats: DashboardAnalyticsDto
+    stats: DashboardAnalyticsDto,
+    onSessionClick: (String) -> Unit
 ) {
     val listPractices by viewModel.practiceSessions.collectAsState()
 
@@ -208,9 +210,9 @@ fun AnalyticsScreen(
             }
         }
 
-        // Practice session logs list
+        // Practice session  list
         Text(
-            text = "Activity History (5 most recent logs)",
+            text = "Practice History (5 most recent)",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(vertical = 8.dp)
@@ -230,21 +232,20 @@ fun AnalyticsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 8.dp),
+                                .clickable { onSessionClick(item.id) }
+                                .padding(vertical = 12.dp, horizontal = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column {
                                 Text(
-                                    text = when (item.practiceType.uppercase(Locale.US)) {
-                                        "MULTIPLE_CHOICE", "MUTIPLE_CHOICE" -> "Multiple Choice Quiz"
-                                        "FLASHCARD" -> "Flashcard Review"
-                                        "MIXED" -> "Mixed Practice Quiz"
-                                        else -> item.practiceType.replace("_", " ").lowercase(Locale.US)
-                                            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() }
+                                    text = if (!item.deckName.isNullOrBlank()) {
+                                        "${item.deckName} quiz"
+                                    } else {
+                                        "Practice quiz"
                                     },
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 13.sp
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
                                 )
                                 val dateFormat = SimpleDateFormat("HH:mm - MMM dd, yyyy", Locale.US)
                                 Text(

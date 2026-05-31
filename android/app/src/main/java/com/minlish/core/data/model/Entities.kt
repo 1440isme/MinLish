@@ -46,6 +46,7 @@ data class VocabularyWithReviewCard(
 data class PracticeSessionEntity(
     val id: String,
     val deckId: String,
+    val deckName: String? = null,
     val practiceType: String,
     val totalQuestions: Int,
     val correctAnswers: Int,
