@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Replay
@@ -41,9 +42,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -155,35 +154,6 @@ fun StudyFlashcardsScreen(
             }
         }
 
-        if (!isFlipped) {
-            Surface(
-                color = Color.Transparent,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(
-                    text = if (isReplayMode) "Chạm vào thẻ để xem lại" else "Chạm vào thẻ để lật",
-                    color = TextSecondary,
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 2.dp),
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        TextButton(
-            onClick = onFinish,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-        ) {
-            Text(
-                text = "Dừng phiên học",
-                color = TextSecondary,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
     }
 }
 
@@ -273,8 +243,8 @@ private fun StudyHeroCard(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 StudyMetricPill(
-                    title = "Đã đi qua",
-                    value = "$reviewedCount/$totalCount",
+                    title = "Đang ở thẻ",
+                    value = "${(reviewedCount + 1).coerceAtMost(totalCount)}/$totalCount",
                     tint = AccentOrange,
                 )
                 StudyMetricPill(
@@ -645,7 +615,7 @@ private fun ReplayPanel(
         shape = RoundedCornerShape(24.dp),
     ) {
         Icon(
-            imageVector = Icons.Default.Replay,
+            imageVector = if (isLastCard) Icons.Default.CheckCircle else Icons.Default.ArrowForward,
             contentDescription = null,
             tint = Color.White,
         )
@@ -786,7 +756,7 @@ private fun StudyCompletedState(
                         shape = RoundedCornerShape(32.dp),
                     ) {
                         Text(
-                            text = "Quay về Dashboard",
+                            text = "Quay về",
                             color = Color.White,
                             fontWeight = FontWeight.Bold,
                         )
