@@ -116,6 +116,19 @@ export class PracticeController {
     return this.practiceService.finishSession(user.id, sessionId);
   }
 
+  @Get('sessions/:sessionId/results')
+  @ApiOperation({ summary: 'Retrieve results of a completed practice session' })
+  @ApiResponse({
+    status: 200,
+    type: FinishSessionResponseDto,
+  })
+  async getSessionResults(
+    @CurrentUser() user: User,
+    @Param('sessionId') sessionId: string
+  ): Promise<FinishSessionResponseDto> {
+    return this.practiceService.getSessionResults(user.id, sessionId);
+  }
+
   @Post('sessions/:sessionId/cancel')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Cancel a practice session in progress' })

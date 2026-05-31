@@ -799,6 +799,25 @@ class MinLishViewModel(
         _finishAnswers.value = emptyList()
     }
 
+    fun loadPastSessionResults(sessionId: String, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                _practiceError.value = null
+                _quizQuestions.value = emptyList()
+                val response = vocabularyRepository.getPastPracticeSessionResults(sessionId)
+                _activeSession.value = response.session
+                _finishAnswers.value = response.answers
+                _finishSummary.value = response.summary
+                _quizFinished.value = true
+                onComplete()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                val apiError = ApiErrorParser.parse(e)
+                _practiceError.value = apiError?.message ?: e.localizedMessage ?: "Failed to load past session results"
+            }
+        }
+    }
+
     fun cancelActiveSession(sessionId: String, onComplete: () -> Unit) {
         viewModelScope.launch {
             try {

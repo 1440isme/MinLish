@@ -176,9 +176,10 @@ export class AnalyticsService {
 
     //hàm 3
     async getPracticeHistory(userId: string) {
-      // Prisma lâấy dữ liệu từ bảng lưu lịch sử làm bài tập
+      // Prisma lấy dữ liệu từ bảng lưu lịch sử làm bài tập, include thêm tên deck
       const sessions = await this.prisma.practiceSession.findMany({
         where: { userId: userId },
+        include: { deck: { select: { name: true } } },
         orderBy: { finishedAt: 'desc' }, // Sắp xếp bài mới làm xếp lên đỉnh
         take: 5, // Chỉ lấy đúng 5 trận gần nhất để nhẹ máy
       });
@@ -186,6 +187,7 @@ export class AnalyticsService {
     return sessions.map(session => ({
         id: session.id,
         deckId: session.deckId,
+        deckName: session.deck?.name || 'Quick Practice',
         practiceType: session.practiceType, // Ví dụ: "MULTIPLE_CHOICE"
         totalQuestions: session.totalQuestions,
         correctAnswers: session.correctAnswers,

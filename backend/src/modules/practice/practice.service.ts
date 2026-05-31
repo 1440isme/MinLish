@@ -369,6 +369,45 @@ export class PracticeService {
     };
   }
 
+  async getSessionResults(userId: string, sessionId: string): Promise<FinishSessionResponseDto> {
+    const session = await this.prisma.practiceSession.findUnique({
+      where: { id: sessionId },
+    });
+    if (!session) {
+      throw new NotFoundException(ErrorCodes.PRACTICE_SESSION_NOT_FOUND);
+    }
+    if (session.userId !== userId) {
+      throw new ForbiddenException(ErrorCodes.PRACTICE_SESSION_FORBIDDEN);
+    }
+
+    const answers = await this.prisma.practiceAnswer.findMany({
+      where: { sessionId },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const totalQuestions = session.totalQuestions;
+    const correctAnswers = answers.filter((a) => a.isCorrect).length;
+    const unanswered = answers.filter((a) => a.userAnswer === null).length;
+    const wrongAnswers = totalQuestions - correctAnswers - unanswered;
+    const accuracy = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
+
+    const finishedAt = session.finishedAt || new Date();
+    const timeTakenSeconds = Math.max(0, Math.floor((finishedAt.getTime() - session.startedAt.getTime()) / 1000));
+
+    return {
+      session: new PracticeSessionEntity(session as any),
+      answers: answers.map((a) => new PracticeAnswerEntity(a as any)),
+      summary: {
+        totalQuestions,
+        correctAnswers,
+        wrongAnswers,
+        unanswered,
+        accuracy,
+        timeTakenSeconds,
+      },
+    };
+  }
+
   async cancelSession(userId: string, sessionId: string): Promise<PracticeSessionEntity> {
     const session = await this.prisma.practiceSession.findUnique({
       where: { id: sessionId },

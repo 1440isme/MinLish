@@ -10,6 +10,7 @@ export enum PracticeType {
   MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
   FILL_IN_BLANK = 'FILL_IN_BLANK',
   LISTENING = 'LISTENING',
+  MIXED = 'MIXED',
 }
 
 export enum PracticeSessionStatus {

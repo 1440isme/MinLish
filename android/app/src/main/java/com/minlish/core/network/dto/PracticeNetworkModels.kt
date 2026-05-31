@@ -17,6 +17,7 @@ data class PracticeSessionDto(
     @SerializedName("id") val id: String,
     @SerializedName("userId") val userId: String,
     @SerializedName("deckId") val deckId: String?,
+    @SerializedName("deckName") val deckName: String? = null,
     @SerializedName("practiceType") val practiceType: String,
     @SerializedName("totalQuestions") val totalQuestions: Int,
     @SerializedName("correctAnswers") val correctAnswers: Int,
