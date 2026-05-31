@@ -12,6 +12,12 @@ function addDays(date: Date, days: number): Date {
   return next;
 }
 
+function addMinutes(date: Date, minutes: number): Date {
+  const next = new Date(date);
+  next.setUTCMinutes(next.getUTCMinutes() + minutes);
+  return next;
+}
+
 @Injectable()
 export class Sm2Service {
   mapRatingToQuality(rating: ReviewRating): 0 | 3 | 4 | 5 {
@@ -59,10 +65,17 @@ export class Sm2Service {
     let repetition = current.repetition;
     let intervalDays = current.intervalDays;
     let easeFactor = Number(current.easeFactor);
+    let dueAt: Date;
 
-    if (quality < 3) {
+    if (current.status === ReviewCardStatus.NEW && current.totalReviews === 0) {
+      const firstReviewSchedule = this.getFirstReviewSchedule(rating, reviewedAt);
+      repetition = firstReviewSchedule.repetition;
+      intervalDays = firstReviewSchedule.intervalDays;
+      dueAt = firstReviewSchedule.dueAt;
+    } else if (quality < 3) {
       repetition = 0;
       intervalDays = 1;
+      dueAt = addDays(reviewedAt, intervalDays);
     } else {
       if (repetition === 0) {
         intervalDays = 1;
@@ -84,6 +97,8 @@ export class Sm2Service {
       if (rating === ReviewRating.EASY) {
         intervalDays = Math.round(intervalDays * 1.3);
       }
+
+      dueAt = addDays(reviewedAt, intervalDays);
     }
 
     easeFactor =
@@ -91,7 +106,6 @@ export class Sm2Service {
     easeFactor = Math.max(1.3, Number(easeFactor.toFixed(2)));
 
     const isCorrect = quality >= 3;
-    const dueAt = addDays(reviewedAt, intervalDays);
     const firstLearnedAt = current.firstLearnedAt ?? reviewedAt;
     const lapses =
       quality < 3 && current.status !== ReviewCardStatus.NEW
@@ -118,6 +132,44 @@ export class Sm2Service {
       totalReviews: current.totalReviews + 1,
       correctReviews: current.correctReviews + (isCorrect ? 1 : 0),
     };
+  }
+
+  private getFirstReviewSchedule(
+    rating: ReviewRating,
+    reviewedAt: Date,
+  ): { repetition: number; intervalDays: number; dueAt: Date } {
+    switch (rating) {
+      case ReviewRating.AGAIN:
+        return {
+          repetition: 0,
+          intervalDays: 0,
+          dueAt: addMinutes(reviewedAt, 1),
+        };
+      case ReviewRating.HARD:
+        return {
+          repetition: 1,
+          intervalDays: 0,
+          dueAt: addMinutes(reviewedAt, 10),
+        };
+      case ReviewRating.GOOD:
+        return {
+          repetition: 1,
+          intervalDays: 0,
+          dueAt: addMinutes(reviewedAt, 30),
+        };
+      case ReviewRating.EASY:
+        return {
+          repetition: 1,
+          intervalDays: 1,
+          dueAt: addDays(reviewedAt, 1),
+        };
+      default:
+        return {
+          repetition: 0,
+          intervalDays: 0,
+          dueAt: addMinutes(reviewedAt, 1),
+        };
+    }
   }
 }
 
