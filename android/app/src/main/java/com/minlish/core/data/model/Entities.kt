@@ -43,6 +43,11 @@ data class VocabularyWithReviewCard(
     val reviewCard: ReviewCardEntity?
 )
 
+data class DeckLearningProgressEntity(
+    val newWordsAvailable: Int,
+    val dueReviewCount: Int,
+)
+
 data class PracticeSessionEntity(
     val id: String,
     val deckId: String,

@@ -337,6 +337,11 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                                 viewModel.selectDeck(deckId)
                                 viewModel.startStudySession(deckId)
                                 currentScreen = "study"
+                            },
+                            onOpenRecentDeck = { deckId ->
+                                viewModel.selectDeck(deckId)
+                                detailDeckId = deckId
+                                currentScreen = "deck_detail"
                             }
                         )
                         "decks" -> DecksScreen(

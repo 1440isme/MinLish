@@ -87,12 +87,15 @@ fun StudyFlashcardsScreen(
     val isFlipped by viewModel.isCardFlipped.collectAsState()
     val isReplayMode by viewModel.isStudyReplayMode.collectAsState()
     val canReplay by viewModel.canReplayStudySession.collectAsState()
+    val canContinue by viewModel.canContinueStudySession.collectAsState()
 
     if (cards.isEmpty()) {
         StudyCompletedState(
             onFinish = onFinish,
             onReplay = { viewModel.replayLastStudySession() },
+            onContinue = { viewModel.continueCurrentStudySession() },
             canReplay = canReplay,
+            canContinue = canContinue,
         )
         return
     }
@@ -312,10 +315,6 @@ private fun FlashcardSurface(
                 )
                 .padding(horizontal = 20.dp, vertical = 18.dp),
         ) {
-            FlashcardMetaRow(card = card)
-
-            Spacer(modifier = Modifier.height(12.dp))
-
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -344,51 +343,6 @@ private fun FlashcardSurface(
 }
 
 @Composable
-private fun FlashcardMetaRow(card: VocabularyWithReviewCard) {
-    val reviewCard = card.reviewCard
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FlashcardChip(
-                text = if (reviewCard == null) "Từ mới" else "Đến hạn ôn",
-                background = if (reviewCard == null) AccentOrange.copy(alpha = 0.15f) else AccentBlue.copy(alpha = 0.14f),
-                content = if (reviewCard == null) AccentOrange else AccentBlue,
-            )
-        }
-
-        if (reviewCard != null) {
-            Text(
-                text = "EF ${String.format("%.2f", reviewCard.easeFactor)}",
-                color = TextSecondary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-    }
-}
-
-@Composable
-private fun FlashcardChip(
-    text: String,
-    background: Color,
-    content: Color,
-) {
-    Text(
-        text = text,
-        color = content,
-        fontSize = 11.sp,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(background)
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-    )
-}
-
-@Composable
 private fun FlashcardFront(
     vocabulary: VocabularyEntity,
     onSpeak: () -> Unit,
@@ -412,6 +366,17 @@ private fun FlashcardFront(
                 text = vocabulary.pronunciation,
                 color = TextSecondary,
                 fontSize = 15.sp,
+                textAlign = TextAlign.Center,
+            )
+        }
+
+        if (vocabulary.partOfSpeech.isNotBlank()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = vocabulary.partOfSpeech,
+                color = AccentBlue,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
             )
         }
@@ -464,15 +429,6 @@ private fun FlashcardBack(vocabulary: VocabularyEntity) {
                 verticalArrangement = Arrangement.Center,
             ) {
                 Text(
-                    text = vocabulary.word,
-                    style = MaterialTheme.typography.displayLarge,
-                    color = TextPrimary,
-                    textAlign = TextAlign.Center,
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
                     text = vocabulary.meaning,
                     style = MaterialTheme.typography.displayLarge,
                     color = AccentGreen,
@@ -483,65 +439,27 @@ private fun FlashcardBack(vocabulary: VocabularyEntity) {
                 if (vocabulary.descriptionEn.isNotBlank()) {
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = vocabulary.descriptionEn,
-                        style = MaterialTheme.typography.bodySmall,
+                        text = "Define: ${vocabulary.descriptionEn}",
                         color = TextPrimary,
-                        maxLines = 3,
-                        textAlign = TextAlign.Center,
+                        fontSize = 15.sp,
+                        lineHeight = 22.sp,
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+
+                if (vocabulary.example.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = "Example: ${vocabulary.example}",
+                        color = TextPrimary,
+                        fontSize = 15.sp,
+                        lineHeight = 22.sp,
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }
-        }
-
-        if (vocabulary.example.isNotBlank()) {
-            Spacer(modifier = Modifier.height(10.dp))
-            StudyInfoCard(
-                title = "Ví dụ",
-                accent = AccentBlue,
-                body = vocabulary.example,
-                maxLines = 3,
-            )
-        }
-
-        if (vocabulary.note.isNotBlank()) {
-            Spacer(modifier = Modifier.height(10.dp))
-            StudyInfoCard(
-                title = "Ghi nhớ",
-                accent = AccentRed,
-                body = vocabulary.note,
-                maxLines = 2,
-            )
-        }
-    }
-}
-
-@Composable
-private fun StudyInfoCard(
-    title: String,
-    accent: Color,
-    body: String,
-    maxLines: Int,
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = accent.copy(alpha = 0.10f)),
-        border = BorderStroke(1.dp, accent.copy(alpha = 0.20f)),
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
-            Text(
-                text = title,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary,
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = body,
-                color = TextPrimary,
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = maxLines,
-            )
         }
     }
 }
@@ -637,6 +555,8 @@ private fun StudyCompletedState(
     onFinish: () -> Unit,
     onReplay: () -> Unit,
     canReplay: Boolean,
+    onContinue: () -> Unit,
+    canContinue: Boolean,
 ) {
     Box(
         modifier = Modifier
@@ -744,26 +664,67 @@ private fun StudyCompletedState(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Học lại phiên này",
+                                text = "Xem lại phiên học",
                                 color = TextPrimary,
                                 fontWeight = FontWeight.Bold,
                             )
                         }
                     }
 
-                    Button(
-                        onClick = onFinish,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
-                        shape = RoundedCornerShape(32.dp),
-                    ) {
-                        Text(
-                            text = "Quay về",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                        )
+                    if (canContinue) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            OutlinedButton(
+                                onClick = onFinish,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(56.dp),
+                                shape = RoundedCornerShape(32.dp),
+                                border = BorderStroke(1.dp, CardBorder),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = HeroSoft,
+                                    contentColor = TextPrimary,
+                                ),
+                            ) {
+                                Text(
+                                    text = "Quay lại",
+                                    color = TextPrimary,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
+
+                            Button(
+                                onClick = onContinue,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(56.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
+                                shape = RoundedCornerShape(32.dp),
+                            ) {
+                                Text(
+                                    text = "Học tiếp",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
+                        }
+                    } else {
+                        Button(
+                            onClick = onFinish,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
+                            shape = RoundedCornerShape(32.dp),
+                        ) {
+                            Text(
+                                text = "Quay lại",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
                     }
                 }
             }
