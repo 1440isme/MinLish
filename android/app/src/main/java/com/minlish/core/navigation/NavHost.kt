@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import com.minlish.core.network.dto.CreateSessionResponse
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.minlish.feature.settings.presentation.SettingsScreen
 
 @Composable
 fun MinLishAppContent(viewModel: MinLishViewModel) {
@@ -44,7 +45,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
     // Dialog state variables
     var showResumeDialog by remember { mutableStateOf(false) }
     var activeSessionResponse by remember { mutableStateOf<CreateSessionResponse?>(null) }
-    
+
     var showSetupDialog by remember { mutableStateOf(false) }
     var targetSetupDeckId by remember { mutableStateOf<String?>(null) }
 
@@ -124,12 +125,13 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
 
     // Dialog for practice setup configuration
     if (showSetupDialog) {
-        val totalWordsInDeck = viewModel.vocabulariesInSelectedDeck.value.size
-        
-        var questionCount by remember(totalWordsInDeck) { 
-            mutableStateOf(if (totalWordsInDeck > 10) 10 else totalWordsInDeck) 
+        val vocabList by viewModel.vocabulariesInSelectedDeck.collectAsState()
+        val totalWordsInDeck = vocabList.size
+
+        var questionCount by remember(totalWordsInDeck) {
+            mutableStateOf(if (totalWordsInDeck > 10) 10 else totalWordsInDeck)
         }
-        
+
         var isMultipleChoiceChecked by remember { mutableStateOf(true) }
         var isFillInBlankChecked by remember { mutableStateOf(true) }
         var isListeningChecked by remember { mutableStateOf(true) }
@@ -151,7 +153,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                         fontSize = 14.sp
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -198,7 +200,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                         )
                         Text("Multiple Choice (Word/Meaning)", fontSize = 14.sp)
                     }
-                    
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
@@ -210,7 +212,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                         )
                         Text("Fill in the Blank", fontSize = 14.sp)
                     }
-                    
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
@@ -406,7 +408,13 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                             stats = databaseAnalytics
                         )
                         "profile" -> ProfileScreen(
-                            viewModel = viewModel
+                            viewModel = viewModel,
+                            onNavigateToSettings = { currentScreen = "settings" }
+                        )
+
+                        "settings" -> SettingsScreen(
+                            viewModel = viewModel,
+                            onBackClick = { currentScreen = "profile" }
                         )
                     }
                 }

@@ -33,7 +33,54 @@ fun AnalyticsScreen(
 ) {
     val listPractices by viewModel.practiceSessions.collectAsState()
 
+    //Kích hoạt tự động mỗi khi bấm vào trang Stats để load lại dữ liệu mới
+    LaunchedEffect(Unit) {
+        viewModel.fetchDashboardAnalytics()
+    }
     val accentTeal = Color(0xFF0D9488)
+
+    //Tính toán tần suất học trong tuần
+    val volumes = remember(listPractices) {
+        val counts = FloatArray(7) { 0f } // Khởi tạo mảng 7 ngày: Mon=0, Tue=1 ... Sun=6
+
+        // 1. Tìm mốc 00:00:00 của ngày Thứ Hai đầu tuần này
+        val currentCal = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+
+            // Ép hệ thống coi Thứ Hai là ngày đầu tuần theo chuẩn Việt Nam/Anh
+            firstDayOfWeek = Calendar.MONDAY
+
+            // Lùi độ số ngày về đúng Thứ Hai đầu tuần gần nhất
+            while (get(Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
+                add(Calendar.DAY_OF_YEAR, -1)
+            }
+        }
+
+        val startOfWeekMs = currentCal.timeInMillis // Điểm bắt đầu: Thứ Hai 00:00
+        val endOfWeekMs = startOfWeekMs + (7L * 24 * 60 * 60 * 1000) // Điểm kết thúc: Chủ Nhật 23:59 (Sau 7 ngày)
+
+        // 2. Vòng lặp phân loại bài tập vào đúng các thứ trong tuần
+        listPractices.forEach { session ->
+            // Bảo vệ an toàn: Kiểm tra nếu mốc bài làm nằm trọn trong tuần này
+            if (session.finishedAt in startOfWeekMs until endOfWeekMs) {
+                val sessionCal = Calendar.getInstance().apply { timeInMillis = session.finishedAt }
+                val dayOfWeek = sessionCal.get(Calendar.DAY_OF_WEEK)
+
+                // Ánh xạ ngày chuẩn xác sang index mảng (Mon=0, Tue=1 ... Sun=6)
+                val index = if (dayOfWeek == Calendar.SUNDAY) 6 else dayOfWeek - 2
+                if (index in 0..6) {
+                    counts[index] += 1f // Tăng chiều cao thêm 1 đơn vị cho cột thứ đó
+                }
+            }
+        }
+        counts.toList()
+    }
+
+    //Phòng trường hợp chia cho 0 nếu tuần này chưa làm bài nào
+    val maxVolume = remember(volumes) { volumes.maxOrNull()?.coerceAtLeast(1f) ?: 1f }
 
     Column(
         modifier = Modifier
@@ -70,8 +117,6 @@ fun AnalyticsScreen(
                         .height(130.dp)
                 ) {
                     val days = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-                    val volumes = listOf(4f, 8f, 5f, 12f, 7f, 15f, 9f)
-                    val maxVolume = 15f
 
                     val barWidth = 32.dp.toPx()
                     val spacing = (size.width - (barWidth * days.size)) / (days.size + 1)
@@ -92,12 +137,14 @@ fun AnalyticsScreen(
                         )
 
                         // Draw active value bar
-                        drawRoundRect(
-                            color = accentTeal,
-                            topLeft = Offset(startX, startY),
-                            size = Size(barWidth, barHeight),
-                            cornerRadius = CornerRadius(4.dp.toPx())
-                        )
+                        if (barHeight > 0f) {
+                            drawRoundRect(
+                                color = accentTeal,
+                                topLeft = Offset(startX, startY),
+                                size = Size(barWidth, barHeight),
+                                cornerRadius = CornerRadius(4.dp.toPx())
+                            )
+                        }
                     }
                 }
 
@@ -152,7 +199,7 @@ fun AnalyticsScreen(
                             color = accentTeal
                         )
                         Text(
-                            text = "Based on continuous SM-2 ratings and quiz results logs compiled locally.",
+                            text = "Calculated from your overall performance across all completed quiz sessions.",
                             fontSize = 11.sp,
                             color = Color.Gray
                         )
@@ -163,7 +210,7 @@ fun AnalyticsScreen(
 
         // Practice session logs list
         Text(
-            text = "Activity History logs",
+            text = "Activity History (5 most recent logs)",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(vertical = 8.dp)
@@ -189,7 +236,13 @@ fun AnalyticsScreen(
                         ) {
                             Column {
                                 Text(
-                                    text = item.practiceType.replace("_", " "),
+                                    text = when (item.practiceType.uppercase(Locale.US)) {
+                                        "MULTIPLE_CHOICE", "MUTIPLE_CHOICE" -> "Multiple Choice Quiz"
+                                        "FLASHCARD" -> "Flashcard Review"
+                                        "MIXED" -> "Mixed Practice Quiz"
+                                        else -> item.practiceType.replace("_", " ").lowercase(Locale.US)
+                                            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() }
+                                    },
                                     fontWeight = FontWeight.SemiBold,
                                     fontSize = 13.sp
                                 )

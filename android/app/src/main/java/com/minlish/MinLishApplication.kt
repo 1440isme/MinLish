@@ -16,6 +16,10 @@ import com.minlish.core.network.LearningApiService
 import com.minlish.core.network.TokenAuthenticator
 import com.minlish.core.network.UserApiService
 import com.minlish.core.network.VocabulariesApiService
+import com.minlish.core.data.repository.AnalyticsRepository
+import com.minlish.core.data.repository.NotificationRepository
+import com.minlish.feature.analytics.data.AnalyticsApiService
+import com.minlish.feature.settings.data.NotificationApiService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -39,6 +43,10 @@ class MinLishApplication : Application() {
     val importsApiService: ImportsApiService by lazy { retrofit.create(ImportsApiService::class.java) }
     val practiceApiService: PracticeApiService by lazy { retrofit.create(PracticeApiService::class.java) }
     val learningApiService: LearningApiService by lazy { retrofit.create(LearningApiService::class.java) }
+
+    //Khai báo ApiService (Dev E )
+    val analyticsApiService: AnalyticsApiService by lazy { retrofit.create(AnalyticsApiService::class.java) }
+    val notificationApiService: NotificationApiService by lazy { retrofit.create(NotificationApiService::class.java) }
 
     private val okHttpClient: OkHttpClient by lazy {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
@@ -77,4 +85,8 @@ class MinLishApplication : Application() {
     val settingsRepository by lazy { SettingsRepository(tokenManager) }
     val authRepository by lazy { AuthRepository(authApiService, tokenManager) }
     val userRepository by lazy { UserRepository(userApiService, tokenManager) }
+
+    //Khai báo Repository (Dev E )
+    val analyticsRepository by lazy { AnalyticsRepository(analyticsApiService) }
+    val notificationRepository by lazy { NotificationRepository(notificationApiService) }
 }

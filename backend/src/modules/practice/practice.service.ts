@@ -18,6 +18,8 @@ import {
   QuestionType,
 } from './entities/practice.entity';
 
+import { AnalyticsService } from '../analytics/analytics.service';
+
 function normalizeText(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, ' ');
 }
@@ -46,7 +48,7 @@ function getDistractors(allVocabs: any[], currentVocab: any, key: 'meaning' | 'w
 
 @Injectable()
 export class PracticeService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private readonly analyticsService: AnalyticsService,) {}
 
   async createSession(
     userId: string,
@@ -160,7 +162,8 @@ export class PracticeService {
         data: {
           userId,
           deckId: dto.deckId,
-          practiceType: practiceTypes[0],
+          //practiceType: practiceTypes[0],
+          practiceType: practiceTypes.length > 1 ? ('MIXED' as any) : practiceTypes[0],
           totalQuestions,
           status: 'IN_PROGRESS',
         },
@@ -341,6 +344,16 @@ export class PracticeService {
         accuracy,
       },
     });
+
+    //--------------
+    // Nhúng code tự động chuyển số liệu sang bảng daily_activity  ( của dev E)
+    await this.analyticsService.trackPracticeActivity(userId, {
+      practiceSessionsCount: 1,
+      correctCount: correctAnswers, // Lấy biến correctAnswers  tính sẵn ở trên
+      wrongCount: wrongAnswers,     // Lấy biến wrongAnswers tính sẵn ở trên
+      totalLearningSeconds: timeTakenSeconds, // Lấy số giây làm bài tính sẵn ở trên
+    });
+
 
     return {
       session: new PracticeSessionEntity(updatedSession as any),
