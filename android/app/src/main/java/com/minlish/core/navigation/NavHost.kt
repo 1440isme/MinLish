@@ -380,13 +380,14 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                             } ?: run { currentScreen = "decks" }
                         }
                         "practice_quiz" -> {
-                            detailDeckId?.let { deckId ->
+                            val finalDeckId = detailDeckId ?: viewModel.activeSession.value?.deckId
+                            finalDeckId?.let { deckId ->
                                 PracticeQuizScreen(
                                     deckId = deckId,
                                     practiceType = activeQuizType,
                                     viewModel = viewModel,
                                     onBack = {
-                                        currentScreen = "deck_detail"
+                                        currentScreen = if (detailDeckId != null) "deck_detail" else "analytics"
                                     }
                                 )
                             } ?: run { currentScreen = "decks" }
@@ -403,7 +404,13 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                         )
                         "analytics" -> AnalyticsScreen(
                             viewModel = viewModel,
-                            stats = databaseAnalytics
+                            stats = databaseAnalytics,
+                            onSessionClick = { sessionId ->
+                                activeQuizType = "MIXED"
+                                viewModel.loadPastSessionResults(sessionId) {
+                                    currentScreen = "practice_quiz"
+                                }
+                            }
                         )
                         "profile" -> ProfileScreen(
                             viewModel = viewModel,

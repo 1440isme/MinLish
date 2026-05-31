@@ -274,7 +274,7 @@ fun PracticeQuizScreen(
         }
     }
 
-    if (questions.isEmpty()) {
+    if (questions.isEmpty() && !isFinished) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -828,19 +828,19 @@ fun PracticeQuizScreen(
             trackColor = Color(0xFFE2E8F0)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         // Mascot
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(110.dp),
+                .height(55.dp),
             contentAlignment = Alignment.Center
         ) {
-            BeeMascot(modifier = Modifier.fillMaxSize())
+            BeeMascot(modifier = Modifier.fillMaxHeight())
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Text(
             text = "Practice",
@@ -851,7 +851,7 @@ fun PracticeQuizScreen(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         // Question Card Display
         Card(
@@ -903,7 +903,7 @@ fun PracticeQuizScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Question choices or input box
         val isSubmitted = lastSubmitResult != null

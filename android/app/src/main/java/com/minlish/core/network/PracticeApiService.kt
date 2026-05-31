@@ -22,6 +22,9 @@ interface PracticeApiService {
     @POST("practice/sessions/{sessionId}/finish")
     suspend fun finishSession(@Path("sessionId") sessionId: String): FinishSessionResponse
 
+    @GET("practice/sessions/{sessionId}/results")
+    suspend fun getSessionResults(@Path("sessionId") sessionId: String): FinishSessionResponse
+
     @POST("practice/sessions/{sessionId}/cancel")
     suspend fun cancelSession(@Path("sessionId") sessionId: String): PracticeSessionDto
 }

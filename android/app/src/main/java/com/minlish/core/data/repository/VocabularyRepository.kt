@@ -460,6 +460,10 @@ class VocabularyRepository(
         return practiceApi.finishSession(sessionId)
     }
 
+    suspend fun getPastPracticeSessionResults(sessionId: String): FinishSessionResponse {
+        return practiceApi.getSessionResults(sessionId)
+    }
+
     suspend fun cancelPracticeSession(sessionId: String): PracticeSessionDto {
         return practiceApi.cancelSession(sessionId)
     }
