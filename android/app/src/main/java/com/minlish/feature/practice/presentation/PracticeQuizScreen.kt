@@ -22,7 +22,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minlish.core.component.BeeMascot
-import com.minlish.core.presentation.MinLishViewModel
 import androidx.compose.ui.res.stringResource
 import com.minlish.R
 import com.minlish.core.network.dto.PracticeQuestionDto
@@ -234,8 +233,9 @@ private fun playIncorrectSound() {
 fun PracticeQuizScreen(
     deckId: String,
     practiceType: String,
-    viewModel: MinLishViewModel,
-    onBack: () -> Unit
+    viewModel: PracticeQuizViewModel,
+    onBack: () -> Unit,
+    onSpeak: (String) -> Unit,
 ) {
     val questions by viewModel.quizQuestions.collectAsState()
     val index by viewModel.currentQuizIndex.collectAsState()
@@ -252,6 +252,10 @@ fun PracticeQuizScreen(
     var showReviewScreen by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
+
+    LaunchedEffect(deckId) {
+        viewModel.loadDeckVocabularies(deckId)
+    }
 
     // Handle auto-advance for correct answer
     LaunchedEffect(lastSubmitResult) {
@@ -724,7 +728,7 @@ fun PracticeQuizScreen(
     // Trigger TTS for listening question format
     LaunchedEffect(currentQuestion.index, currentQuestion.questionType) {
         if (currentQuestion.questionType == "LISTENING_WORD" && vocab != null) {
-            viewModel.speak(vocab.word)
+            onSpeak(vocab.word)
         }
     }
 
@@ -876,7 +880,7 @@ fun PracticeQuizScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         IconButton(
                             onClick = {
-                                if (vocab != null) viewModel.speak(vocab.word)
+                                if (vocab != null) onSpeak(vocab.word)
                             },
                             modifier = Modifier
                                 .size(64.dp)

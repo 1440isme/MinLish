@@ -26,15 +26,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import com.minlish.core.presentation.MinLishViewModel
 import com.minlish.core.notification.NotificationScheduler
+import com.minlish.feature.profile.presentation.ProfileSettingsViewModel
 import java.util.Calendar
 import androidx.compose.ui.res.stringResource
 import com.minlish.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(viewModel: MinLishViewModel, onBackClick: () -> Unit) {
+fun SettingsScreen(viewModel: ProfileSettingsViewModel, onBackClick: () -> Unit) {
     val notiSettings by viewModel.notificationSettings.collectAsState()
 
     val accentTeal = Color(0xFF0D9488)

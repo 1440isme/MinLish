@@ -12,12 +12,19 @@ export class CreateDeviceTokenDto {
   @IsNotEmpty()
   token: string;
 
-  @ApiProperty({ example: 'ANDROID', enum: DevicePlatform, required: false })
+  @ApiProperty({
+    example: 'ANDROID',
+    enum: DevicePlatform,
+    required: false,
+  })
   @IsEnum(DevicePlatform)
   @IsOptional()
   platform?: DevicePlatform;
 
-  @ApiProperty({ example: 'Samsung Galaxy S24 Ultra', required: false })
+  @ApiProperty({
+    example: 'Samsung Galaxy S24 Ultra',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   deviceName?: string;

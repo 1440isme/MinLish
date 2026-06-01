@@ -51,12 +51,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.minlish.R
 import com.minlish.core.data.model.DeckEntity
-import com.minlish.core.presentation.MinLishViewModel
 import kotlinx.coroutines.delay
 
 @Composable
 fun DecksScreen(
-    viewModel: MinLishViewModel,
+    viewModel: DecksViewModel,
     onDeckClick: (String) -> Unit,
 ) {
     val decks by viewModel.decksList.collectAsState()

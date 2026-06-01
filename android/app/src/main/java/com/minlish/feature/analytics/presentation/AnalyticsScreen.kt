@@ -25,7 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minlish.core.data.model.DashboardAnalyticsDto
-import com.minlish.core.presentation.MinLishViewModel
+import com.minlish.feature.practice.presentation.PracticeQuizViewModel
 import androidx.compose.ui.res.stringResource
 import com.minlish.R
 import java.text.SimpleDateFormat
@@ -33,15 +33,17 @@ import java.util.*
 
 @Composable
 fun AnalyticsScreen(
-    viewModel: MinLishViewModel,
+    viewModel: PracticeQuizViewModel,
     stats: DashboardAnalyticsDto,
-    onSessionClick: (String) -> Unit
+    onSessionClick: (String) -> Unit,
+    onRefreshStats: () -> Unit,
 ) {
     val listPractices by viewModel.practiceSessions.collectAsState()
 
     //Kích hoạt tự động mỗi khi bấm vào trang Stats để load lại dữ liệu mới
     LaunchedEffect(Unit) {
-        viewModel.fetchDashboardAnalytics()
+        onRefreshStats()
+        viewModel.fetchPracticeHistory()
     }
     val accentTeal = Color(0xFF0D9488)
 

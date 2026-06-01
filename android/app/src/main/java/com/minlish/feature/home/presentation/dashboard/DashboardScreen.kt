@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minlish.core.data.model.RecentStudyDeckEntity
 import com.minlish.core.component.GiraffeMascot
-import com.minlish.core.presentation.MinLishViewModel
 import com.minlish.ui.theme.MinLishTheme
 import java.text.SimpleDateFormat
 import java.util.*
@@ -31,7 +30,7 @@ import com.minlish.R
 
 @Composable
 fun DashboardScreen(
-    viewModel: MinLishViewModel,
+    viewModel: DashboardViewModel,
     onStartDailyQuiz: () -> Unit,
     onStartDailyNew: () -> Unit,
     onNavigateToDecks: () -> Unit,
@@ -44,6 +43,7 @@ fun DashboardScreen(
     val recentStudyDeck by viewModel.recentStudyDeck.collectAsState()
 
     LaunchedEffect(Unit) {
+        viewModel.fetchDashboardAnalytics()
         viewModel.refreshRecentStudyDeck()
     }
 

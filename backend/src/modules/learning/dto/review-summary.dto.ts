@@ -2,7 +2,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { ReviewRating } from '../enums/review-rating.enum';
 
 export class ReviewSummaryDto {
-  @ApiProperty({ enum: ReviewRating, example: ReviewRating.GOOD })
+  @ApiProperty({
+    enum: ReviewRating,
+    example: ReviewRating.GOOD,
+  })
   rating: ReviewRating;
 
   @ApiProperty({ example: 4 })
@@ -18,4 +21,3 @@ export class ReviewSummaryDto {
     Object.assign(this, partial);
   }
 }
-

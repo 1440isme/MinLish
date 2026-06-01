@@ -35,8 +35,6 @@ import androidx.compose.ui.window.Dialog
 import com.minlish.R
 import com.minlish.core.data.model.AddVocabularyResult
 import com.minlish.core.data.model.VocabularyEntity
-import com.minlish.core.presentation.MinLishViewModel
-import com.minlish.core.presentation.SameWordWarningState
 import kotlinx.coroutines.launch
 
 private val partOfSpeechOptions = listOf(
@@ -56,10 +54,11 @@ private val partOfSpeechOptions = listOf(
 @Composable
 fun DeckDetailScreen(
     deckId: String,
-    viewModel: MinLishViewModel,
+    viewModel: DeckDetailViewModel,
     onBack: () -> Unit,
     onStartStudy: () -> Unit,
-    onStartQuiz: (String) -> Unit
+    onStartQuiz: (String) -> Unit,
+    onSpeak: (String) -> Unit,
 ) {
     val deck by viewModel.selectedDeck.collectAsState()
     val vocabs by viewModel.vocabulariesInSelectedDeck.collectAsState()
@@ -278,7 +277,7 @@ fun DeckDetailScreen(
                         isFavorited = isFavorited,
                         showFavorite = true,
                         onClick = { selectedVocabulary = vocab },
-                        onSpeak = { viewModel.speak(vocab.word) },
+                        onSpeak = { onSpeak(vocab.word) },
                         onToggleFavorite = {
                             viewModel.toggleFavorite(vocab) { _, error ->
                                 error?.let { msg ->

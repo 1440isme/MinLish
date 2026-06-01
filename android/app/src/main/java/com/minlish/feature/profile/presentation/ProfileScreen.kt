@@ -31,14 +31,13 @@ import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import com.minlish.R
-import com.minlish.core.presentation.MinLishViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.minlish.BuildConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit ) //lệnh chuyển màn hình từ NavHost truyền vào
+fun ProfileScreen(viewModel: ProfileSettingsViewModel , onNavigateToSettings: () -> Unit ) //lệnh chuyển màn hình từ NavHost truyền vào
 {
     val name by viewModel.fullName.collectAsState()
     val avatarUrl by viewModel.avatarUrl.collectAsState()

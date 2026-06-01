@@ -9,20 +9,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.MinLishApplication
-import com.minlish.core.presentation.MinLishViewModel
+import com.minlish.core.presentation.MainViewModel
 import com.minlish.feature.analytics.presentation.AnalyticsScreen
 import com.minlish.feature.auth.presentation.AuthViewModel
 import com.minlish.feature.auth.presentation.AuthViewModelFactory
 import com.minlish.feature.auth.presentation.login.LoginScreen
 import com.minlish.feature.auth.presentation.register.RegisterScreen
 import com.minlish.feature.deck.presentation.DeckDetailScreen
+import com.minlish.feature.deck.presentation.DeckDetailViewModel
 import com.minlish.feature.deck.presentation.DecksScreen
+import com.minlish.feature.deck.presentation.DecksViewModel
 import com.minlish.feature.home.presentation.dashboard.DashboardScreen
+import com.minlish.feature.home.presentation.dashboard.DashboardViewModel
 import com.minlish.feature.learning.presentation.StudyFlashcardsScreen
+import com.minlish.feature.learning.presentation.StudyFlashcardsViewModel
 import com.minlish.feature.practice.presentation.PracticeQuizScreen
+import com.minlish.feature.practice.presentation.PracticeQuizViewModel
 import com.minlish.feature.profile.presentation.ProfileScreen
+import com.minlish.feature.profile.presentation.ProfileSettingsViewModel
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
@@ -39,9 +46,32 @@ import androidx.compose.ui.res.stringResource
 import com.minlish.R
 
 @Composable
-fun MinLishAppContent(viewModel: MinLishViewModel) {
-    val isOnboarded by viewModel.isOnboarded.collectAsState()
-    val databaseAnalytics by viewModel.dashboardAnalytics.collectAsState()
+fun MinLishAppContent(
+    mainViewModel: MainViewModel,
+    viewModelFactory: ViewModelProvider.Factory,
+) {
+    val dashboardViewModel: DashboardViewModel = viewModel(factory = viewModelFactory)
+    val decksViewModel: DecksViewModel = viewModel(factory = viewModelFactory)
+    val deckDetailViewModel: DeckDetailViewModel = viewModel(factory = viewModelFactory)
+    val studyViewModel: StudyFlashcardsViewModel = viewModel(factory = viewModelFactory)
+    val practiceViewModel: PracticeQuizViewModel = viewModel(factory = viewModelFactory)
+    val profileSettingsViewModel: ProfileSettingsViewModel = viewModel(factory = viewModelFactory)
+
+    val isOnboarded by mainViewModel.isOnboarded.collectAsState()
+    val databaseAnalytics by dashboardViewModel.dashboardAnalytics.collectAsState()
+
+    LaunchedEffect(isOnboarded) {
+        if (isOnboarded) {
+            dashboardViewModel.fetchLearningLevels()
+            dashboardViewModel.fetchDashboardAnalytics()
+            dashboardViewModel.refreshRecentStudyDeck()
+            deckDetailViewModel.refreshFavoritedIds()
+            profileSettingsViewModel.fetchUserProfile()
+            profileSettingsViewModel.fetchNotificationSettings()
+            profileSettingsViewModel.fetchLearningLevels()
+            practiceViewModel.fetchPracticeHistory()
+        }
+    }
 
     var currentScreen by remember { mutableStateOf("home") }
     var detailDeckId by remember { mutableStateOf<String?>(null) }
@@ -90,7 +120,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                     onClick = {
                         showResumeDialog = false
                         activeSessionResponse?.let {
-                            viewModel.resumeActiveSession(it)
+                            practiceViewModel.resumeActiveSession(it)
                             currentScreen = "practice_quiz"
                         }
                     },
@@ -104,7 +134,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                     onClick = {
                         showResumeDialog = false
                         activeSessionResponse?.session?.id?.let { sessionId ->
-                            viewModel.cancelActiveSession(sessionId) {
+                            practiceViewModel.cancelActiveSession(sessionId) {
                                 targetSetupDeckId = detailDeckId
                                 showSetupDialog = true
                             }
@@ -123,7 +153,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
 
     // Dialog for practice setup configuration
     if (showSetupDialog) {
-        val vocabList by viewModel.vocabulariesInSelectedDeck.collectAsState()
+        val vocabList by deckDetailViewModel.vocabulariesInSelectedDeck.collectAsState()
         val totalWordsInDeck = vocabList.size
 
         var questionCount by remember(totalWordsInDeck) {
@@ -279,7 +309,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                                 ).show()
                                 return@let
                             }
-                            viewModel.startNewPracticeSession(deckId, types, questionCount, practiceScope)
+                            practiceViewModel.startNewPracticeSession(deckId, types, questionCount, practiceScope)
                             showSetupDialog = false
                             currentScreen = "practice_quiz"
                         }
@@ -335,15 +365,15 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                     ) {
                         when (currentScreen) {
                             "home" -> DashboardScreen(
-                                viewModel = viewModel,
+                                viewModel = dashboardViewModel,
                                 onStartDailyQuiz = {
                                     activeStudyDeckId = null
-                                    viewModel.startDailyQuizSession()
+                                    studyViewModel.startDailyQuizSession()
                                     currentScreen = "study"
                                 },
                                 onStartDailyNew = {
                                     activeStudyDeckId = null
-                                    viewModel.startDailyNewSession()
+                                    studyViewModel.startDailyNewSession()
                                     currentScreen = "study"
                                 },
                                 onNavigateToDecks = {
@@ -352,20 +382,20 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                                 onResumeRecentDeck = { deckId ->
                                     detailDeckId = deckId
                                     activeStudyDeckId = deckId
-                                    viewModel.selectDeck(deckId)
-                                    viewModel.startStudySession(deckId)
+                                    deckDetailViewModel.selectDeck(deckId)
+                                    studyViewModel.startStudySession(deckId)
                                     currentScreen = "study"
                                 },
                                 onOpenRecentDeck = { deckId ->
-                                    viewModel.selectDeck(deckId)
+                                    deckDetailViewModel.selectDeck(deckId)
                                     detailDeckId = deckId
                                     currentScreen = "deck_detail"
                                 }
                             )
                             "decks" -> DecksScreen(
-                                viewModel = viewModel,
+                                viewModel = decksViewModel,
                                 onDeckClick = { deckId ->
-                                    viewModel.selectDeck(deckId)
+                                    deckDetailViewModel.selectDeck(deckId)
                                     detailDeckId = deckId
                                     currentScreen = "deck_detail"
                                 }
@@ -374,16 +404,16 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                                 detailDeckId?.let { deckId ->
                                     DeckDetailScreen(
                                         deckId = deckId,
-                                        viewModel = viewModel,
+                                        viewModel = deckDetailViewModel,
                                         onBack = { currentScreen = "decks"; detailDeckId = null },
                                         onStartStudy = {
                                             activeStudyDeckId = deckId
-                                            viewModel.startStudySession(deckId)
+                                            studyViewModel.startStudySession(deckId)
                                             currentScreen = "study"
                                         },
                                         onStartQuiz = { qType ->
                                             if (qType == deckId) {
-                                                viewModel.checkForActiveSession(deckId) { activeResponse ->
+                                                practiceViewModel.checkForActiveSession(deckId) { activeResponse ->
                                                     if (activeResponse != null) {
                                                         activeSessionResponse = activeResponse
                                                         showResumeDialog = true
@@ -395,28 +425,30 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                                             } else {
                                                 activeQuizDeckId = deckId
                                                 activeQuizType = qType
-                                                viewModel.startNewPracticeSession(deckId, listOf(qType), 10)
+                                                practiceViewModel.startNewPracticeSession(deckId, listOf(qType), 10)
                                                 currentScreen = "practice_quiz"
                                             }
-                                        }
+                                        },
+                                        onSpeak = { text -> studyViewModel.speak(text) },
                                     )
                                 } ?: run { currentScreen = "decks" }
                             }
                             "practice_quiz" -> {
-                                val finalDeckId = detailDeckId ?: viewModel.activeSession.value?.deckId
+                                val finalDeckId = detailDeckId ?: practiceViewModel.activeSession.value?.deckId
                                 finalDeckId?.let { deckId ->
                                     PracticeQuizScreen(
                                         deckId = deckId,
                                         practiceType = activeQuizType,
-                                        viewModel = viewModel,
+                                        viewModel = practiceViewModel,
                                         onBack = {
                                             currentScreen = if (detailDeckId != null) "deck_detail" else "analytics"
-                                        }
+                                        },
+                                        onSpeak = { text -> studyViewModel.speak(text) },
                                     )
                                 } ?: run { currentScreen = "decks" }
                             }
                             "study" -> StudyFlashcardsScreen(
-                                viewModel = viewModel,
+                                viewModel = studyViewModel,
                                 onFinish = {
                                     currentScreen = if (activeStudyDeckId != null) {
                                         "deck_detail"
@@ -426,22 +458,23 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                                 }
                             )
                             "analytics" -> AnalyticsScreen(
-                                viewModel = viewModel,
+                                viewModel = practiceViewModel,
                                 stats = databaseAnalytics,
                                 onSessionClick = { sessionId ->
                                     activeQuizType = "MIXED"
-                                    viewModel.loadPastSessionResults(sessionId) {
+                                    practiceViewModel.loadPastSessionResults(sessionId) {
                                         currentScreen = "practice_quiz"
                                     }
-                                }
+                                },
+                                onRefreshStats = { dashboardViewModel.fetchDashboardAnalytics() },
                             )
                             "profile" -> ProfileScreen(
-                                viewModel = viewModel,
+                                viewModel = profileSettingsViewModel,
                                 onNavigateToSettings = { currentScreen = "settings" }
                             )
 
                             "settings" -> SettingsScreen(
-                                viewModel = viewModel,
+                                viewModel = profileSettingsViewModel,
                                 onBackClick = { currentScreen = "profile" }
                             )
                         }

@@ -58,7 +58,6 @@ import androidx.compose.ui.unit.sp
 import com.minlish.core.component.GiraffeMascot
 import com.minlish.core.data.model.VocabularyEntity
 import com.minlish.core.data.model.VocabularyWithReviewCard
-import com.minlish.core.presentation.MinLishViewModel
 import androidx.compose.ui.res.stringResource
 import com.minlish.R
 
@@ -83,7 +82,7 @@ private data class RatingUi(
 
 @Composable
 fun StudyFlashcardsScreen(
-    viewModel: MinLishViewModel,
+    viewModel: StudyFlashcardsViewModel,
     onFinish: () -> Unit,
 ) {
     val cards by viewModel.activeFlashcards.collectAsState()
