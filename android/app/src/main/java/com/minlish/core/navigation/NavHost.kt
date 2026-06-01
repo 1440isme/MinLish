@@ -126,6 +126,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
         var isMultipleChoiceChecked by remember { mutableStateOf(true) }
         var isFillInBlankChecked by remember { mutableStateOf(true) }
         var isListeningChecked by remember { mutableStateOf(true) }
+        var practiceScope by remember { mutableStateOf("LEARNED_ONLY") }
 
         AlertDialog(
             onDismissRequest = { showSetupDialog = false },
@@ -215,6 +216,41 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                         )
                         Text("Listening Practice", fontSize = 14.sp)
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        "Practice scope:",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = practiceScope == "LEARNED_ONLY",
+                            onClick = { practiceScope = "LEARNED_ONLY" },
+                            colors = RadioButtonDefaults.colors(selectedColor = Color(0xFFFBBF24))
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Only learned words", fontSize = 14.sp)
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = practiceScope == "ALL",
+                            onClick = { practiceScope = "ALL" },
+                            colors = RadioButtonDefaults.colors(selectedColor = Color(0xFFFBBF24))
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("All words in deck", fontSize = 14.sp)
+                    }
                 }
             },
             confirmButton = {
@@ -236,7 +272,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                                 ).show()
                                 return@let
                             }
-                            viewModel.startNewPracticeSession(deckId, types, questionCount)
+                            viewModel.startNewPracticeSession(deckId, types, questionCount, practiceScope)
                             showSetupDialog = false
                             currentScreen = "practice_quiz"
                         }

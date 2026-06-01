@@ -833,12 +833,12 @@ class MinLishViewModel(
         }
     }
 
-    fun startNewPracticeSession(deckId: String, practiceTypes: List<String>, totalQuestions: Int) {
+    fun startNewPracticeSession(deckId: String, practiceTypes: List<String>, totalQuestions: Int, scope: String = "LEARNED_ONLY") {
         viewModelScope.launch {
             try {
                 _practiceError.value = null
                 _quizQuestions.value = emptyList()
-                val response = vocabularyRepository.createPracticeSession(deckId, practiceTypes, totalQuestions)
+                val response = vocabularyRepository.createPracticeSession(deckId, practiceTypes, totalQuestions, scope)
                 _activeSession.value = response.session
                 _quizQuestions.value = response.questions
                 _currentQuizIndex.value = 0
@@ -853,7 +853,9 @@ class MinLishViewModel(
                 val errorMsg = apiError?.message ?: apiError?.code
                 val msg = when (errorMsg) {
                     "PRACTICE_NOT_ENOUGH_VOCABULARY", "deckId must be a UUID" ->
-                        "This deck does not have enough vocabulary to start this practice mode. (Minimum 4 words needed )."
+                        "This deck does not have enough vocabulary to start this practice mode. (Minimum 4 words needed)."
+                    "PRACTICE_NOT_ENOUGH_LEARNED_VOCABULARY" ->
+                        "This deck does not have enough learned vocabulary. Please study at least 4 words first."
                     "PRACTICE_DECK_NOT_FOUND" ->
                         "The selected deck was not found or has been deleted."
                     else -> apiError?.message ?: e.localizedMessage ?: "Failed to start practice session"
