@@ -55,7 +55,9 @@ data class PracticeSessionEntity(
     val practiceType: String,
     val totalQuestions: Int,
     val correctAnswers: Int,
-    val finishedAt: Long
+    val finishedAt: Long,
+
+    val status: String,
 )
 
 data class DashboardAnalyticsDto(
@@ -65,7 +67,9 @@ data class DashboardAnalyticsDto(
     val dailyGoal: Int,
     val accuracy: Float,
     val streak: Int,
-    val progressPercent: Int
+    val progressPercent: Int,
+    val weeklyActiveDays: List<Boolean> = List(7) { false }, // mảng 7 ngày lấy từ server
+    val totalPractices: Int = 0   //tổng số lượng baài practice đã làm
 )
 
 data class RecentStudyDeckEntity(

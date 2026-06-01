@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.FiberNew
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
@@ -51,8 +52,12 @@ fun DashboardScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
-        // Rovio Streak Weekly tracker at the very top!
-        RovioWeeklyTracker(streakCount = stats.streak)
+        // Rovio Streak Weekly tracker
+        //Thêm mảng 7 ngày vào tracker
+        RovioWeeklyTracker(
+            streakCount = stats.streak,
+            weeklyActiveDays = stats.weeklyActiveDays
+        )
 
         // Greeting Header
         Text(
@@ -355,12 +360,12 @@ private fun RecentDeckCard(
 @Composable
 fun DashboardScreenPreview() {
     MinLishTheme {
-        // Mock data for preview could be added here
+        // Mock data for preview
     }
 }
 
 @Composable
-fun RovioWeeklyTracker(streakCount: Int) {
+fun RovioWeeklyTracker(streakCount: Int, weeklyActiveDays: List<Boolean>) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -406,53 +411,48 @@ fun RovioWeeklyTracker(streakCount: Int) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                val daysList = remember(streakCount) {
-                    val list = mutableListOf<Triple<String, String, Boolean>>()
-                    val sdfNum = SimpleDateFormat("dd", Locale.US)
-                    val sdfName = SimpleDateFormat("E", Locale.US)
+                // Danh sách 7 ngày hiển thị chữ cái đầu
+                val daysOfWeek = listOf("M", "T", "W", "T", "F", "S", "S")
 
-                    for (i in 3 downTo 0) {
-                        val cal = Calendar.getInstance()
-                        cal.add(Calendar.DAY_OF_YEAR, -i)
 
-                        // Nếu số ngày i nằm trong phạm vi chuỗi ngày streak thật, tự thắp sáng chấm tròn vàng
-                        val finished = i < streakCount
-                        list.add(Triple(sdfNum.format(cal.time), sdfName.format(cal.time), finished))
-                    }
-                    list
-                }
-
-                daysList.forEach { (num, day, finished) ->
+                daysOfWeek.forEachIndexed { index, dayLabel ->
+                    // Tránh lỗi Index nếu danh sách mảng chưa kịp update
+                    val isActive = weeklyActiveDays.getOrElse(index) { false }
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            num,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (finished) Color(0xFF1C1C1A) else Color(0xFF7C776E).copy(alpha = 0.6f)
-                        )
-                        Text(
-                            day,
-                            fontSize = 11.sp,
-                            color = Color(0xFF7C776E)
+                            text = dayLabel,
+                            fontSize = 13.sp,
+                            fontWeight = if (isActive) FontWeight.Bold else FontWeight.SemiBold,
+                            color = if (isActive) Color(0xFF1C1C1A) else Color(0xFF7C776E).copy(alpha = 0.6f)
                         )
                         
                         // Circle Indicator
                         Box(
                             modifier = Modifier
-                                .size(24.dp)
+                                .size(28.dp)
                                 .clip(CircleShape)
                                 .background(
-                                    if (finished) Color(0xFFFBBF24) else Color.White
+                                    if (isActive) Color(0xFFFBBF24) else Color.White
                                 )
                                 .border(
                                     width = 1.5.dp,
-                                    color = if (finished) Color(0xFFFBBF24) else Color(0xFFE0E7FF),
+                                    color = if (isActive) Color(0xFFFBBF24) else Color(0xFFE0E7FF),
                                     shape = CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isActive) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Active",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
                                 )
-                        )
+                            }
+                        }
                     }
                 }
             }

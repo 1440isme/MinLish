@@ -753,6 +753,9 @@ class MinLishViewModel(
                     _activeFlashcards.value = emptyList()
                     refreshStudyContinuationAvailability()
                 }
+
+                fetchDashboardAnalytics() //tải lại số liệu Streak ngay sau học xong từ vựng
+
                 _lastErrorMessage.value = null
             } catch (e: Exception) {
                 _lastErrorMessage.value = e.message ?: "Failed to submit review"

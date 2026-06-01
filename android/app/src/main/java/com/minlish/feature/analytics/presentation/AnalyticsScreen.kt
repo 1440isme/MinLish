@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Analytics
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,6 +19,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -40,6 +42,18 @@ fun AnalyticsScreen(
         viewModel.fetchDashboardAnalytics()
     }
     val accentTeal = Color(0xFF0D9488)
+
+    //Tổng số practice đã thực hiện :
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val textPaint = remember(density) {
+        android.graphics.Paint().apply {
+            color = android.graphics.Color.parseColor("#0D9488") // Màu Teal cho số liệu
+            textAlign = android.graphics.Paint.Align.CENTER
+            textSize = with(density) { 13.sp.toPx() } // Chữ tự co giãn theo tỷ lệ màn hình
+            typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
+            isAntiAlias = true
+        }
+    }
 
     //Tính toán tần suất học trong tuần
     val volumes = remember(listPractices) {
@@ -146,6 +160,13 @@ fun AnalyticsScreen(
                                 size = Size(barWidth, barHeight),
                                 cornerRadius = CornerRadius(4.dp.toPx())
                             )
+                            // Thêm số lieệu cụ thể lên đỉnh cột
+                            drawContext.canvas.nativeCanvas.drawText(
+                                volume.toInt().toString(), // In con số thực tế
+                                startX + (barWidth / 2),   // Căn giữa cột
+                                startY - 12.dp.toPx(),     // Nổi lên trên đỉnh cột 12dp
+                                textPaint
+                            )
                         }
                     }
                 }
@@ -178,12 +199,13 @@ fun AnalyticsScreen(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "Historical Accuracy Metrics",
+                    text = "Overall Practice Statistics",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
+                // Dòng 1: tỉ lệ chính xác
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Analytics,
@@ -202,6 +224,33 @@ fun AnalyticsScreen(
                         )
                         Text(
                             text = "Calculated from your overall performance across all completed quiz sessions.",
+                            fontSize = 11.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider(color = Color.Black.copy(alpha = 0.05f))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Dòng 2: Tổng số bài làm
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = androidx.compose.material.icons.Icons.Default.EmojiEvents,
+                        contentDescription = null,
+                        tint = Color(0xFFF59E0B),
+                        modifier = Modifier.size(40.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(
+                            text = "${stats.totalPractices} Sessions Completed",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 17.sp,
+                            color = Color(0xFFD97706)
+                        )
+                        Text(
+                            text = "Total practice quizzes taken so far.",
                             fontSize = 11.sp,
                             color = Color.Gray
                         )
@@ -237,7 +286,10 @@ fun AnalyticsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column {
+                            // Thêm Modifier.weight(1f) để ép Column chỉ lấy phần không gian còn lại,
+                            // nhường chỗ cho text bên phải không bao giờ bị chèn
+                            Column(modifier = Modifier.weight(1f).padding(end = 16.dp))
+                            {
                                 Text(
                                     text = if (!item.deckName.isNullOrBlank()) {
                                         "${item.deckName} quiz"
@@ -245,8 +297,11 @@ fun AnalyticsScreen(
                                         "Practice quiz"
                                     },
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp
+                                    fontSize = 14.sp,
+                                    maxLines = 2 // Cho phép tự động xuống dòng nếu tên quá dài
                                 )
+                                // Tự động nhân 1000 nếu server trả về giây ( chống lỗi 1970 )
+                                val finishedMillis = if (item.finishedAt < 1000000000000L) item.finishedAt * 1000 else item.finishedAt
                                 val dateFormat = SimpleDateFormat("HH:mm - MMM dd, yyyy", Locale.US)
                                 Text(
                                     text = dateFormat.format(Date(item.finishedAt)),
@@ -255,11 +310,17 @@ fun AnalyticsScreen(
                                 )
                             }
 
+                            // Giữ không gian cố định cho kết quả câu hỏi
+                            val isCancelled = item.status.toString().uppercase(Locale.US) == "CANCELLED"
+
                             Text(
-                                text = "${item.correctAnswers} / ${item.totalQuestions} answers",
+                                text = if (isCancelled) "Cancelled" else { "${item.correctAnswers} / ${item.totalQuestions} answers" },
+                                //text = "${item.correctAnswers} / ${item.totalQuestions} answers",
                                 fontWeight = FontWeight.Bold,
-                                color = accentTeal,
-                                fontSize = 13.sp
+                                color = if (isCancelled) Color(0xFFEF4444) else accentTeal, //pratice bị huỷ thì sẽ hiện đỏ
+                                //color =  accentTeal, //pratice bị huỷ thì sẽ hiện đỏ
+                                fontSize = 13.sp,
+                                maxLines = 1 // Ép giữ trên một dòng duy nhất
                             )
                         }
                         HorizontalDivider()
