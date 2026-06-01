@@ -67,6 +67,30 @@ export class PracticeService {
 
     // 2. Fetch vocabulary
     const scope = dto.scope ?? 'LEARNED_ONLY';
+
+    // Count total vocabulary in the deck first to check if the deck itself is too small
+    const totalVocabInDeck = await this.prisma.vocabulary.count({
+      where: {
+        deckId: dto.deckId,
+        deletedAt: null,
+      },
+    });
+
+    // Resolve practiceTypes
+    const practiceTypes = dto.practiceTypes && dto.practiceTypes.length > 0
+      ? dto.practiceTypes
+      : [PracticeType.MULTIPLE_CHOICE, PracticeType.FILL_IN_BLANK, PracticeType.LISTENING];
+
+    const hasMultipleChoiceOrListening = practiceTypes.some(
+      (type) => type === PracticeType.MULTIPLE_CHOICE || type === PracticeType.LISTENING
+    );
+
+    // If the deck itself doesn't have enough vocabulary (minimum 4 for MC/listening, or 0 at all)
+    if (totalVocabInDeck === 0 || (hasMultipleChoiceOrListening && totalVocabInDeck < 4)) {
+      throw new BadRequestException(ErrorCodes.PRACTICE_NOT_ENOUGH_VOCABULARY);
+    }
+
+    // Now query the vocabulary list with optional learned words scope
     const vocabularies = await this.prisma.vocabulary.findMany({
       where: {
         deckId: dto.deckId,
@@ -90,23 +114,7 @@ export class PracticeService {
       vocabCount: vocabularies.length
     });
 
-    if (vocabularies.length === 0) {
-      if (scope === 'LEARNED_ONLY') {
-        throw new BadRequestException(ErrorCodes.PRACTICE_NOT_ENOUGH_LEARNED_VOCABULARY);
-      }
-      throw new BadRequestException(ErrorCodes.PRACTICE_NOT_ENOUGH_VOCABULARY);
-    }
-
-    // Resolve practiceTypes
-    const practiceTypes = dto.practiceTypes && dto.practiceTypes.length > 0
-      ? dto.practiceTypes
-      : [PracticeType.MULTIPLE_CHOICE, PracticeType.FILL_IN_BLANK, PracticeType.LISTENING];
-
-    // Validate vocab length for multiple choice/listening
-    const hasMultipleChoiceOrListening = practiceTypes.some(
-      (type) => type === PracticeType.MULTIPLE_CHOICE || type === PracticeType.LISTENING
-    );
-    if (hasMultipleChoiceOrListening && vocabularies.length < 4) {
+    if (vocabularies.length === 0 || (hasMultipleChoiceOrListening && vocabularies.length < 4)) {
       if (scope === 'LEARNED_ONLY') {
         throw new BadRequestException(ErrorCodes.PRACTICE_NOT_ENOUGH_LEARNED_VOCABULARY);
       }
