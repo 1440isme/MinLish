@@ -6,6 +6,7 @@ import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -86,6 +87,22 @@ fun DeckDetailScreen(
     ) { uri ->
         selectedImportUri = uri
         selectedImportFileName = uri?.let { resolveDisplayName(context, it) }
+    }
+
+    val csvTemplateLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        val saved = writeSampleCsvTemplate(context, uri)
+        coroutineScope.launch {
+            snackbarHostState.showSnackbar(
+                if (saved) {
+                    "Sample CSV saved. You can fill it in and import it back here."
+                } else {
+                    "Could not save the sample CSV file."
+                }
+            )
+        }
     }
 
     LaunchedEffect(deckId) {
@@ -613,6 +630,37 @@ fun DeckDetailScreen(
                         color = Color.Gray,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Need the exact structure? Download the sample CSV with all supported columns and example values.",
+                        fontSize = 11.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedButton(
+                        onClick = { csvTemplateLauncher.launch("minlish-import-template.csv") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, accentTeal.copy(alpha = 0.45f))
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.Download,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = accentTeal
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                "Download Sample CSV",
+                                fontWeight = FontWeight.SemiBold,
+                                color = accentTeal
+                            )
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedButton(
@@ -1306,4 +1354,20 @@ private fun formatImportReport(fileName: String, response: com.minlish.core.data
 private fun formatImportFailureMessage(response: com.minlish.core.data.model.ImportCsvResponse): String {
     val firstError = response.errors?.firstOrNull()?.takeIf { it.isNotBlank() }
     return firstError ?: "The selected CSV file could not be imported. Please check the file format and required columns."
+}
+
+private fun writeSampleCsvTemplate(context: Context, uri: Uri): Boolean {
+    val sampleCsv = buildString {
+        appendLine("word,meaning,pronunciation,description_en,example,collocation,related_words,note,part_of_speech")
+        appendLine("\"budget\",\"ngân sách\",\"/ˈbʌdʒɪt/\",\"an estimate of income and expenditure\",\"We need to reduce the budget.\",\"tight budget\",\"finance;cost\",\"common in business English\",\"noun\"")
+        appendLine("\"delay\",\"trì hoãn\",\"/dɪˈleɪ/\",\"to make something happen later\",\"The flight was delayed.\",\"delay a plan\",\"postpone;defer\",\"can be verb or noun\",\"verb\"")
+    }
+
+    return runCatching {
+        context.contentResolver.openOutputStream(uri)?.bufferedWriter(Charsets.UTF_8).use { writer ->
+            checkNotNull(writer) { "Output stream is unavailable" }
+            writer.write(sampleCsv)
+            writer.flush()
+        }
+    }.isSuccess
 }
