@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minlish.core.data.model.DashboardAnalyticsDto
 import com.minlish.core.presentation.MinLishViewModel
+import androidx.compose.ui.res.stringResource
+import com.minlish.R
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -101,12 +103,12 @@ fun AnalyticsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFF4F9F8))
+            .background(if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFFFF9F2))
             .verticalScroll(rememberScrollState())
-            .padding(16.dp)
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 100.dp)
     ) {
         Text(
-            text = "Progress Insights",
+            text = stringResource(R.string.analytics_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.ExtraBold
         )
@@ -121,7 +123,7 @@ fun AnalyticsScreen(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "Weekly Practice Frequency",
+                    text = stringResource(R.string.analytics_weekly_frequency),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -132,7 +134,9 @@ fun AnalyticsScreen(
                         .fillMaxWidth()
                         .height(130.dp)
                 ) {
-                    val days = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+                    val days = listOf(
+                        "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
+                    )
 
                     val barWidth = 32.dp.toPx()
                     val spacing = (size.width - (barWidth * days.size)) / (days.size + 1)
@@ -175,7 +179,15 @@ fun AnalyticsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    val daysLabels = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+                    val daysLabels = listOf(
+                        stringResource(R.string.day_mon),
+                        stringResource(R.string.day_tue),
+                        stringResource(R.string.day_wed),
+                        stringResource(R.string.day_thu),
+                        stringResource(R.string.day_fri),
+                        stringResource(R.string.day_sat),
+                        stringResource(R.string.day_sun)
+                    )
                     daysLabels.forEach { label ->
                         Text(
                             text = label,
@@ -199,7 +211,7 @@ fun AnalyticsScreen(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "Overall Practice Statistics",
+                    text = stringResource(R.string.analytics_overall_stats),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -217,13 +229,13 @@ fun AnalyticsScreen(
                     Column {
                         val formattedAccuracy = String.format(Locale.US, "%.1f", stats.accuracy)
                         Text(
-                            text = "$formattedAccuracy% Accuracy Rate",
+                            text = stringResource(R.string.analytics_accuracy_rate, formattedAccuracy),
                             fontWeight = FontWeight.Bold,
                             fontSize = 17.sp,
                             color = accentTeal
                         )
                         Text(
-                            text = "Calculated from your overall performance across all completed quiz sessions.",
+                            text = stringResource(R.string.analytics_accuracy_desc),
                             fontSize = 11.sp,
                             color = Color.Gray
                         )
@@ -244,13 +256,13 @@ fun AnalyticsScreen(
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text(
-                            text = "${stats.totalPractices} Sessions Completed",
+                            text = stringResource(R.string.analytics_sessions_completed, stats.totalPractices),
                             fontWeight = FontWeight.Bold,
                             fontSize = 17.sp,
                             color = Color(0xFFD97706)
                         )
                         Text(
-                            text = "Total practice quizzes taken so far.",
+                            text = stringResource(R.string.analytics_sessions_desc),
                             fontSize = 11.sp,
                             color = Color.Gray
                         )
@@ -259,9 +271,9 @@ fun AnalyticsScreen(
             }
         }
 
-        // Practice session      list
+        // Practice session list
         Text(
-            text = "Practice History (5 most recent)",
+            text = stringResource(R.string.analytics_history_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(vertical = 8.dp)
@@ -274,7 +286,7 @@ fun AnalyticsScreen(
             Column(modifier = Modifier.padding(12.dp)) {
                 if (listPractices.isEmpty()) {
                     Box(modifier = Modifier.fillMaxWidth().padding(20.dp), contentAlignment = Alignment.Center) {
-                        Text("No completed practices found yet.", color = Color.Gray, fontSize = 12.sp)
+                        Text(stringResource(R.string.analytics_no_history), color = Color.Gray, fontSize = 12.sp)
                     }
                 } else {
                     listPractices.take(5).forEach { item ->
@@ -292,9 +304,9 @@ fun AnalyticsScreen(
                             {
                                 Text(
                                     text = if (!item.deckName.isNullOrBlank()) {
-                                        "${item.deckName} quiz"
+                                        stringResource(R.string.analytics_deck_quiz, item.deckName)
                                     } else {
-                                        "Practice quiz"
+                                        stringResource(R.string.analytics_practice_quiz)
                                     },
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp,
@@ -302,9 +314,10 @@ fun AnalyticsScreen(
                                 )
                                 // Tự động nhân 1000 nếu server trả về giây ( chống lỗi 1970 )
                                 val finishedMillis = if (item.finishedAt < 1000000000000L) item.finishedAt * 1000 else item.finishedAt
-                                val dateFormat = SimpleDateFormat("HH:mm - MMM dd, yyyy", Locale.US)
+                                val locale = if (Locale.getDefault().language == "vi") Locale("vi", "VN") else Locale.US
+                                val dateFormat = SimpleDateFormat("HH:mm - dd/MM/yyyy", locale)
                                 Text(
-                                    text = dateFormat.format(Date(item.finishedAt)),
+                                    text = dateFormat.format(Date(finishedMillis)),
                                     fontSize = 11.sp,
                                     color = Color.Gray
                                 )
@@ -314,11 +327,11 @@ fun AnalyticsScreen(
                             val isCancelled = item.status.toString().uppercase(Locale.US) == "CANCELLED"
 
                             Text(
-                                text = if (isCancelled) "Cancelled" else { "${item.correctAnswers} / ${item.totalQuestions} answers" },
-                                //text = "${item.correctAnswers} / ${item.totalQuestions} answers",
+                                text = if (isCancelled) stringResource(R.string.analytics_cancelled) else {
+                                    stringResource(R.string.analytics_answers_count, item.correctAnswers, item.totalQuestions)
+                                },
                                 fontWeight = FontWeight.Bold,
                                 color = if (isCancelled) Color(0xFFEF4444) else accentTeal, //pratice bị huỷ thì sẽ hiện đỏ
-                                //color =  accentTeal, //pratice bị huỷ thì sẽ hiện đỏ
                                 fontSize = 13.sp,
                                 maxLines = 1 // Ép giữ trên một dòng duy nhất
                             )

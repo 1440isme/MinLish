@@ -29,6 +29,8 @@ import androidx.core.content.ContextCompat
 import com.minlish.core.presentation.MinLishViewModel
 import com.minlish.core.notification.NotificationScheduler
 import java.util.Calendar
+import androidx.compose.ui.res.stringResource
+import com.minlish.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,7 +58,7 @@ fun SettingsScreen(viewModel: MinLishViewModel, onBackClick: () -> Unit) {
                 NotificationScheduler.scheduleDailyReminder(context, cleanTime)
             }
         } else {
-            Toast.makeText(context, "Notification permission denied", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, context.getString(R.string.settings_notif_permission_denied), Toast.LENGTH_LONG).show()
         }
     }
 
@@ -68,12 +70,12 @@ fun SettingsScreen(viewModel: MinLishViewModel, onBackClick: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("App Settings", fontWeight = FontWeight.ExtraBold, fontSize = 20.sp) },
+                title = { Text(stringResource(R.string.settings_title), fontWeight = FontWeight.ExtraBold, fontSize = 20.sp) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back to Profile",
+                            contentDescription = stringResource(R.string.common_back),
                             tint = accentTeal
                         )
                     }
@@ -86,13 +88,13 @@ fun SettingsScreen(viewModel: MinLishViewModel, onBackClick: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFF4F9F8))
+                .background(if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFFFF9F2))
                 .verticalScroll(scrollState)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Tiêu đề hệ thống thông báo
-            Text("Reminders & Notifications", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = accentTeal)
+            Text(stringResource(R.string.settings_section_reminders), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = accentTeal)
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -117,8 +119,8 @@ fun SettingsScreen(viewModel: MinLishViewModel, onBackClick: () -> Unit) {
                                 Icon(Icons.Default.NotificationsActive, contentDescription = null, tint = accentTeal)
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
-                                    Text("Daily Study Reminder", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                                    Text("Get notified to achieve your daily word goals", fontSize = 11.sp, color = Color.Gray)
+                                    Text(stringResource(R.string.settings_daily_reminder), fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                                    Text(stringResource(R.string.settings_daily_reminder_desc), fontSize = 11.sp, color = Color.Gray)
                                 }
                             }
                             Switch(
@@ -151,7 +153,7 @@ fun SettingsScreen(viewModel: MinLishViewModel, onBackClick: () -> Unit) {
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("Preferred Reminder Time", fontSize = 13.sp, color = Color.DarkGray)
+                                Text(stringResource(R.string.settings_preferred_time), fontSize = 13.sp, color = Color.DarkGray)
 
                                 val cleanTime = currentNoti.dailyReminderTime.substringAfter("T").substringBeforeLast(":")
 
@@ -191,8 +193,8 @@ fun SettingsScreen(viewModel: MinLishViewModel, onBackClick: () -> Unit) {
                                 Icon(Icons.Default.HourglassEmpty, contentDescription = null, tint = accentTeal)
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
-                                    Text("Review Cards Due", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                                    Text("Smart alerts based on Spaced Repetition interval tracking", fontSize = 11.sp, color = Color.Gray)
+                                    Text(stringResource(R.string.settings_review_due), fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                                    Text(stringResource(R.string.settings_review_due_desc), fontSize = 11.sp, color = Color.Gray)
                                 }
                             }
                             Switch(

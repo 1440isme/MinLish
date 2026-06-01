@@ -19,6 +19,7 @@ import com.minlish.core.network.dto.PracticeAnswerDto
 import com.minlish.core.network.dto.PracticeQuestionDto
 import com.minlish.core.network.dto.PracticeSessionDto
 import com.minlish.core.network.dto.PracticeSessionSummaryDto
+import com.minlish.core.network.dto.LearningLevelDto
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -49,6 +50,9 @@ class MinLishViewModel(
     private val notificationRepository: NotificationRepository
 ) : AndroidViewModel(application), TextToSpeech.OnInitListener {
 
+    private val _learningLevels = MutableStateFlow<List<com.minlish.core.network.dto.LearningLevelDto>>(emptyList())
+    val learningLevels: StateFlow<List<com.minlish.core.network.dto.LearningLevelDto>> = _learningLevels
+
     // General app states
     val fullName = settingsRepository.fullName.stateIn(
         scope = viewModelScope,
@@ -70,7 +74,22 @@ class MinLishViewModel(
         started = SharingStarted.Eagerly,
         initialValue = "TOEIC"
     )
-    val targetLevel = settingsRepository.targetLevel.stateIn(
+    val targetLevel = combine(
+        settingsRepository.targetLevelId,
+        learningLevels
+    ) { levelId, levelsList ->
+        levelsList.find { it.id == levelId }?.name ?: when (levelId) {
+            "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1" -> "TOEIC 450+"
+            "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2" -> "TOEIC 600+"
+            "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3" -> "TOEIC 750+"
+            "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4" -> "TOEIC 900+"
+            "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1" -> "IELTS 4.0+"
+            "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2" -> "IELTS 5.5+"
+            "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3" -> "IELTS 6.5+"
+            "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb4" -> "IELTS 7.0+"
+            else -> "TOEIC 600+"
+        }
+    }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = "TOEIC 600+"
@@ -263,6 +282,18 @@ class MinLishViewModel(
     //----------------------
 
 
+
+    fun fetchLearningLevels() {
+        viewModelScope.launch {
+            try {
+                _learningLevels.value = userRepository.getLevels()
+            } catch (e: Exception) {
+                android.util.Log.e("MINLISH_LEVELS", "Failed to fetch learning levels: ", e)
+            }
+        }
+    }
+
+
     init {
         // Initialize TTS
         tts = TextToSpeech(application, this)
@@ -291,6 +322,7 @@ class MinLishViewModel(
                     //Khi người dùng mở app và đã onboard, tự động kéo dữ liệu thật về
                     fetchDashboardAnalytics()
                     fetchNotificationSettings()
+                    fetchLearningLevels()
                 }
             }
         }

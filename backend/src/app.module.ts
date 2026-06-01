@@ -14,6 +14,7 @@ import { LearningModule } from './modules/learning/learning.module';
 import { JwtAuthGuard } from './config/common/guards/jwt-auth.guard';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { LevelsModule } from './modules/levels/levels.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
     LearningModule,
     NotificationsModule,
     AnalyticsModule,
+    LevelsModule,
   ],
   controllers: [AppController],
   providers: [

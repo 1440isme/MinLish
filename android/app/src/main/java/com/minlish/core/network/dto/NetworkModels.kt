@@ -50,3 +50,4 @@ data class UpdateProfileRequest(
 data class GoogleLoginRequest(
     @SerializedName("idToken") val idToken: String
 )
+

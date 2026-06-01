@@ -27,6 +27,8 @@ data class LearningLevelDto(
     @SerializedName("id") val id: String,
     @SerializedName("code") val code: String,
     @SerializedName("name") val name: String,
+    @SerializedName("learningPathId") val learningPathId: String? = null,
+    @SerializedName("description") val description: String? = null,
     @SerializedName("learningPath") val learningPath: LearningPathDto? = null,
 )
 

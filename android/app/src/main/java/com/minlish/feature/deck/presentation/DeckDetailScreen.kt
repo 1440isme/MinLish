@@ -142,14 +142,15 @@ fun DeckDetailScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        containerColor = if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFF4F9F8),
+        containerColor = if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFFFF9F2),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFF4F9F8))
-                .padding(16.dp)
+                .background(if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFFFF9F2))
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -266,6 +267,7 @@ fun DeckDetailScreen(
 
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = PaddingValues(bottom = 100.dp),
                 modifier = Modifier.weight(1f)
             ) {
                 items(vocabs) { vocab ->

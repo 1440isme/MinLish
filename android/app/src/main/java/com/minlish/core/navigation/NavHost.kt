@@ -28,8 +28,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import com.minlish.core.network.dto.CreateSessionResponse
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import com.minlish.feature.settings.presentation.SettingsScreen
+import androidx.compose.ui.res.stringResource
+import com.minlish.R
 
 @Composable
 fun MinLishAppContent(viewModel: MinLishViewModel) {
@@ -66,14 +73,14 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
             onDismissRequest = { showResumeDialog = false },
             title = {
                 Text(
-                    "Resume practice?",
+                    stringResource(R.string.practice_resume_title),
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
             },
             text = {
                 Text(
-                    "You have an incomplete practice session in this deck. Would you like to resume it or start a new one?",
+                    stringResource(R.string.practice_resume_desc),
                     fontSize = 14.sp,
                     color = Color(0xFF4B5563)
                 )
@@ -89,7 +96,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D9488))
                 ) {
-                    Text("Resume", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.practice_btn_resume), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -106,7 +113,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444)),
                     border = BorderStroke(1.dp, Color(0xFFEF4444))
                 ) {
-                    Text("Start New", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.practice_btn_start_new), fontWeight = FontWeight.Bold)
                 }
             },
             shape = RoundedCornerShape(24.dp),
@@ -132,7 +139,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
             onDismissRequest = { showSetupDialog = false },
             title = {
                 Text(
-                    "Practice Settings",
+                    stringResource(R.string.practice_setup_title),
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
@@ -140,7 +147,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
             text = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        "Number of questions:",
+                        stringResource(R.string.practice_setup_num_questions),
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp
                     )
@@ -165,7 +172,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "$questionCount questions",
+                            text = stringResource(R.string.practice_setup_questions_count, questionCount),
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
                             color = Color.Black
@@ -175,7 +182,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        "Question types:",
+                        stringResource(R.string.practice_setup_question_types),
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp
                     )
@@ -190,7 +197,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                             onCheckedChange = { isMultipleChoiceChecked = it },
                             colors = CheckboxDefaults.colors(checkedColor = Color(0xFFFBBF24))
                         )
-                        Text("Multiple Choice (Word/Meaning)", fontSize = 14.sp)
+                        Text(stringResource(R.string.practice_setup_type_mc), fontSize = 14.sp)
                     }
 
                     Row(
@@ -202,7 +209,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                             onCheckedChange = { isFillInBlankChecked = it },
                             colors = CheckboxDefaults.colors(checkedColor = Color(0xFFFBBF24))
                         )
-                        Text("Fill in the Blank", fontSize = 14.sp)
+                        Text(stringResource(R.string.practice_setup_type_fib), fontSize = 14.sp)
                     }
 
                     Row(
@@ -214,13 +221,13 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                             onCheckedChange = { isListeningChecked = it },
                             colors = CheckboxDefaults.colors(checkedColor = Color(0xFFFBBF24))
                         )
-                        Text("Listening Practice", fontSize = 14.sp)
+                        Text(stringResource(R.string.practice_setup_type_listening), fontSize = 14.sp)
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        "Practice scope:",
+                        stringResource(R.string.practice_setup_scope),
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp
                     )
@@ -236,7 +243,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                             colors = RadioButtonDefaults.colors(selectedColor = Color(0xFFFBBF24))
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Only learned words", fontSize = 14.sp)
+                        Text(stringResource(R.string.practice_setup_scope_learned), fontSize = 14.sp)
                     }
 
                     Row(
@@ -249,7 +256,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                             colors = RadioButtonDefaults.colors(selectedColor = Color(0xFFFBBF24))
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("All words in deck", fontSize = 14.sp)
+                        Text(stringResource(R.string.practice_setup_scope_all), fontSize = 14.sp)
                     }
                 }
             },
@@ -267,7 +274,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                                 showSetupDialog = false
                                 android.widget.Toast.makeText(
                                     context,
-                                    "This deck has no words yet. Please add words before practicing!",
+                                    context.getString(R.string.practice_setup_empty_deck_warning),
                                     android.widget.Toast.LENGTH_LONG
                                 ).show()
                                 return@let
@@ -280,7 +287,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                     enabled = isAnyChecked,
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
                 ) {
-                    Text("Start")
+                    Text(stringResource(R.string.practice_setup_btn_start))
                 }
             },
             dismissButton = {
@@ -288,7 +295,7 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
                     onClick = { showSetupDialog = false },
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Gray)
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.common_cancel))
                 }
             },
             shape = RoundedCornerShape(24.dp),
@@ -314,154 +321,222 @@ fun MinLishAppContent(viewModel: MinLishViewModel) {
             }
         } else {
             Scaffold(
-                bottomBar = {
-                    NavigationBar(
-                        modifier = Modifier.navigationBarsPadding(),
-                        tonalElevation = 8.dp
-                    ) {
-                        NavigationBarItem(
-                            icon = { Icon(Icons.Default.Home, contentDescription = "Dashboard") },
-                            label = { Text("Home", fontSize = 11.sp) },
-                            selected = currentScreen == "home",
-                            onClick = { currentScreen = "home"; detailDeckId = null }
-                        )
-                        NavigationBarItem(
-                            icon = { Icon(Icons.Default.MenuBook, contentDescription = "Decks") },
-                            label = { Text("Decks", fontSize = 11.sp) },
-                            selected = (currentScreen == "decks" || currentScreen == "deck_detail"),
-                            onClick = { currentScreen = "decks"; detailDeckId = null }
-                        )
-                        NavigationBarItem(
-                            icon = { Icon(Icons.Default.BarChart, contentDescription = "Analytics") },
-                            label = { Text("Stats", fontSize = 11.sp) },
-                            selected = currentScreen == "analytics",
-                            onClick = { currentScreen = "analytics"; detailDeckId = null }
-                        )
-                        NavigationBarItem(
-                            icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
-                            label = { Text("Profile", fontSize = 11.sp) },
-                            selected = currentScreen == "profile",
-                            onClick = { currentScreen = "profile"; detailDeckId = null }
-                        )
-                    }
-                }
+                // Empty bottomBar to allow content to scroll underneath the floating island
+                contentWindowInsets = WindowInsets.statusBars
             ) { innerPadding ->
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
                 ) {
-                    when (currentScreen) {
-                        "home" -> DashboardScreen(
-                            viewModel = viewModel,
-                            onStartDailyQuiz = {
-                                activeStudyDeckId = null
-                                viewModel.startDailyQuizSession()
-                                currentScreen = "study"
-                            },
-                            onStartDailyNew = {
-                                activeStudyDeckId = null
-                                viewModel.startDailyNewSession()
-                                currentScreen = "study"
-                            },
-                            onNavigateToDecks = {
-                                currentScreen = "decks"
-                            },
-                            onResumeRecentDeck = { deckId ->
-                                detailDeckId = deckId
-                                activeStudyDeckId = deckId
-                                viewModel.selectDeck(deckId)
-                                viewModel.startStudySession(deckId)
-                                currentScreen = "study"
-                            },
-                            onOpenRecentDeck = { deckId ->
-                                viewModel.selectDeck(deckId)
-                                detailDeckId = deckId
-                                currentScreen = "deck_detail"
-                            }
-                        )
-                        "decks" -> DecksScreen(
-                            viewModel = viewModel,
-                            onDeckClick = { deckId ->
-                                viewModel.selectDeck(deckId)
-                                detailDeckId = deckId
-                                currentScreen = "deck_detail"
-                            }
-                        )
-                        "deck_detail" -> {
-                            detailDeckId?.let { deckId ->
-                                DeckDetailScreen(
-                                    deckId = deckId,
-                                    viewModel = viewModel,
-                                    onBack = { currentScreen = "decks"; detailDeckId = null },
-                                    onStartStudy = {
-                                        activeStudyDeckId = deckId
-                                        viewModel.startStudySession(deckId)
-                                        currentScreen = "study"
-                                    },
-                                    onStartQuiz = { qType ->
-                                        if (qType == deckId) {
-                                            viewModel.checkForActiveSession(deckId) { activeResponse ->
-                                                if (activeResponse != null) {
-                                                    activeSessionResponse = activeResponse
-                                                    showResumeDialog = true
-                                                } else {
-                                                    targetSetupDeckId = deckId
-                                                    showSetupDialog = true
+                    // Content screens drawing under the floating bar
+                    Box(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        when (currentScreen) {
+                            "home" -> DashboardScreen(
+                                viewModel = viewModel,
+                                onStartDailyQuiz = {
+                                    activeStudyDeckId = null
+                                    viewModel.startDailyQuizSession()
+                                    currentScreen = "study"
+                                },
+                                onStartDailyNew = {
+                                    activeStudyDeckId = null
+                                    viewModel.startDailyNewSession()
+                                    currentScreen = "study"
+                                },
+                                onNavigateToDecks = {
+                                    currentScreen = "decks"
+                                },
+                                onResumeRecentDeck = { deckId ->
+                                    detailDeckId = deckId
+                                    activeStudyDeckId = deckId
+                                    viewModel.selectDeck(deckId)
+                                    viewModel.startStudySession(deckId)
+                                    currentScreen = "study"
+                                },
+                                onOpenRecentDeck = { deckId ->
+                                    viewModel.selectDeck(deckId)
+                                    detailDeckId = deckId
+                                    currentScreen = "deck_detail"
+                                }
+                            )
+                            "decks" -> DecksScreen(
+                                viewModel = viewModel,
+                                onDeckClick = { deckId ->
+                                    viewModel.selectDeck(deckId)
+                                    detailDeckId = deckId
+                                    currentScreen = "deck_detail"
+                                }
+                            )
+                            "deck_detail" -> {
+                                detailDeckId?.let { deckId ->
+                                    DeckDetailScreen(
+                                        deckId = deckId,
+                                        viewModel = viewModel,
+                                        onBack = { currentScreen = "decks"; detailDeckId = null },
+                                        onStartStudy = {
+                                            activeStudyDeckId = deckId
+                                            viewModel.startStudySession(deckId)
+                                            currentScreen = "study"
+                                        },
+                                        onStartQuiz = { qType ->
+                                            if (qType == deckId) {
+                                                viewModel.checkForActiveSession(deckId) { activeResponse ->
+                                                    if (activeResponse != null) {
+                                                        activeSessionResponse = activeResponse
+                                                        showResumeDialog = true
+                                                    } else {
+                                                        targetSetupDeckId = deckId
+                                                        showSetupDialog = true
+                                                    }
                                                 }
+                                            } else {
+                                                activeQuizDeckId = deckId
+                                                activeQuizType = qType
+                                                viewModel.startNewPracticeSession(deckId, listOf(qType), 10)
+                                                currentScreen = "practice_quiz"
                                             }
-                                        } else {
-                                            activeQuizDeckId = deckId
-                                            activeQuizType = qType
-                                            viewModel.startNewPracticeSession(deckId, listOf(qType), 10)
-                                            currentScreen = "practice_quiz"
+                                        }
+                                    )
+                                } ?: run { currentScreen = "decks" }
+                            }
+                            "practice_quiz" -> {
+                                val finalDeckId = detailDeckId ?: viewModel.activeSession.value?.deckId
+                                finalDeckId?.let { deckId ->
+                                    PracticeQuizScreen(
+                                        deckId = deckId,
+                                        practiceType = activeQuizType,
+                                        viewModel = viewModel,
+                                        onBack = {
+                                            currentScreen = if (detailDeckId != null) "deck_detail" else "analytics"
+                                        }
+                                    )
+                                } ?: run { currentScreen = "decks" }
+                            }
+                            "study" -> StudyFlashcardsScreen(
+                                viewModel = viewModel,
+                                onFinish = {
+                                    currentScreen = if (activeStudyDeckId != null) {
+                                        "deck_detail"
+                                    } else {
+                                        "home"
+                                    }
+                                }
+                            )
+                            "analytics" -> AnalyticsScreen(
+                                viewModel = viewModel,
+                                stats = databaseAnalytics,
+                                onSessionClick = { sessionId ->
+                                    activeQuizType = "MIXED"
+                                    viewModel.loadPastSessionResults(sessionId) {
+                                        currentScreen = "practice_quiz"
+                                    }
+                                }
+                            )
+                            "profile" -> ProfileScreen(
+                                viewModel = viewModel,
+                                onNavigateToSettings = { currentScreen = "settings" }
+                            )
+
+                            "settings" -> SettingsScreen(
+                                viewModel = viewModel,
+                                onBackClick = { currentScreen = "profile" }
+                            )
+                        }
+                    }
+
+                    // Floating Island Tab Bar overlay
+                    if (currentScreen != "study" && currentScreen != "practice_quiz") {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                                .navigationBarsPadding()
+                                .background(Color.Transparent),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(24.dp), // Fully rounded corners all around for an aligned island
+                                tonalElevation = 8.dp,
+                                shadowElevation = 8.dp,
+                                color = Color(0xFFFFF9F2), // System warm yellow/cream background (slightly lighter)
+                                border = BorderStroke(1.dp, Color(0xFFE8E2DA)), // Soft matching outline border
+                                modifier = Modifier
+                                    .padding(start = 24.dp, end = 24.dp, bottom = 0.dp) // Aligns with the 24.dp padding of cards
+                                    .fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 8.dp, vertical = 8.dp), // Matched horizontal (8.dp) and vertical (8.dp) padding for uniform margins
+                                    horizontalArrangement = Arrangement.SpaceBetween, // Pins end items exactly to the padding boundaries
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    val screens = listOf("home", "decks", "analytics", "profile")
+                                    screens.forEach { screen ->
+                                        val isSelected = when (screen) {
+                                            "home" -> currentScreen == "home"
+                                            "decks" -> currentScreen == "decks" || currentScreen == "deck_detail"
+                                            "analytics" -> currentScreen == "analytics"
+                                            "profile" -> currentScreen == "profile"
+                                            else -> false
+                                        }
+                                        val icon = when (screen) {
+                                            "home" -> Icons.Default.Home
+                                            "decks" -> Icons.Default.MenuBook
+                                            "analytics" -> Icons.Default.BarChart
+                                            "profile" -> Icons.Default.Person
+                                            else -> Icons.Default.Home
+                                        }
+                                        val contentDesc = when (screen) {
+                                            "home" -> stringResource(R.string.bottom_nav_home)
+                                            "decks" -> stringResource(R.string.bottom_nav_decks)
+                                            "analytics" -> stringResource(R.string.bottom_nav_stats)
+                                            "profile" -> stringResource(R.string.bottom_nav_profile)
+                                            else -> ""
+                                        }
+
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center,
+                                            modifier = Modifier
+                                                .width(72.dp) // Fixed width to ensure all active backgrounds are perfectly uniform and balanced!
+                                                .clip(RoundedCornerShape(16.dp))
+                                                .background(
+                                                    if (isSelected) Color(0xFF0D9488).copy(alpha = 0.12f) else Color.Transparent
+                                                )
+                                                .clickable {
+                                                    currentScreen = if (screen == "decks") "decks" else screen
+                                                    detailDeckId = null
+                                                }
+                                                .padding(vertical = 6.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = icon,
+                                                contentDescription = contentDesc,
+                                                tint = if (isSelected) Color(0xFF0D9488) else Color(0xFF7C776E),
+                                                modifier = Modifier.size(22.dp)
+                                            )
+                                            Spacer(modifier = Modifier.height(3.dp))
+                                            Text(
+                                                text = when (screen) {
+                                                    "home" -> stringResource(R.string.bottom_nav_home)
+                                                    "decks" -> stringResource(R.string.bottom_nav_decks)
+                                                    "analytics" -> stringResource(R.string.bottom_nav_stats)
+                                                    "profile" -> stringResource(R.string.bottom_nav_profile)
+                                                    else -> ""
+                                                },
+                                                fontSize = 10.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                color = if (isSelected) Color(0xFF0D9488) else Color(0xFF7C776E)
+                                            )
                                         }
                                     }
-                                )
-                            } ?: run { currentScreen = "decks" }
-                        }
-                        "practice_quiz" -> {
-                            val finalDeckId = detailDeckId ?: viewModel.activeSession.value?.deckId
-                            finalDeckId?.let { deckId ->
-                                PracticeQuizScreen(
-                                    deckId = deckId,
-                                    practiceType = activeQuizType,
-                                    viewModel = viewModel,
-                                    onBack = {
-                                        currentScreen = if (detailDeckId != null) "deck_detail" else "analytics"
-                                    }
-                                )
-                            } ?: run { currentScreen = "decks" }
-                        }
-                        "study" -> StudyFlashcardsScreen(
-                            viewModel = viewModel,
-                            onFinish = {
-                                currentScreen = if (activeStudyDeckId != null) {
-                                    "deck_detail"
-                                } else {
-                                    "home"
                                 }
                             }
-                        )
-                        "analytics" -> AnalyticsScreen(
-                            viewModel = viewModel,
-                            stats = databaseAnalytics,
-                            onSessionClick = { sessionId ->
-                                activeQuizType = "MIXED"
-                                viewModel.loadPastSessionResults(sessionId) {
-                                    currentScreen = "practice_quiz"
-                                }
-                            }
-                        )
-                        "profile" -> ProfileScreen(
-                            viewModel = viewModel,
-                            onNavigateToSettings = { currentScreen = "settings" }
-                        )
-
-                        "settings" -> SettingsScreen(
-                            viewModel = viewModel,
-                            onBackClick = { currentScreen = "profile" }
-                        )
+                        }
                     }
                 }
             }

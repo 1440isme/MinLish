@@ -155,7 +155,10 @@ export class AuthService {
     let fullName: string;
     let providerId: string;
 
-    if (process.env.NODE_ENV !== 'production' && dto.idToken.startsWith('mock_google_token_')) {
+    const isProd = process.env.NODE_ENV === 'production';
+    const enableMock = process.env.ENABLE_MOCK_GOOGLE_LOGIN === 'true';
+
+    if (!isProd && enableMock && dto.idToken.startsWith('mock_google_token_')) {
       // Format: mock_google_token_{email}_{fullName}
       const parts = dto.idToken.split('_');
       email = parts[3] || 'mock_google_user@gmail.com';
@@ -172,10 +175,28 @@ export class AuthService {
           });
         }
         const payload = (await response.json()) as any;
+
+        // Security check: Verify audience (aud) matches the Google Client ID
+        const googleClientId = process.env.GOOGLE_CLIENT_ID;
+        if (googleClientId && payload.aud !== googleClientId) {
+          throw new UnauthorizedException({
+            code: ErrorCodes.GOOGLE_AUTH_FAILED,
+            message: 'Token audience không hợp lệ',
+          });
+        } else if (!googleClientId && isProd) {
+          throw new UnauthorizedException({
+            code: ErrorCodes.GOOGLE_AUTH_FAILED,
+            message: 'Cấu hình Google Client ID trên server bị thiếu',
+          });
+        }
+
         email = payload.email;
         fullName = payload.name || payload.given_name || 'Google User';
         providerId = payload.sub;
       } catch (err) {
+        if (err instanceof UnauthorizedException) {
+          throw err;
+        }
         throw new UnauthorizedException({
           code: ErrorCodes.GOOGLE_AUTH_FAILED,
           message: 'Không thể kết nối đến Google Auth API',
