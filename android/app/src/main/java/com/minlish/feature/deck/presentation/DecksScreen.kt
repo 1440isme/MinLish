@@ -42,12 +42,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.minlish.R
 import com.minlish.core.data.model.DeckEntity
 import com.minlish.core.presentation.MinLishViewModel
 import kotlinx.coroutines.delay
@@ -106,7 +108,7 @@ fun DecksScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "Study Decks",
+                    text = stringResource(R.string.decks_title),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color(0xFF1C1C1A),
@@ -119,7 +121,7 @@ fun DecksScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Add, contentDescription = null)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Add Deck", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.decks_add_deck), fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -129,14 +131,14 @@ fun DecksScreen(
             OutlinedTextField(
                 value = searchKey,
                 onValueChange = { searchKey = it },
-                placeholder = { Text("Search decks, tags,...") },
+                placeholder = { Text(stringResource(R.string.decks_search_placeholder)) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = {
                     if (searchKey.isNotBlank()) {
                         IconButton(onClick = { searchKey = "" }) {
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = "Clear search",
+                                contentDescription = stringResource(R.string.decks_clear_search),
                             )
                         }
                     }
@@ -153,19 +155,19 @@ fun DecksScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 GoalFilterChip(
-                    label = "My Decks",
+                    label = stringResource(R.string.decks_tab_my_decks),
                     selected = selectedGoalFilter == "MY_DECKS",
                     onClick = { selectedGoalFilter = "MY_DECKS" },
                     accentColor = accentTeal,
                 )
                 GoalFilterChip(
-                    label = "TOEIC",
+                    label = stringResource(R.string.decks_tab_toeic),
                     selected = selectedGoalFilter == "TOEIC",
                     onClick = { selectedGoalFilter = "TOEIC" },
                     accentColor = accentTeal,
                 )
                 GoalFilterChip(
-                    label = "IELTS",
+                    label = stringResource(R.string.decks_tab_ielts),
                     selected = selectedGoalFilter == "IELTS",
                     onClick = { selectedGoalFilter = "IELTS" },
                     accentColor = accentTeal,
@@ -195,9 +197,9 @@ fun DecksScreen(
                         item {
                             Text(
                                 text = when (selectedGoalFilter) {
-                                    "TOEIC" -> "TOEIC Curated Decks"
-                                    "IELTS" -> "IELTS Curated Decks"
-                                    else -> "System Curated Decks"
+                                    "TOEIC" -> stringResource(R.string.decks_section_toeic)
+                                    "IELTS" -> stringResource(R.string.decks_section_ielts)
+                                    else -> stringResource(R.string.decks_section_system)
                                 },
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
@@ -213,7 +215,7 @@ fun DecksScreen(
                     if (isMyDecksTab && favoritesDecks.isNotEmpty()) {
                         item {
                             Text(
-                                text = "Favorites",
+                                text = stringResource(R.string.decks_section_favorites),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFFE11D48),
@@ -232,7 +234,7 @@ fun DecksScreen(
                     if (isMyDecksTab && userDecks.isNotEmpty()) {
                         item {
                             Text(
-                                text = "My Personal Decks",
+                                text = stringResource(R.string.decks_section_personal),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFFA855F7),
@@ -270,15 +272,15 @@ fun DecksScreen(
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
                                         text = if (searchKey.isNotBlank()) {
-                                            "No decks found for \"$searchKey\"."
+                                            stringResource(R.string.decks_empty_search, searchKey)
                                         } else if (isMyDecksTab) {
-                                            "You do not have any saved or personal decks yet."
+                                            stringResource(R.string.decks_empty_my_decks)
                                         } else if (selectedGoalFilter == "TOEIC") {
-                                            "No TOEIC system decks are available right now."
+                                            stringResource(R.string.decks_empty_toeic)
                                         } else if (selectedGoalFilter == "IELTS") {
-                                            "No IELTS system decks are available right now."
+                                            stringResource(R.string.decks_empty_ielts)
                                         } else {
-                                            "No decks are available right now."
+                                            stringResource(R.string.decks_empty_default)
                                         },
                                         color = Color.Gray,
                                     )
@@ -307,7 +309,7 @@ fun DecksScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
-                        "Create Custom Deck",
+                        stringResource(R.string.decks_create_dialog_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )
@@ -316,7 +318,7 @@ fun DecksScreen(
                     OutlinedTextField(
                         value = dName,
                         onValueChange = { dName = it },
-                        label = { Text("Deck Name") },
+                        label = { Text(stringResource(R.string.decks_field_name)) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("deck_name_input"),
@@ -328,7 +330,7 @@ fun DecksScreen(
                     OutlinedTextField(
                         value = dDesc,
                         onValueChange = { dDesc = it },
-                        label = { Text("Description") },
+                        label = { Text(stringResource(R.string.decks_field_description)) },
                         modifier = Modifier.fillMaxWidth(),
                     )
 
@@ -337,7 +339,7 @@ fun DecksScreen(
                     OutlinedTextField(
                         value = dTags,
                         onValueChange = { dTags = it },
-                        label = { Text("Tags (comma separated)") },
+                        label = { Text(stringResource(R.string.decks_field_tags)) },
                         modifier = Modifier.fillMaxWidth(),
                     )
 
@@ -348,7 +350,7 @@ fun DecksScreen(
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         TextButton(onClick = { showCreateDialog = false }) {
-                            Text("Cancel")
+                            Text(stringResource(R.string.common_cancel))
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
@@ -362,7 +364,7 @@ fun DecksScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = accentTeal),
                             modifier = Modifier.testTag("deck_save_button"),
                         ) {
-                            Text("Create")
+                            Text(stringResource(R.string.common_create))
                         }
                     }
                 }
@@ -404,6 +406,10 @@ private fun GoalFilterChip(
 fun DeckItemCard(deck: DeckEntity, onClick: () -> Unit, accentColor: Color) {
     val tagList = deck.tags.split(";").filter { it.isNotEmpty() }
     val hasDeckMeta = deck.isFavoritesDeck || tagList.isNotEmpty() || deck.targetLevel.isNotBlank()
+    val favoriteBadges = listOf(
+        stringResource(R.string.decks_badge_favorites),
+        stringResource(R.string.decks_badge_saved_words),
+    )
 
     Card(
         modifier = Modifier
@@ -461,7 +467,7 @@ fun DeckItemCard(deck: DeckEntity, onClick: () -> Unit, accentColor: Color) {
                         modifier = Modifier.weight(1f),
                     ) {
                         if (deck.isFavoritesDeck) {
-                            listOf("Favorites", "Saved words").forEach { badge ->
+                            favoriteBadges.forEach { badge ->
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(8.dp))
