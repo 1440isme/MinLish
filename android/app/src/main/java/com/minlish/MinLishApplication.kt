@@ -16,6 +16,7 @@ import com.minlish.core.network.LearningApiService
 import com.minlish.core.network.TokenAuthenticator
 import com.minlish.core.network.UserApiService
 import com.minlish.core.network.VocabulariesApiService
+import com.minlish.core.network.LevelsApiService
 import com.minlish.core.data.repository.AnalyticsRepository
 import com.minlish.core.data.repository.NotificationRepository
 import com.minlish.feature.analytics.data.AnalyticsApiService
@@ -33,6 +34,7 @@ class MinLishApplication : Application() {
 
     val authApiService: AuthApiService by lazy { retrofit.create(AuthApiService::class.java) }
     val userApiService: UserApiService by lazy { retrofit.create(UserApiService::class.java) }
+    val levelsApiService: LevelsApiService by lazy { retrofit.create(LevelsApiService::class.java) }
     val decksApiService: DecksApiService by lazy { retrofit.create(DecksApiService::class.java) }
     val vocabulariesApiService: VocabulariesApiService by lazy {
         retrofit.create(VocabulariesApiService::class.java)
@@ -84,7 +86,7 @@ class MinLishApplication : Application() {
     }
     val settingsRepository by lazy { SettingsRepository(tokenManager) }
     val authRepository by lazy { AuthRepository(authApiService, tokenManager) }
-    val userRepository by lazy { UserRepository(userApiService, tokenManager) }
+    val userRepository by lazy { UserRepository(userApiService, levelsApiService, tokenManager) }
 
     //Khai báo Repository (Dev E )
     val analyticsRepository by lazy { AnalyticsRepository(analyticsApiService) }

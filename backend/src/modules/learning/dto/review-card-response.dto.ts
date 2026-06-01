@@ -12,7 +12,10 @@ export class ReviewCardResponseDto {
   @ApiProperty({ example: 'uuid-vocabulary' })
   vocabularyId: string;
 
-  @ApiProperty({ enum: ReviewCardStatus, example: ReviewCardStatus.REVIEW })
+  @ApiProperty({
+    enum: ReviewCardStatus,
+    example: ReviewCardStatus.REVIEW,
+  })
   status: ReviewCardStatus;
 
   @ApiProperty({ example: 2 })
@@ -27,10 +30,16 @@ export class ReviewCardResponseDto {
   @ApiProperty({ type: Date })
   dueAt: Date;
 
-  @ApiPropertyOptional({ type: Date, nullable: true })
+  @ApiPropertyOptional({
+    type: Date,
+    nullable: true,
+  })
   lastReviewedAt?: Date | null;
 
-  @ApiPropertyOptional({ type: Date, nullable: true })
+  @ApiPropertyOptional({
+    type: Date,
+    nullable: true,
+  })
   firstLearnedAt?: Date | null;
 
   @ApiProperty({ example: 0 })
@@ -49,4 +58,3 @@ export class ReviewCardResponseDto {
     Object.assign(this, partial);
   }
 }
-

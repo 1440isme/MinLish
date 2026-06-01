@@ -16,31 +16,35 @@
     <string name="dashboard_streak_days">%1$d ngày sử dụng</string>
     <string name="dashboard_popular_topics">Chủ đề phổ biến</string>
     <string name="dashboard_see_all">Xem tất cả</string>
+    <string name="dashboard_recent_deck_desc">%1$d từ cần ôn tập • %2$d/%3$d đã học</string>
     <string name="bottom_nav_home">Trang chủ</string>
+    <string name="bottom_nav_decks">Bộ từ</string>
+    <string name="bottom_nav_stats">Tiến độ</string>
+    <string name="bottom_nav_profile">Cá nhân</string>
     <string name="bottom_nav_explore">Khám phá</string>
     <string name="bottom_nav_search">Tìm kiếm</string>
     <string name="bottom_nav_settings">Cài đặt</string>
 
     <!-- Decks -->
     <string name="decks_title">Bộ từ vựng</string>
-    <string name="decks_add_deck">Thêm deck</string>
-    <string name="decks_search_placeholder">Tìm deck, mô tả hoặc thẻ</string>
+    <string name="decks_add_deck">Thêm bộ từ</string>
+    <string name="decks_search_placeholder">Tìm bộ từ, mô tả hoặc thẻ</string>
     <string name="decks_clear_search">Xóa tìm kiếm</string>
-    <string name="decks_tab_my_decks">Deck của tôi</string>
+    <string name="decks_tab_my_decks">Bộ từ của tôi</string>
     <string name="decks_tab_toeic">TOEIC</string>
     <string name="decks_tab_ielts">IELTS</string>
     <string name="decks_section_system">Bộ từ vựng hệ thống</string>
     <string name="decks_section_toeic">Bộ từ vựng TOEIC</string>
     <string name="decks_section_ielts">Bộ từ vựng IELTS</string>
     <string name="decks_section_favorites">Yêu thích</string>
-    <string name="decks_section_personal">Deck cá nhân của tôi</string>
-    <string name="decks_empty_search">Không tìm thấy deck nào cho "%1$s".</string>
-    <string name="decks_empty_my_decks">Bạn chưa có deck đã lưu hoặc deck cá nhân nào.</string>
+    <string name="decks_section_personal">Bộ từ cá nhân của tôi</string>
+    <string name="decks_empty_search">Không tìm thấy bộ từ nào cho "%1$s".</string>
+    <string name="decks_empty_my_decks">Bạn chưa có bộ từ đã lưu hoặc bộ từ cá nhân nào.</string>
     <string name="decks_empty_toeic">Hiện chưa có bộ từ vựng TOEIC nào.</string>
     <string name="decks_empty_ielts">Hiện chưa có bộ từ vựng IELTS nào.</string>
-    <string name="decks_empty_default">Hiện chưa có deck nào.</string>
-    <string name="decks_create_dialog_title">Tạo deck cá nhân</string>
-    <string name="decks_field_name">Tên deck</string>
+    <string name="decks_empty_default">Hiện chưa có bộ từ nào.</string>
+    <string name="decks_create_dialog_title">Tạo bộ từ cá nhân</string>
+    <string name="decks_field_name">Tên bộ từ</string>
     <string name="decks_field_description">Mô tả</string>
     <string name="decks_field_tags">Thẻ (ngăn cách bằng dấu phẩy)</string>
     <string name="decks_badge_favorites">Yêu thích</string>
@@ -125,4 +129,177 @@
     <string name="deck_detail_import_report_duplicate_samples">Ví dụ dòng trùng lặp:</string>
     <string name="deck_detail_import_report_rows_to_fix">Các dòng cần chỉnh sửa:</string>
     <string name="deck_detail_import_failure_default">Không thể import file CSV đã chọn. Vui lòng kiểm tra định dạng file và các cột bắt buộc.</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">Cấu hình ứng dụng</string>
+    <string name="settings_section_reminders">Nhắc nhở &amp; Thông báo</string>
+    <string name="settings_daily_reminder">Nhắc nhở học hàng ngày</string>
+    <string name="settings_daily_reminder_desc">Nhận thông báo để hoàn thành mục tiêu học từ vựng</string>
+    <string name="settings_preferred_time">Giờ nhắc nhở mong muốn</string>
+    <string name="settings_review_due">Từ vựng cần ôn tập</string>
+    <string name="settings_review_due_desc">Thông báo thông minh dựa trên chu kỳ lặp lại ngắt quãng</string>
+    <string name="settings_section_theme">Giao diện hiển thị</string>
+    <string name="settings_dark_mode">Giao diện Tối</string>
+    <string name="settings_dark_mode_desc">Chuyển đổi giữa giao diện sáng và tối</string>
+    <string name="settings_language">Ngôn ngữ / Language</string>
+    <string name="settings_language_desc">Chọn tiếng Anh hoặc tiếng Việt</string>
+    <string name="settings_section_dev">Chế độ nhà phát triển</string>
+    <string name="settings_mock_mode">Bật dịch vụ giả lập</string>
+    <string name="settings_mock_mode_desc">Mô phỏng dữ liệu phản hồi từ máy chủ để thử nghiệm</string>
+    <string name="settings_notif_permission_denied">Quyền thông báo bị từ chối</string>
+
+    <!-- Profile Screen -->
+    <string name="profile_title">Trang cá nhân</string>
+    <string name="profile_learning_goal">Mục tiêu học</string>
+    <string name="profile_target_level">Trình độ mục tiêu</string>
+    <string name="profile_daily_words">Mục tiêu từ hàng ngày</string>
+    <string name="profile_app_settings">Cấu hình ứng dụng</string>
+    <string name="profile_sign_out">Đăng xuất</string>
+    <string name="profile_logout_success">Đăng xuất thành công</string>
+    <string name="profile_goal_updated">Đã cập nhật mục tiêu hàng ngày!</string>
+    <string name="profile_words_count">%1$d từ</string>
+    <string name="profile_change_avatar">URL ảnh đại diện (Tùy chọn)</string>
+    <string name="profile_change_name">Tên hiển thị</string>
+    <string name="profile_edit_avatar_title">Sửa ảnh đại diện</string>
+    <string name="profile_edit_name_title">Sửa tên hiển thị</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_greeting">Xin chào, %1$s!</string>
+    <string name="dashboard_daily_quiz">Trắc nghiệm ôn tập</string>
+    <string name="dashboard_daily_quiz_desc">Thử thách từ vựng hàng ngày đang chờ bạn!</string>
+    <string name="dashboard_daily_new">Từ mới hàng ngày</string>
+    <string name="dashboard_deck_learning">Học theo bộ từ</string>
+    <string name="dashboard_learn_with_decks">Luyện tập từ vựng theo bộ từ tự chọn</string>
+    <string name="dashboard_recent_deck">Bộ từ vựng gần đây</string>
+    <string name="dashboard_weekly_progress">Tiến độ hàng tuần</string>
+    <string name="dashboard_no_cards_due">Chưa có từ nào cần ôn tập</string>
+    <string name="dashboard_continue">Tiếp tục</string>
+
+    <!-- Study and Practice -->
+    <string name="study_end_session">Kết thúc lượt xem lại</string>
+    <string name="study_next_card">Xem thẻ tiếp theo</string>
+    <string name="study_complete_session">Hoàn thành lượt học</string>
+    <string name="study_quality_again">HỌC LẠI</string>
+    <string name="study_quality_hard">KHÓ</string>
+    <string name="study_quality_good">TỐT</string>
+    <string name="study_quality_easy">DỄ</string>
+    <string name="quiz_correct">Chính xác</string>
+    <string name="quiz_incorrect">Không chính xác</string>
+    <string name="quiz_skipped">Bỏ qua</string>
+    <string name="quiz_unable_to_load">Không thể tải lượt luyện tập</string>
+    <string name="quiz_loading_questions">Đang tải câu hỏi…</string>
+    <string name="quiz_practice_review">Xem lại lượt luyện tập</string>
+    <string name="quiz_type_word_to_meaning">Từ sang Nghĩa</string>
+    <string name="quiz_type_meaning_to_word">Nghĩa sang Từ</string>
+    <string name="quiz_type_fill_in_blank">Điền vào chỗ trống</string>
+    <string name="quiz_type_listening_word">Nghe từ</string>
+    <string name="quiz_your_answer">Câu trả lời của bạn: %1$s</string>
+    <string name="quiz_skipped_parentheses">(Đã bỏ qua)</string>
+    <string name="quiz_correct_answer">Đáp án đúng: %1$s</string>
+    <string name="common_done">Xong</string>
+    <string name="quiz_practice_completed">Hoàn thành luyện tập!</string>
+    <string name="quiz_accuracy">Độ chính xác: %1$d%%</string>
+    <string name="quiz_correct_answers_label">Số câu đúng:</string>
+    <string name="quiz_wrong_answers_label">Số câu sai:</string>
+    <string name="quiz_skipped_answers_label">Số câu bỏ qua:</string>
+    <string name="quiz_time_taken_label">Thời gian làm bài:</string>
+    <string name="quiz_btn_review_answers">Xem lại đáp án</string>
+    <string name="quiz_tap_to_listen">Chạm để nghe lại</string>
+    <string name="quiz_enter_word_placeholder">Nhập từ tiếng Anh…</string>
+    <string name="quiz_cloze_correct">Chính xác!</string>
+    <string name="quiz_cloze_incorrect">Chưa chính xác!</string>
+    <string name="quiz_cloze_correct_answer_label">Đáp án đúng: %1$s</string>
+    <string name="quiz_meaning_label">Nghĩa: %1$s</string>
+    <string name="quiz_show_hint">Xem gợi ý</string>
+    <string name="quiz_hint_label">Gợi ý: %1$s</string>
+    <string name="quiz_btn_dont_know">Không biết?</string>
+    <string name="quiz_btn_answer">Trả lời</string>
+    <string name="quiz_question_number">Câu hỏi %1$d / %2$d</string>
+    <string name="common_submit">Nộp bài</string>
+
+    <!-- Analytics / Stats -->
+    <string name="analytics_title">Tiến độ học tập</string>
+    <string name="analytics_weekly_frequency">Tần suất luyện tập hàng tuần</string>
+    <string name="day_mon">T2</string>
+    <string name="day_tue">T3</string>
+    <string name="day_wed">T4</string>
+    <string name="day_thu">T5</string>
+    <string name="day_fri">T6</string>
+    <string name="day_sat">T7</string>
+    <string name="day_sun">CN</string>
+    <string name="analytics_overall_stats">Thống kê luyện tập chung</string>
+    <string name="analytics_accuracy_rate">Tỷ lệ chính xác: %1$s%%</string>
+    <string name="analytics_accuracy_desc">Được tính toán từ hiệu suất làm bài của bạn trên tất cả các lượt trắc nghiệm đã hoàn thành.</string>
+    <string name="analytics_sessions_completed">Đã hoàn thành %1$d lượt</string>
+    <string name="analytics_sessions_desc">Tổng số lượt trắc nghiệm luyện tập đã làm từ trước đến nay.</string>
+    <string name="analytics_history_title">Lịch sử luyện tập (5 lượt gần nhất)</string>
+    <string name="analytics_no_history">Chưa tìm thấy lịch sử luyện tập nào.</string>
+    <string name="analytics_deck_quiz">Trắc nghiệm: %1$s</string>
+    <string name="analytics_practice_quiz">Trắc nghiệm luyện tập</string>
+    <string name="analytics_cancelled">Đã hủy</string>
+    <string name="analytics_answers_count">%1$d / %2$d đáp án</string>
+
+    <!-- Profile Dialogs -->
+    <string name="profile_set_daily_goal">Thiết lập mục tiêu hàng ngày</string>
+    <string name="profile_select_words_desc">Chọn số lượng từ mới bạn muốn học mỗi ngày:</string>
+    <string name="profile_select_goal_desc">Chọn lộ trình học tập chính của bạn:</string>
+    <string name="profile_select_level_desc">Chọn trình độ điểm số mục tiêu của bạn:</string>
+    <string name="profile_goal_updated_success">Đã cập nhật mục tiêu học tập!</string>
+    <string name="profile_target_level_updated">Đã cập nhật trình độ mục tiêu!</string>
+    <string name="profile_edit_title">Chỉnh sửa hồ sơ</string>
+    <string name="profile_name_min_length">Tên phải chứa ít nhất 2 ký tự</string>
+    <string name="profile_updated_success">Cập nhật hồ sơ thành công!</string>
+
+    <!-- Practice Setup & Resume Dialogs -->
+    <string name="practice_resume_title">Tiếp tục luyện tập?</string>
+    <string name="practice_resume_desc">Bạn đang có một lượt luyện tập chưa hoàn thành trong bộ từ này. Bạn muốn tiếp tục hay bắt đầu lượt mới?</string>
+    <string name="practice_btn_resume">Tiếp tục</string>
+    <string name="practice_btn_start_new">Lượt mới</string>
+    <string name="practice_setup_title">Cấu hình luyện tập</string>
+    <string name="practice_setup_num_questions">Số lượng câu hỏi:</string>
+    <string name="practice_setup_questions_count">%1$d câu hỏi</string>
+    <string name="practice_setup_question_types">Các dạng câu hỏi:</string>
+    <string name="practice_setup_type_mc">Trắc nghiệm (Từ/Nghĩa)</string>
+    <string name="practice_setup_type_fib">Điền vào chỗ trống</string>
+    <string name="practice_setup_type_listening">Luyện nghe phát âm</string>
+    <string name="practice_setup_scope">Phạm vi luyện tập:</string>
+    <string name="practice_setup_scope_learned">Chỉ những từ đã học</string>
+    <string name="practice_setup_scope_all">Tất cả các từ trong bộ từ</string>
+    <string name="practice_setup_empty_deck_warning">Bộ từ này hiện chưa có từ nào. Vui lòng thêm từ trước khi luyện tập!</string>
+    <string name="practice_setup_btn_start">Bắt đầu</string>
+
+    <!-- Auth & Registration Screens -->
+    <string name="auth_google_success">Đăng nhập Google thành công!</string>
+    <string name="auth_google_null_token">Đăng nhập Google: ID token bị rỗng</string>
+    <string name="auth_google_failed">Đăng nhập Google thất bại: mã %1$d\nHãy chắc chắn SHA-1 đã được đăng ký trên GCP!</string>
+    <string name="auth_forgot_password_mock">Tính năng khôi phục mật khẩu đang được giả lập.</string>
+    <string name="auth_login_fields_required">Vui lòng nhập email và mật khẩu</string>
+    <string name="auth_google_button">Đăng nhập bằng Google</string>
+    <string name="auth_or_divider"> HOẶC </string>
+
+    <string name="register_title">Tạo tài khoản</string>
+    <string name="register_subtitle">Tham gia MinLish</string>
+    <string name="register_full_name">Họ và tên</string>
+    <string name="register_confirm_password">Xác nhận mật khẩu</string>
+    <string name="register_back_desc">Quay lại Đăng nhập</string>
+    <string name="register_name_min_length">Họ và tên phải có ít nhất 2 ký tự</string>
+    <string name="register_invalid_email">Địa chỉ email không hợp lệ</string>
+    <string name="register_password_min_length">Mật khẩu phải có ít nhất 8 ký tự</string>
+    <string name="register_password_strength_error">Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 chữ số</string>
+    <string name="register_passwords_dont_match">Mật khẩu xác nhận không trùng khớp</string>
+    <string name="register_button_text">Đăng ký</string>
+    <string name="register_already_have_account">Đã có tài khoản? </string>
+
+    <!-- Study Screen Localizations -->
+    <string name="study_preparing">Đang chuẩn bị lượt học của bạn…</string>
+    <string name="study_loading">Đang tải thẻ từ và dữ liệu ôn tập.</string>
+    <string name="study_hero_title">Ôn tập Flashcard</string>
+    <string name="study_hero_desc">Học từng đợt ngắn, ôn tập nhanh chóng và duy trì chuỗi học mỗi ngày.</string>
+    <string name="study_hear_pronunciation">Nghe phát âm</string>
+    <string name="study_tap_hint">Chạm để xem nghĩa từ vựng</string>
+    <string name="study_block_definition">Định nghĩa: %1$s</string>
+    <string name="study_block_example">Ví dụ: %1$s</string>
+    <string name="study_finished_desc">Bạn đã hoàn thành ôn tập toàn bộ các thẻ hoạt động hôm nay. Hãy tiếp tục duy trì đều đặn để có nhịp độ học tập bền vững!</string>
+    <string name="study_session_title">Lượt ôn tập</string>
 </resources>
+

@@ -7,7 +7,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 // Color System
-val BgWarm = Color(0xFFFFF6EB)        // Nền kem ấm áp xuyên suốt các màn hình
+val BgWarm = Color(0xFFFFF9F2)        // Nền kem ấm áp xuyên suốt các màn hình
 val SurfaceWhite = Color(0xFFFFFFFF)  // Thẻ Card trắng tinh
 val TextPrimary = Color(0xFF000000)   // Chữ đen đậm tương phản cao
 val TextSecondary = Color(0xFF7F7F7F) // Chữ xám cho thông tin phụ

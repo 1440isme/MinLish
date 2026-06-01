@@ -51,12 +51,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.minlish.R
 import com.minlish.core.data.model.DeckEntity
-import com.minlish.core.presentation.MinLishViewModel
 import kotlinx.coroutines.delay
 
 @Composable
 fun DecksScreen(
-    viewModel: MinLishViewModel,
+    viewModel: DecksViewModel,
     onDeckClick: (String) -> Unit,
 ) {
     val decks by viewModel.decksList.collectAsState()
@@ -80,7 +79,7 @@ fun DecksScreen(
     }
 
     val accentTeal = Color(0xFF0D9488)
-    val backgroundColor = if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFF9F6EE)
+    val backgroundColor = if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFFFF9F2)
     val isMyDecksTab = selectedGoalFilter == "MY_DECKS"
     val systemDecks = decks.filter { it.deckType == "SYSTEM" }
     val filteredSystemDecks = when (selectedGoalFilter) {
@@ -94,13 +93,14 @@ fun DecksScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         containerColor = backgroundColor,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(backgroundColor)
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+                .padding(start = 24.dp, end = 24.dp, top = 16.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -191,7 +191,7 @@ fun DecksScreen(
                         .fillMaxWidth()
                         .weight(1f),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 16.dp),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 100.dp),
                 ) {
                     if (filteredSystemDecks.isNotEmpty()) {
                         item {

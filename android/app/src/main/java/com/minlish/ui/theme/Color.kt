@@ -3,7 +3,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
 // 1. Định nghĩa các mã màu thô (Hex Colors) theo ảnh mẫu
-val WarmBackground = Color(0xFFFFF6EB)   // Màu vàng kem ấm làm nền app
+val WarmBackground = Color(0xFFFFF9F2)   // Màu vàng kem ấm làm nền app
 val PureWhite = Color(0xFFFFFFFF)        // Màu trắng tinh cho các khối Card
 val DeepBlack = Color(0xFF000000)         // Màu đen tuyền cho Text chính và Nút nhấn
 val SoftGray = Color(0xFF7F7F7F)          // Màu xám cho text phụ, sub-title

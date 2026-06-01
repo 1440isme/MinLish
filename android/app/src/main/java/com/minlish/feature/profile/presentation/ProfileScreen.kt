@@ -29,11 +29,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
-import com.minlish.core.presentation.MinLishViewModel
+import androidx.compose.ui.res.stringResource
+import com.minlish.R
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.minlish.BuildConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit ) //lệnh chuyển màn hình từ NavHost truyền vào
+fun ProfileScreen(viewModel: ProfileSettingsViewModel , onNavigateToSettings: () -> Unit ) //lệnh chuyển màn hình từ NavHost truyền vào
 {
     val name by viewModel.fullName.collectAsState()
     val avatarUrl by viewModel.avatarUrl.collectAsState()
@@ -42,6 +46,7 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
     val currentGoalWords by viewModel.dailyNewWordsGoal.collectAsState()
     val targetLvl by viewModel.targetLevel.collectAsState()
     val targetLevelId by viewModel.targetLevelId.collectAsState()
+    val learningLevels by viewModel.learningLevels.collectAsState()
 
     val context = LocalContext.current
     var showGoalDialog by remember { mutableStateOf(false) }
@@ -52,18 +57,18 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
     var tempAvatar by remember { mutableStateOf("") }
 
     val accentTeal = Color(0xFF0D9488)
-    val bgLight = Color(0xFFF4F9F8)
+    val bgLight = Color(0xFFFFF9F2)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(bgLight)
-            .padding(24.dp),
+            .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 100.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // App header
         Text(
-            text = "My Profile",
+            text = stringResource(R.string.profile_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.ExtraBold,
             color = Color(0xFF1C1C1A),
@@ -77,7 +82,7 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
         if (avatarUrl.isNotBlank()) {
             AsyncImage(
                 model = avatarUrl,
-                contentDescription = "User Avatar",
+                contentDescription = stringResource(R.string.profile_title),
                 modifier = Modifier
                     .size(100.dp)
                     .clip(CircleShape)
@@ -142,7 +147,7 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
             Spacer(modifier = Modifier.width(6.dp))
             Icon(
                 imageVector = Icons.Default.Edit,
-                contentDescription = "Edit name",
+                contentDescription = stringResource(R.string.profile_edit_name_title),
                 tint = accentTeal,
                 modifier = Modifier.size(16.dp)
             )
@@ -150,7 +155,7 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
 
         // Email address
         Text(
-            text = email.ifEmpty { "no-email@minlish.com" },
+            text = email.ifEmpty { "—" },
             fontSize = 14.sp,
             color = Color.Gray,
             modifier = Modifier.padding(top = 2.dp)
@@ -179,7 +184,7 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
                         Icon(Icons.Default.Flag, contentDescription = null, tint = accentTeal)
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Learning Goal",
+                            text = stringResource(R.string.profile_learning_goal),
                             fontWeight = FontWeight.Medium,
                             fontSize = 14.sp,
                             color = Color(0xFF1C1C1A)
@@ -212,7 +217,7 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
                         Icon(Icons.Default.TrendingUp, contentDescription = null, tint = accentTeal)
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Target Level",
+                            text = stringResource(R.string.profile_target_level),
                             fontWeight = FontWeight.Medium,
                             fontSize = 14.sp,
                             color = Color(0xFF1C1C1A)
@@ -245,7 +250,7 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
                         Icon(Icons.Default.Edit, contentDescription = null, tint = accentTeal)
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Daily Target Words",
+                            text = stringResource(R.string.profile_daily_words),
                             fontWeight = FontWeight.Medium,
                             fontSize = 14.sp,
                             color = Color(0xFF1C1C1A)
@@ -253,7 +258,7 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = "$currentGoalWords words",
+                            text = stringResource(R.string.profile_words_count, currentGoalWords),
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
                             color = accentTeal
@@ -278,7 +283,7 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
                         Icon(Icons.Default.Settings, contentDescription = null, tint = accentTeal)
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "App Settings",
+                            text = stringResource(R.string.profile_app_settings),
                             fontWeight = FontWeight.Medium,
                             fontSize = 14.sp,
                             color = Color(0xFF1C1C1A)
@@ -290,15 +295,26 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        // Google Sign-In client for sign out
+        val googleSignInOptions = remember {
+            GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(BuildConfig.GOOGLE_WEB_CLIENT_ID)
+                .requestEmail()
+                .build()
+        }
+        val googleSignInClient = remember {
+            GoogleSignIn.getClient(context, googleSignInOptions)
+        }
 
         // Log out button
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable {
-                    viewModel.logout()
-                    Toast.makeText(context, "Logged out successfully", Toast.LENGTH_SHORT).show()
+                    googleSignInClient.signOut().addOnCompleteListener {
+                        viewModel.logout()
+                        Toast.makeText(context, context.getString(R.string.profile_logout_success), Toast.LENGTH_SHORT).show()
+                    }
                 },
             colors = CardDefaults.cardColors(containerColor = Color.White),
             shape = RoundedCornerShape(20.dp),
@@ -312,10 +328,10 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.ExitToApp, contentDescription = "Log out", tint = Color.Red)
+                    Icon(Icons.Default.ExitToApp, contentDescription = stringResource(R.string.profile_sign_out), tint = Color.Red)
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Sign out",
+                        text = stringResource(R.string.profile_sign_out),
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
                         color = Color.Red
@@ -329,13 +345,13 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
         if (showGoalDialog) {
             AlertDialog(
                 onDismissRequest = { showGoalDialog = false },
-                title = { Text("Set Daily Goal", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.profile_set_daily_goal), fontWeight = FontWeight.Bold) },
                 text = {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Select how many new words you want to study each day:", fontSize = 14.sp, color = Color.Gray)
+                        Text(stringResource(R.string.profile_select_words_desc), fontSize = 14.sp, color = Color.Gray)
                         
                         var selectedVal by remember { mutableStateOf(currentGoalWords) }
                         val goalOptions = listOf(5, 10, 20, 30)
@@ -371,18 +387,18 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
                             horizontalArrangement = Arrangement.End
                         ) {
                             TextButton(onClick = { showGoalDialog = false }) {
-                                Text("Cancel", color = Color.Gray)
+                                Text(stringResource(R.string.common_cancel), color = Color.Gray)
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             Button(
                                 onClick = {
                                     viewModel.updateDailyGoal(selectedVal)
                                     showGoalDialog = false
-                                    Toast.makeText(context, "Daily goal updated!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.profile_goal_updated), Toast.LENGTH_SHORT).show()
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = accentTeal)
                             ) {
-                                Text("Save", color = Color.White)
+                                Text(stringResource(R.string.common_save), color = Color.White)
                             }
                         }
                     }
@@ -397,13 +413,13 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
         if (showGoalTypeDialog) {
             AlertDialog(
                 onDismissRequest = { showGoalTypeDialog = false },
-                title = { Text("Select Learning Goal", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.profile_learning_goal), fontWeight = FontWeight.Bold) },
                 text = {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Select your primary learning pathway:", fontSize = 14.sp, color = Color.Gray)
+                        Text(stringResource(R.string.profile_select_goal_desc), fontSize = 14.sp, color = Color.Gray)
                         
                         var selectedVal by remember { mutableStateOf(goal) }
                         val goalOptions = listOf("TOEIC", "IELTS")
@@ -439,18 +455,18 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
                             horizontalArrangement = Arrangement.End
                         ) {
                             TextButton(onClick = { showGoalTypeDialog = false }) {
-                                Text("Cancel", color = Color.Gray)
+                                Text(stringResource(R.string.common_cancel), color = Color.Gray)
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             Button(
                                 onClick = {
                                     viewModel.updateLearningGoal(selectedVal)
                                     showGoalTypeDialog = false
-                                    Toast.makeText(context, "Learning goal updated!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.profile_goal_updated_success), Toast.LENGTH_SHORT).show()
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = accentTeal)
                             ) {
-                                Text("Save", color = Color.White)
+                                Text(stringResource(R.string.common_save), color = Color.White)
                             }
                         }
                     }
@@ -465,28 +481,33 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
         if (showTargetLevelDialog) {
             AlertDialog(
                 onDismissRequest = { showTargetLevelDialog = false },
-                title = { Text("Select Target Level", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.profile_target_level), fontWeight = FontWeight.Bold) },
                 text = {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Select your target score level:", fontSize = 14.sp, color = Color.Gray)
+                        Text(stringResource(R.string.profile_select_level_desc), fontSize = 14.sp, color = Color.Gray)
                         
-                        val levelOptions = if (goal == "TOEIC") {
-                            listOf(
-                                "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1" to "TOEIC 450+",
-                                "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2" to "TOEIC 600+",
-                                "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3" to "TOEIC 750+",
-                                "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4" to "TOEIC 900+"
-                            )
-                        } else {
-                            listOf(
-                                "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1" to "IELTS 4.0+",
-                                "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2" to "IELTS 5.5+",
-                                "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3" to "IELTS 6.5+",
-                                "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb4" to "IELTS 7.0+"
-                            )
+                        val filteredLevels = learningLevels.filter { level ->
+                            level.code.startsWith(goal ?: "TOEIC", ignoreCase = true)
+                        }
+                        val levelOptions = filteredLevels.map { it.id to it.name }.ifEmpty {
+                            if (goal == "TOEIC") {
+                                listOf(
+                                    "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1" to "TOEIC 450+",
+                                    "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2" to "TOEIC 600+",
+                                    "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3" to "TOEIC 750+",
+                                    "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4" to "TOEIC 900+"
+                                )
+                            } else {
+                                listOf(
+                                    "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1" to "IELTS 4.0+",
+                                    "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2" to "IELTS 5.5+",
+                                    "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3" to "IELTS 6.5+",
+                                    "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb4" to "IELTS 7.0+"
+                                )
+                            }
                         }
 
                         var selectedId by remember { mutableStateOf(targetLevelId) }
@@ -522,7 +543,7 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
                             horizontalArrangement = Arrangement.End
                         ) {
                             TextButton(onClick = { showTargetLevelDialog = false }) {
-                                Text("Cancel", color = Color.Gray)
+                                Text(stringResource(R.string.common_cancel), color = Color.Gray)
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             Button(
@@ -531,11 +552,11 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
                                         viewModel.updateTargetLevel(selectedId)
                                     }
                                     showTargetLevelDialog = false
-                                    Toast.makeText(context, "Target level updated!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.profile_target_level_updated), Toast.LENGTH_SHORT).show()
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = accentTeal)
                             ) {
-                                Text("Save", color = Color.White)
+                                Text(stringResource(R.string.common_save), color = Color.White)
                             }
                         }
                     }
@@ -550,7 +571,7 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
         if (showEditNameDialog) {
             AlertDialog(
                 onDismissRequest = { showEditNameDialog = false },
-                title = { Text("Edit Profile", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.profile_edit_title), fontWeight = FontWeight.Bold) },
                 text = {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
@@ -559,7 +580,7 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
                         // Full name input
                         Column {
                             Text(
-                                text = "Full Name",
+                                text = stringResource(R.string.profile_change_name),
                                 style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
                                 color = Color.Gray,
                                 modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
@@ -576,7 +597,7 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
                         // Avatar URL input
                         Column {
                             Text(
-                                text = "Avatar Image URL (Optional)",
+                                text = stringResource(R.string.profile_change_avatar),
                                 style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
                                 color = Color.Gray,
                                 modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
@@ -598,22 +619,22 @@ fun ProfileScreen(viewModel: MinLishViewModel , onNavigateToSettings: () -> Unit
                             horizontalArrangement = Arrangement.End
                         ) {
                             TextButton(onClick = { showEditNameDialog = false }) {
-                                Text("Cancel", color = Color.Gray)
+                                Text(stringResource(R.string.common_cancel), color = Color.Gray)
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             Button(
                                 onClick = {
                                     if (tempName.trim().length < 2) {
-                                        Toast.makeText(context, "Name must be at least 2 characters", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.profile_name_min_length), Toast.LENGTH_SHORT).show()
                                     } else {
                                         viewModel.updateProfile(tempName.trim(), tempAvatar.trim())
                                         showEditNameDialog = false
-                                        Toast.makeText(context, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.profile_updated_success), Toast.LENGTH_SHORT).show()
                                     }
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = accentTeal)
                             ) {
-                                Text("Save", color = Color.White)
+                                Text(stringResource(R.string.common_save), color = Color.White)
                             }
                         }
                     }

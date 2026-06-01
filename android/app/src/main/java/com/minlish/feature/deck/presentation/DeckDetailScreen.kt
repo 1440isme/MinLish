@@ -35,8 +35,6 @@ import androidx.compose.ui.window.Dialog
 import com.minlish.R
 import com.minlish.core.data.model.AddVocabularyResult
 import com.minlish.core.data.model.VocabularyEntity
-import com.minlish.core.presentation.MinLishViewModel
-import com.minlish.core.presentation.SameWordWarningState
 import kotlinx.coroutines.launch
 
 private val partOfSpeechOptions = listOf(
@@ -56,10 +54,11 @@ private val partOfSpeechOptions = listOf(
 @Composable
 fun DeckDetailScreen(
     deckId: String,
-    viewModel: MinLishViewModel,
+    viewModel: DeckDetailViewModel,
     onBack: () -> Unit,
     onStartStudy: () -> Unit,
-    onStartQuiz: (String) -> Unit
+    onStartQuiz: (String) -> Unit,
+    onSpeak: (String) -> Unit,
 ) {
     val deck by viewModel.selectedDeck.collectAsState()
     val vocabs by viewModel.vocabulariesInSelectedDeck.collectAsState()
@@ -142,14 +141,15 @@ fun DeckDetailScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        containerColor = if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFF4F9F8),
+        containerColor = if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFFFF9F2),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFF4F9F8))
-                .padding(16.dp)
+                .background(if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFFFF9F2))
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -266,6 +266,7 @@ fun DeckDetailScreen(
 
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = PaddingValues(bottom = 100.dp),
                 modifier = Modifier.weight(1f)
             ) {
                 items(vocabs) { vocab ->
@@ -276,7 +277,7 @@ fun DeckDetailScreen(
                         isFavorited = isFavorited,
                         showFavorite = true,
                         onClick = { selectedVocabulary = vocab },
-                        onSpeak = { viewModel.speak(vocab.word) },
+                        onSpeak = { onSpeak(vocab.word) },
                         onToggleFavorite = {
                             viewModel.toggleFavorite(vocab) { _, error ->
                                 error?.let { msg ->

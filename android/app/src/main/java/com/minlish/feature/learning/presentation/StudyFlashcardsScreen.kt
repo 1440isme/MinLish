@@ -58,9 +58,10 @@ import androidx.compose.ui.unit.sp
 import com.minlish.core.component.GiraffeMascot
 import com.minlish.core.data.model.VocabularyEntity
 import com.minlish.core.data.model.VocabularyWithReviewCard
-import com.minlish.core.presentation.MinLishViewModel
+import androidx.compose.ui.res.stringResource
+import com.minlish.R
 
-private val WarmBackground = Color(0xFFF9F6EE)
+private val WarmBackground = Color(0xFFFFF9F2)
 private val CardBorder = Color(0x14000000)
 private val TextPrimary = Color(0xFF1C1C1A)
 private val TextSecondary = Color(0xFF7C776E)
@@ -74,13 +75,14 @@ private val ButtonSurface = Color(0xFFFFF8F0)
 
 private data class RatingUi(
     val label: String,
+    val resourceId: Int,
     val borderColor: Color,
     val fillColor: Color,
 )
 
 @Composable
 fun StudyFlashcardsScreen(
-    viewModel: MinLishViewModel,
+    viewModel: StudyFlashcardsViewModel,
     onFinish: () -> Unit,
 ) {
     val cards by viewModel.activeFlashcards.collectAsState()
@@ -183,13 +185,13 @@ private fun StudyLoadingState() {
                     trackColor = Color(0xFFECE7DE),
                 )
                 Text(
-                    text = "Preparing your study session...",
+                    text = stringResource(id = R.string.study_preparing),
                     color = TextPrimary,
                     style = MaterialTheme.typography.titleMedium,
                     textAlign = TextAlign.Center,
                 )
                 Text(
-                    text = "Loading cards and review data.",
+                    text = stringResource(id = R.string.study_loading),
                     color = TextSecondary,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
@@ -243,13 +245,13 @@ private fun StudyHeroCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Flashcard Review",
+                        text = stringResource(id = R.string.study_hero_title),
                         style = MaterialTheme.typography.titleLarge,
                         color = TextPrimary,
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Study in short bursts, review quickly, and keep your streak going every day.",
+                        text = stringResource(id = R.string.study_hero_desc),
                         color = TextSecondary,
                         style = MaterialTheme.typography.bodySmall,
                     )
@@ -446,7 +448,7 @@ private fun FlashcardFront(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Hear pronunciation",
+                text = stringResource(id = R.string.study_hear_pronunciation),
                 color = TextPrimary,
                 fontWeight = FontWeight.Bold,
             )
@@ -455,7 +457,7 @@ private fun FlashcardFront(
         Spacer(modifier = Modifier.height(10.dp))
 
         Text(
-            text = "Tap to see the meaning",
+            text = stringResource(id = R.string.study_tap_hint),
             color = TextSecondary,
             fontSize = 11.sp,
         )
@@ -489,7 +491,7 @@ private fun FlashcardBack(vocabulary: VocabularyEntity) {
                 if (vocabulary.descriptionEn.isNotBlank()) {
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "Define: ${vocabulary.descriptionEn}",
+                        text = stringResource(id = R.string.study_block_definition, vocabulary.descriptionEn),
                         color = TextPrimary,
                         fontSize = 15.sp,
                         lineHeight = 22.sp,
@@ -501,7 +503,7 @@ private fun FlashcardBack(vocabulary: VocabularyEntity) {
                 if (vocabulary.example.isNotBlank()) {
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "Example: ${vocabulary.example}",
+                        text = stringResource(id = R.string.study_block_example, vocabulary.example),
                         color = TextPrimary,
                         fontSize = 15.sp,
                         lineHeight = 22.sp,
@@ -520,10 +522,10 @@ private fun RatingPanel(
 ) {
     val ratings = remember {
         listOf(
-            RatingUi("AGAIN", AccentRed, ButtonSurface),
-            RatingUi("HARD", AccentOrange, ButtonSurface),
-            RatingUi("GOOD", AccentGreen, ButtonSurface),
-            RatingUi("EASY", AccentBlue, ButtonSurface),
+            RatingUi("AGAIN", R.string.study_quality_again, AccentRed, ButtonSurface),
+            RatingUi("HARD", R.string.study_quality_hard, AccentOrange, ButtonSurface),
+            RatingUi("GOOD", R.string.study_quality_good, AccentGreen, ButtonSurface),
+            RatingUi("EASY", R.string.study_quality_easy, AccentBlue, ButtonSurface),
         )
     }
 
@@ -565,7 +567,7 @@ private fun RatingChoiceButton(
         ),
     ) {
         Text(
-            text = rating.label,
+            text = stringResource(rating.resourceId),
             color = TextPrimary,
             fontWeight = FontWeight.Bold,
             fontSize = 13.sp,
@@ -593,7 +595,7 @@ private fun ReplayPanel(
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = if (isLastCard) "Kết thúc lượt xem lại" else "Xem thẻ tiếp theo",
+            text = if (isLastCard) stringResource(R.string.study_end_session) else stringResource(R.string.study_next_card),
             color = Color.White,
             fontWeight = FontWeight.Bold,
         )
@@ -655,7 +657,7 @@ private fun StudyCompletedState(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Text(
-                    text = "Complete session",
+                    text = stringResource(R.string.study_complete_session),
                     style = MaterialTheme.typography.headlineLarge,
                     color = TextPrimary,
                     textAlign = TextAlign.Center,
@@ -664,7 +666,7 @@ private fun StudyCompletedState(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "You’ve finished reviewing today’s active cards. Keep going consistently to maintain a light but sustainable learning rhythm.",
+                    text = stringResource(id = R.string.study_finished_desc),
                     color = TextSecondary,
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
@@ -699,7 +701,7 @@ private fun StudyCompletedState(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Review session",
+                                text = stringResource(id = R.string.study_session_title),
                                 color = TextPrimary,
                                 fontWeight = FontWeight.Bold,
                             )
@@ -709,7 +711,7 @@ private fun StudyCompletedState(
                     if (canContinue) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             OutlinedButton(
                                 onClick = onFinish,
@@ -724,12 +726,12 @@ private fun StudyCompletedState(
                                 ),
                             ) {
                                 Text(
-                                    text = "Back",
+                                    text = stringResource(R.string.common_back),
                                     color = TextPrimary,
                                     fontWeight = FontWeight.Bold,
                                 )
                             }
-
+ 
                             Button(
                                 onClick = onContinue,
                                 modifier = Modifier
@@ -739,7 +741,7 @@ private fun StudyCompletedState(
                                 shape = RoundedCornerShape(32.dp),
                             ) {
                                 Text(
-                                    text = "Continue",
+                                    text = stringResource(R.string.dashboard_continue),
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold,
                                 )
@@ -755,7 +757,7 @@ private fun StudyCompletedState(
                             shape = RoundedCornerShape(32.dp),
                         ) {
                             Text(
-                                text = "Back",
+                                text = stringResource(R.string.common_back),
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
                             )
