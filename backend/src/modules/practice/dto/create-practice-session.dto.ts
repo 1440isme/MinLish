@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsEnum, IsInt, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
+import { IsArray, IsEnum, IsInt, IsOptional, IsString, Max, Min, IsIn } from 'class-validator';
 import { PracticeType } from '../entities/practice.entity';
 
 export class CreatePracticeSessionDto {
@@ -8,8 +8,17 @@ export class CreatePracticeSessionDto {
     description: 'UUID of the deck to practice',
   })
   @IsString()
-  @IsUUID()
   deckId: string;
+
+  @ApiPropertyOptional({
+    enum: ['ALL', 'LEARNED_ONLY'],
+    example: 'LEARNED_ONLY',
+    description: 'Scope of vocabularies to practice. Default is LEARNED_ONLY.',
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['ALL', 'LEARNED_ONLY'])
+  scope?: 'ALL' | 'LEARNED_ONLY';
 
   @ApiPropertyOptional({
     type: [String],

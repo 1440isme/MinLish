@@ -816,31 +816,32 @@ fun PracticeQuizScreen(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         LinearProgressIndicator(
             progress = { (index + 1).toFloat() / questions.size },
             modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
+                .width(80.dp)
+                .height(4.dp)
+                .align(Alignment.CenterHorizontally)
                 .clip(CircleShape),
             color = Color(0xFFFBBF24),
             trackColor = Color(0xFFE2E8F0)
         )
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Mascot
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(55.dp),
+                .height(85.dp),
             contentAlignment = Alignment.Center
         ) {
             BeeMascot(modifier = Modifier.fillMaxHeight())
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         Text(
             text = "Practice",
@@ -851,7 +852,7 @@ fun PracticeQuizScreen(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Question Card Display
         Card(
@@ -903,7 +904,7 @@ fun PracticeQuizScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Question choices or input box
         val isSubmitted = lastSubmitResult != null
