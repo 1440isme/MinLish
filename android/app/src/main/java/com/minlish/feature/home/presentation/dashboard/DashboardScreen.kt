@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoStories
+import androidx.compose.material.icons.filled.FiberNew
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -140,7 +142,6 @@ fun DashboardScreen(
             }
         }
 
-        // Active Statistics Track
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -150,48 +151,112 @@ fun DashboardScreen(
             Card(
                 modifier = Modifier
                     .weight(1f)
+                    .height(168.dp)
                     .clickable { onStartDailyNew() },
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 border = BorderStroke(1.dp, Color(0xFF000000).copy(alpha = 0.05f))
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Daily New",
-                        fontSize = 12.sp,
-                        color = Color(0xFF7C776E),
-                        fontWeight = FontWeight.Medium
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "$wordsGoal words",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1C1C1A)
-                    )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 18.dp, vertical = 16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Text(
+                            text = "Daily New",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1C1C1A),
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(Color(0xFFFEFBF4))
+                                .padding(horizontal = 8.dp, vertical = 5.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "$wordsGoal words",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF1C1C1A)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(62.dp)
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(Color(0xFFE7F8F4)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FiberNew,
+                                contentDescription = null,
+                                tint = Color(0xFF0D9488),
+                                modifier = Modifier.size(34.dp)
+                            )
+                        }
+                    }
                 }
             }
 
             Card(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(168.dp)
+                    .clickable { onNavigateToDecks() },
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 border = BorderStroke(1.dp, Color(0xFF000000).copy(alpha = 0.05f))
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 18.dp, vertical = 16.dp)
+                ) {
                     Text(
-                        text = "Study Streak",
-                        fontSize = 12.sp,
-                        color = Color(0xFF7C776E),
-                        fontWeight = FontWeight.Medium
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "\uD83D\uDD25${stats.streak} Days",
-                        fontSize = 18.sp,
+                        text = "Deck learning",
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1C1C1A)
+                        color = Color(0xFF1C1C1A),
                     )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = "Learn with decks",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF7C776E),
+                    )
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(62.dp)
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(Color(0xFFFFF3DE)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AutoStories,
+                            contentDescription = null,
+                            tint = Color(0xFFB7791F),
+                            modifier = Modifier.size(34.dp)
+                        )
+                    }
                 }
             }
         }
@@ -203,21 +268,6 @@ fun DashboardScreen(
                 onOpenDeck = { onOpenRecentDeck(recentDeck.deck.id) },
                 modifier = Modifier.padding(bottom = 20.dp),
             )
-        }
-
-        // Return browse decks
-        Button(
-            onClick = onNavigateToDecks,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Black,
-                contentColor = Color.White
-            ),
-            shape = RoundedCornerShape(32.dp)
-        ) {
-            Text("Browse Study Decks", fontWeight = FontWeight.Bold, fontSize = 15.sp)
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -257,21 +307,21 @@ private fun RecentDeckCard(
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "Deck gần nhất đã học",
-                        fontSize = 18.sp,
+                        text = "Recent deck",
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1C1C1A)
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = recentDeck.deck.name,
-                        fontSize = 15.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF1C1C1A)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "${recentDeck.dueReviewCount} thẻ ôn • $learnedWords/$totalWords đã học",
+                        text = "${recentDeck.dueReviewCount} cards due • $learnedWords/$totalWords learned",
                         fontSize = 13.sp,
                         color = Color(0xFF7C776E)
                     )
@@ -286,13 +336,13 @@ private fun RecentDeckCard(
                     .fillMaxWidth()
                     .height(52.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Black,
+                    containerColor = Color(0xFF0D9488),
                     contentColor = Color.White
                 ),
                 shape = RoundedCornerShape(20.dp)
             ) {
                 Text(
-                    text = if (isCompleted) "Đã hoàn thành" else "Học tiếp",
+                    text = if (isCompleted) "No cards due" else "Continue",
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp
                 )
@@ -329,23 +379,23 @@ fun RovioWeeklyTracker(streakCount: Int) {
             ) {
                 Text(
                     text = "Weekly Progress",
-                    fontSize = 15.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1C1C1A)
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = "Star Progress",
-                        tint = Color(0xFFFBBF24),
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "Active",
+                        text = "$streakCount days",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF7C776E)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        imageVector = Icons.Default.LocalFireDepartment,
+                        contentDescription = "Study streak",
+                        tint = Color(0xFFF97316),
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }

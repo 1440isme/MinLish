@@ -144,6 +144,9 @@ class MinLishViewModel(
     private val _canReplayStudySession = MutableStateFlow(false)
     val canReplayStudySession: StateFlow<Boolean> = _canReplayStudySession
 
+    private val _isLoadingStudySession = MutableStateFlow(false)
+    val isLoadingStudySession: StateFlow<Boolean> = _isLoadingStudySession
+
     private val _canContinueStudySession = MutableStateFlow(false)
     val canContinueStudySession: StateFlow<Boolean> = _canContinueStudySession
 
@@ -646,6 +649,7 @@ class MinLishViewModel(
     fun startStudySession(deckId: String? = null) {
         activeStudySessionMode = StudySessionMode.MIXED
         activeStudySessionDeckId = deckId
+        _isLoadingStudySession.value = true
         viewModelScope.launch {
             try {
                 val words = vocabularyRepository.getDueReviewAndNewWords(
@@ -665,6 +669,7 @@ class MinLishViewModel(
     fun startDailyQuizSession(deckId: String? = null) {
         activeStudySessionMode = StudySessionMode.DAILY_REVIEW
         activeStudySessionDeckId = deckId
+        _isLoadingStudySession.value = true
         viewModelScope.launch {
             try {
                 val words = vocabularyRepository.getDueReviewWords(
@@ -684,6 +689,7 @@ class MinLishViewModel(
     fun startDailyNewSession(deckId: String? = null) {
         activeStudySessionMode = StudySessionMode.DAILY_NEW
         activeStudySessionDeckId = deckId
+        _isLoadingStudySession.value = true
         viewModelScope.launch {
             try {
                 val words = vocabularyRepository.getNewWords(
@@ -759,6 +765,7 @@ class MinLishViewModel(
         _currentCardIndex.value = 0
         _isCardFlipped.value = false
         _isStudyReplayMode.value = false
+        _isLoadingStudySession.value = false
         replayableStudyCards = words
         _canReplayStudySession.value = words.isNotEmpty()
     }
@@ -768,6 +775,7 @@ class MinLishViewModel(
         _currentCardIndex.value = 0
         _isCardFlipped.value = false
         _isStudyReplayMode.value = false
+        _isLoadingStudySession.value = false
         replayableStudyCards = emptyList()
         _canReplayStudySession.value = false
         _canContinueStudySession.value = false

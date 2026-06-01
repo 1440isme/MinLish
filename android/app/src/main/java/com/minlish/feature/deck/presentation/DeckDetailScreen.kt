@@ -987,7 +987,7 @@ private fun DeckLearningProgressHeader(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(
-            text = "Đã học: $learnedWords/$totalWords",
+            text = "Learned: $learnedWords/$totalWords",
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,

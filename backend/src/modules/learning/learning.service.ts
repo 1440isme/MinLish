@@ -44,6 +44,14 @@ const deckWithLearningLevelInclude = {
   },
 } as const;
 
+function isUniqueConstraintError(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null || !('code' in error)) {
+    return false;
+  }
+
+  return error.code === 'P2002';
+}
+
 @Injectable()
 export class LearningService {
   constructor(
@@ -480,24 +488,45 @@ export class LearningService {
     vocabularyId: string,
   ): Promise<ReviewCard> {
     const now = new Date();
-    return tx.reviewCard.upsert({
-      where: {
-        userId_vocabularyId: {
+    try {
+      return await tx.reviewCard.upsert({
+        where: {
+          userId_vocabularyId: {
+            userId,
+            vocabularyId,
+          },
+        },
+        update: {},
+        create: {
           userId,
           vocabularyId,
+          status: ReviewCardStatus.NEW,
+          repetition: 0,
+          intervalDays: 0,
+          easeFactor: 2.5,
+          dueAt: now,
         },
-      },
-      update: {},
-      create: {
-        userId,
-        vocabularyId,
-        status: ReviewCardStatus.NEW,
-        repetition: 0,
-        intervalDays: 0,
-        easeFactor: 2.5,
-        dueAt: now,
-      },
-    });
+      });
+    } catch (error) {
+      if (!isUniqueConstraintError(error)) {
+        throw error;
+      }
+
+      const existingCard = await tx.reviewCard.findUnique({
+        where: {
+          userId_vocabularyId: {
+            userId,
+            vocabularyId,
+          },
+        },
+      });
+
+      if (existingCard) {
+        return existingCard;
+      }
+
+      throw error;
+    }
   }
 
   private normalizeReviewedAt(reviewedAt: string): Date {
