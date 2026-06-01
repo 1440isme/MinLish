@@ -5,7 +5,8 @@ import com.google.gson.annotations.SerializedName
 data class CreatePracticeSessionRequest(
     @SerializedName("deckId") val deckId: String,
     @SerializedName("practiceTypes") val practiceTypes: List<String>?,
-    @SerializedName("totalQuestions") val totalQuestions: Int?
+    @SerializedName("totalQuestions") val totalQuestions: Int?,
+    @SerializedName("scope") val scope: String? = "LEARNED_ONLY"
 )
 
 data class SubmitAnswerRequest(

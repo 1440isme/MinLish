@@ -210,7 +210,7 @@ fun AnalyticsScreen(
             }
         }
 
-        // Practice session  list
+        // Practice session      list
         Text(
             text = "Practice History (5 most recent)",
             style = MaterialTheme.typography.titleMedium,

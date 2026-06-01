@@ -18,7 +18,7 @@ import { CreatePracticeSessionDto } from './dto/create-practice-session.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { PracticeQuestionDto } from './dto/practice-question.dto';
 import { FinishSessionResponseDto } from './dto/finish-session-response.dto';
-import { IsUUID, IsString } from 'class-validator';
+import { IsString } from 'class-validator';
 import { PracticeAnswerEntity, PracticeSessionEntity } from './entities/practice.entity';
 
 export class CreateSessionResponseDto {
@@ -35,7 +35,6 @@ export class GetActiveSessionQueryDto {
     description: 'UUID of the deck',
   })
   @IsString()
-  @IsUUID()
   deckId: string;
 }
 

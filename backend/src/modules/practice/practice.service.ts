@@ -66,14 +66,34 @@ export class PracticeService {
     }
 
     // 2. Fetch vocabulary
+    const scope = dto.scope ?? 'LEARNED_ONLY';
     const vocabularies = await this.prisma.vocabulary.findMany({
       where: {
         deckId: dto.deckId,
         deletedAt: null,
+        ...(scope === 'LEARNED_ONLY' ? {
+          reviewCards: {
+            some: {
+              userId,
+            },
+          },
+        } : {}),
       },
     });
 
+    console.log('CREATE PRACTICE SESSION DEBUG:', {
+      userId,
+      deckId: dto.deckId,
+      deckName: deck.name,
+      deckType: deck.deckType,
+      scope,
+      vocabCount: vocabularies.length
+    });
+
     if (vocabularies.length === 0) {
+      if (scope === 'LEARNED_ONLY') {
+        throw new BadRequestException(ErrorCodes.PRACTICE_NOT_ENOUGH_LEARNED_VOCABULARY);
+      }
       throw new BadRequestException(ErrorCodes.PRACTICE_NOT_ENOUGH_VOCABULARY);
     }
 
@@ -87,6 +107,9 @@ export class PracticeService {
       (type) => type === PracticeType.MULTIPLE_CHOICE || type === PracticeType.LISTENING
     );
     if (hasMultipleChoiceOrListening && vocabularies.length < 4) {
+      if (scope === 'LEARNED_ONLY') {
+        throw new BadRequestException(ErrorCodes.PRACTICE_NOT_ENOUGH_LEARNED_VOCABULARY);
+      }
       throw new BadRequestException(ErrorCodes.PRACTICE_NOT_ENOUGH_VOCABULARY);
     }
 

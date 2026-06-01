@@ -429,10 +429,11 @@ class VocabularyRepository(
     suspend fun createPracticeSession(
         deckId: String,
         practiceTypes: List<String>?,
-        totalQuestions: Int?
+        totalQuestions: Int?,
+        scope: String? = "LEARNED_ONLY"
     ): CreateSessionResponse {
         return practiceApi.createSession(
-            CreatePracticeSessionRequest(deckId, practiceTypes, totalQuestions)
+            CreatePracticeSessionRequest(deckId, practiceTypes, totalQuestions, scope)
         )
     }
 
