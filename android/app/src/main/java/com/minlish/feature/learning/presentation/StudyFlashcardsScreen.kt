@@ -32,6 +32,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -86,8 +87,14 @@ fun StudyFlashcardsScreen(
     val index by viewModel.currentCardIndex.collectAsState()
     val isFlipped by viewModel.isCardFlipped.collectAsState()
     val isReplayMode by viewModel.isStudyReplayMode.collectAsState()
+    val isLoading by viewModel.isLoadingStudySession.collectAsState()
     val canReplay by viewModel.canReplayStudySession.collectAsState()
     val canContinue by viewModel.canContinueStudySession.collectAsState()
+
+    if (isLoading) {
+        StudyLoadingState()
+        return
+    }
 
     if (cards.isEmpty()) {
         StudyCompletedState(
@@ -150,6 +157,49 @@ fun StudyFlashcardsScreen(
 }
 
 @Composable
+private fun StudyLoadingState() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(WarmBackground)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(24.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(36.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            border = BorderStroke(1.dp, CardBorder),
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                CircularProgressIndicator(
+                    color = AccentGold,
+                    trackColor = Color(0xFFECE7DE),
+                )
+                Text(
+                    text = "Preparing your study session...",
+                    color = TextPrimary,
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = "Loading cards and review data.",
+                    color = TextSecondary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun StudyTopBar(
     onFinish: () -> Unit,
 ) {
@@ -199,7 +249,7 @@ private fun StudyHeroCard(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Ôn tập nhịp ngắn, chấm nhanh, giữ streak đều mỗi ngày.",
+                        text = "Study in short bursts, review quickly, and keep your streak going every day.",
                         color = TextSecondary,
                         style = MaterialTheme.typography.bodySmall,
                     )
@@ -235,12 +285,12 @@ private fun StudyHeroCard(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 StudyMetricPill(
-                    title = "Đang ở thẻ",
+                    title = "Current card",
                     value = "${(reviewedCount + 1).coerceAtMost(totalCount)}/$totalCount",
                     tint = AccentOrange,
                 )
                 StudyMetricPill(
-                    title = "Tiến độ",
+                    title = "Progress",
                     value = "${(progress * 100).toInt()}%",
                     tint = AccentGold,
                 )
@@ -396,7 +446,7 @@ private fun FlashcardFront(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Nghe phát âm",
+                text = "Hear pronunciation",
                 color = TextPrimary,
                 fontWeight = FontWeight.Bold,
             )
@@ -405,7 +455,7 @@ private fun FlashcardFront(
         Spacer(modifier = Modifier.height(10.dp))
 
         Text(
-            text = "Chạm để xem nghĩa",
+            text = "Tap to see the meaning",
             color = TextSecondary,
             fontSize = 11.sp,
         )
@@ -605,7 +655,7 @@ private fun StudyCompletedState(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Text(
-                    text = "Hoàn thành phiên học",
+                    text = "Complete session",
                     style = MaterialTheme.typography.headlineLarge,
                     color = TextPrimary,
                     textAlign = TextAlign.Center,
@@ -614,7 +664,7 @@ private fun StudyCompletedState(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Bạn đã ôn xong các thẻ đang hoạt động hôm nay. Tiếp tục đều đặn để giữ nhịp học thật nhẹ mà bền.",
+                    text = "You’ve finished reviewing today’s active cards. Keep going consistently to maintain a light but sustainable learning rhythm.",
                     color = TextSecondary,
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
@@ -622,21 +672,6 @@ private fun StudyCompletedState(
 
                 Spacer(modifier = Modifier.height(18.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    StudyMetricPill(
-                        title = "Hôm nay",
-                        value = "Done",
-                        tint = AccentGreen,
-                    )
-                    StudyMetricPill(
-                        title = "Nhịp học",
-                        value = "Ổn định",
-                        tint = AccentGold,
-                    )
-                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -664,7 +699,7 @@ private fun StudyCompletedState(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Xem lại phiên học",
+                                text = "Review session",
                                 color = TextPrimary,
                                 fontWeight = FontWeight.Bold,
                             )
@@ -689,7 +724,7 @@ private fun StudyCompletedState(
                                 ),
                             ) {
                                 Text(
-                                    text = "Quay lại",
+                                    text = "Back",
                                     color = TextPrimary,
                                     fontWeight = FontWeight.Bold,
                                 )
@@ -704,7 +739,7 @@ private fun StudyCompletedState(
                                 shape = RoundedCornerShape(32.dp),
                             ) {
                                 Text(
-                                    text = "Học tiếp",
+                                    text = "Continue",
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold,
                                 )
@@ -720,7 +755,7 @@ private fun StudyCompletedState(
                             shape = RoundedCornerShape(32.dp),
                         ) {
                             Text(
-                                text = "Quay lại",
+                                text = "Back",
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
                             )
