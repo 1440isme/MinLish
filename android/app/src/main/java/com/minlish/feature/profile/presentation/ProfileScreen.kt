@@ -1,6 +1,7 @@
 package com.minlish.feature.profile.presentation
 
 import android.widget.Toast
+import com.minlish.core.utils.showToast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -63,7 +64,7 @@ fun ProfileScreen(viewModel: ProfileSettingsViewModel , onNavigateToSettings: ()
         modifier = Modifier
             .fillMaxSize()
             .background(bgLight)
-            .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 100.dp),
+            .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 140.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // App header
@@ -295,6 +296,8 @@ fun ProfileScreen(viewModel: ProfileSettingsViewModel , onNavigateToSettings: ()
             }
         }
 
+        Spacer(modifier = Modifier.height(20.dp)) // Add distance/spacing between settings container and logout button
+
         // Google Sign-In client for sign out
         val googleSignInOptions = remember {
             GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -313,7 +316,7 @@ fun ProfileScreen(viewModel: ProfileSettingsViewModel , onNavigateToSettings: ()
                 .clickable {
                     googleSignInClient.signOut().addOnCompleteListener {
                         viewModel.logout()
-                        Toast.makeText(context, context.getString(R.string.profile_logout_success), Toast.LENGTH_SHORT).show()
+                        showToast(context, context.getString(R.string.profile_logout_success), Toast.LENGTH_SHORT)
                     }
                 },
             colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -394,7 +397,7 @@ fun ProfileScreen(viewModel: ProfileSettingsViewModel , onNavigateToSettings: ()
                                 onClick = {
                                     viewModel.updateDailyGoal(selectedVal)
                                     showGoalDialog = false
-                                    Toast.makeText(context, context.getString(R.string.profile_goal_updated), Toast.LENGTH_SHORT).show()
+                                    showToast(context, context.getString(R.string.profile_goal_updated), Toast.LENGTH_SHORT)
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = accentTeal)
                             ) {
@@ -462,7 +465,7 @@ fun ProfileScreen(viewModel: ProfileSettingsViewModel , onNavigateToSettings: ()
                                 onClick = {
                                     viewModel.updateLearningGoal(selectedVal)
                                     showGoalTypeDialog = false
-                                    Toast.makeText(context, context.getString(R.string.profile_goal_updated_success), Toast.LENGTH_SHORT).show()
+                                    showToast(context, context.getString(R.string.profile_goal_updated_success), Toast.LENGTH_SHORT)
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = accentTeal)
                             ) {
@@ -552,7 +555,7 @@ fun ProfileScreen(viewModel: ProfileSettingsViewModel , onNavigateToSettings: ()
                                         viewModel.updateTargetLevel(selectedId)
                                     }
                                     showTargetLevelDialog = false
-                                    Toast.makeText(context, context.getString(R.string.profile_target_level_updated), Toast.LENGTH_SHORT).show()
+                                    showToast(context, context.getString(R.string.profile_target_level_updated), Toast.LENGTH_SHORT)
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = accentTeal)
                             ) {
@@ -625,11 +628,11 @@ fun ProfileScreen(viewModel: ProfileSettingsViewModel , onNavigateToSettings: ()
                             Button(
                                 onClick = {
                                     if (tempName.trim().length < 2) {
-                                        Toast.makeText(context, context.getString(R.string.profile_name_min_length), Toast.LENGTH_SHORT).show()
+                                        showToast(context, context.getString(R.string.profile_name_min_length), Toast.LENGTH_SHORT)
                                     } else {
                                         viewModel.updateProfile(tempName.trim(), tempAvatar.trim())
                                         showEditNameDialog = false
-                                        Toast.makeText(context, context.getString(R.string.profile_updated_success), Toast.LENGTH_SHORT).show()
+                                        showToast(context, context.getString(R.string.profile_updated_success), Toast.LENGTH_SHORT)
                                     }
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = accentTeal)

@@ -322,7 +322,7 @@ fun DeckDetailScreen(
 
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(bottom = 100.dp),
+                contentPadding = PaddingValues(bottom = 140.dp),
                 modifier = Modifier.weight(1f)
             ) {
                 items(vocabs) { vocab ->

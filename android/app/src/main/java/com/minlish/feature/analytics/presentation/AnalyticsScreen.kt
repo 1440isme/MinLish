@@ -75,7 +75,7 @@ fun AnalyticsScreen(
             .fillMaxSize()
             .background(if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFFFF9F2))
             .verticalScroll(rememberScrollState())
-            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 100.dp)
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 140.dp)
     ) {
         Text(
             text = stringResource(R.string.analytics_title),

@@ -199,7 +199,7 @@ fun DecksScreen(
                         .fillMaxWidth()
                         .weight(1f),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 100.dp),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 140.dp),
                 ) {
                     if (filteredSystemDecks.isNotEmpty()) {
                         item {
