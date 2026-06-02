@@ -3,7 +3,10 @@ import { ReviewCardResponseDto } from './review-card-response.dto';
 import { VocabularyPreviewDto } from './vocabulary-preview.dto';
 
 export class DailyPlanResponseDto {
-  @ApiPropertyOptional({ example: 'uuid-deck', nullable: true })
+  @ApiPropertyOptional({
+    example: 'uuid-deck',
+    nullable: true,
+  })
   deckId?: string | null;
 
   @ApiProperty({ example: 10 })
@@ -25,4 +28,3 @@ export class DailyPlanResponseDto {
     Object.assign(this, partial);
   }
 }
-

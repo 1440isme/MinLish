@@ -17,9 +17,291 @@
     <string name="dashboard_streak_days">%1$d days used</string>
     <string name="dashboard_popular_topics">Popular Topics</string>
     <string name="dashboard_see_all">See all</string>
+    <string name="dashboard_recent_deck_desc">%1$d cards due • %2$d/%3$d learned</string>
 
     <string name="bottom_nav_home">Home</string>
+    <string name="bottom_nav_decks">Decks</string>
+    <string name="bottom_nav_stats">Stats</string>
+    <string name="bottom_nav_profile">Profile</string>
     <string name="bottom_nav_explore">Explore</string>
     <string name="bottom_nav_search">Search</string>
     <string name="bottom_nav_settings">Settings</string>
+
+    <!-- Decks -->
+    <string name="decks_title">Study Decks</string>
+    <string name="decks_add_deck">Add Deck</string>
+    <string name="decks_search_placeholder">Search decks, descriptions, or tags</string>
+    <string name="decks_clear_search">Clear search</string>
+    <string name="decks_tab_my_decks">My Decks</string>
+    <string name="decks_tab_toeic">TOEIC</string>
+    <string name="decks_tab_ielts">IELTS</string>
+    <string name="decks_section_system">System Curated Decks</string>
+    <string name="decks_section_toeic">TOEIC Curated Decks</string>
+    <string name="decks_section_ielts">IELTS Curated Decks</string>
+    <string name="decks_section_favorites">Favorites</string>
+    <string name="decks_section_personal">My Personal Decks</string>
+    <string name="decks_empty_search">No decks found for "%1$s".</string>
+    <string name="decks_empty_my_decks">You do not have any saved or personal decks yet.</string>
+    <string name="decks_empty_toeic">No TOEIC system decks are available right now.</string>
+    <string name="decks_empty_ielts">No IELTS system decks are available right now.</string>
+    <string name="decks_empty_default">No decks are available right now.</string>
+    <string name="decks_create_dialog_title">Create Custom Deck</string>
+    <string name="decks_field_name">Deck Name</string>
+    <string name="decks_field_description">Description</string>
+    <string name="decks_field_tags">Tags (comma separated)</string>
+    <string name="decks_badge_favorites">Favorites</string>
+    <string name="decks_badge_saved_words">Saved words</string>
+
+    <!-- Common -->
+    <string name="common_add">Add</string>
+    <string name="common_back">Back</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_create">Create</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_edit">Edit</string>
+    <string name="common_ok">OK</string>
+    <string name="common_save">Save</string>
+
+    <!-- Deck Detail -->
+    <string name="deck_detail_csv_template_saved">Sample CSV saved. You can fill it in and import it back here.</string>
+    <string name="deck_detail_csv_template_save_failed">Could not save the sample CSV file.</string>
+    <string name="deck_detail_empty_manageable">This deck is empty. Add a word manually or import a CSV file to get started.</string>
+    <string name="deck_detail_empty_favorites">You have not favorited any vocabulary yet. Tap the heart icon on a word card to save it here.</string>
+    <string name="deck_detail_empty_default">This deck does not contain any vocabulary yet.</string>
+    <string name="deck_detail_edit_deck">Edit Deck</string>
+    <string name="deck_detail_delete_deck">Delete Deck</string>
+    <string name="deck_detail_learn">Learn</string>
+    <string name="deck_detail_practice">Practice</string>
+    <string name="deck_detail_add_manual_word">Add Manual Word</string>
+    <string name="deck_detail_import_csv">Import CSV</string>
+    <string name="deck_detail_delete_deck_title">Delete deck?</string>
+    <string name="deck_detail_delete_deck_message">Delete "%1$s" and remove it from your personal decks? This action cannot be undone.</string>
+    <string name="deck_detail_add_vocab_title">Add English Vocabulary</string>
+    <string name="deck_detail_edit_vocab_title">Edit Vocabulary</string>
+    <string name="deck_detail_field_word">Vocabulary (Word)</string>
+    <string name="deck_detail_field_pronunciation">Pronunciation</string>
+    <string name="deck_detail_field_part_of_speech">Part of Speech</string>
+    <string name="deck_detail_field_meaning">Meaning (Vietnamese)</string>
+    <string name="deck_detail_field_english_definition">English Definition</string>
+    <string name="deck_detail_field_example_sentence">Example Sentence</string>
+    <string name="deck_detail_field_collocations">Common Collocations (semicolon separated)</string>
+    <string name="deck_detail_field_related_words">Related Words</string>
+    <string name="deck_detail_field_notes">Personal Memory Notes</string>
+    <string name="deck_detail_word_added">Word added</string>
+    <string name="deck_detail_word_meaning_required">Word and Meaning are mandatory!</string>
+    <string name="deck_detail_import_title">Import Vocabularies from CSV</string>
+    <string name="deck_detail_import_description">Choose a .csv file from your device. Required columns: word, meaning.</string>
+    <string name="deck_detail_import_help">Need the exact structure? Download the sample CSV with all supported columns and example values.</string>
+    <string name="deck_detail_download_sample_csv">Download Sample CSV</string>
+    <string name="deck_detail_choose_csv_file">Choose CSV File</string>
+    <string name="deck_detail_selected_file">Selected file</string>
+    <string name="deck_detail_selected_csv_fallback">Selected CSV file</string>
+    <string name="deck_detail_no_csv_selected">No CSV file selected yet</string>
+    <string name="deck_detail_choose_csv_prompt">Choose a .csv file to continue.</string>
+    <string name="deck_detail_ready_to_import">Ready to import into this deck.</string>
+    <string name="deck_detail_import_choose_file_first">Please choose a CSV file before importing.</string>
+    <string name="deck_detail_import_button">Import</string>
+    <string name="deck_detail_new_meaning_added">New meaning added</string>
+    <string name="deck_detail_could_not_add_word">Could not add word</string>
+    <string name="deck_detail_import_report_title">Import report</string>
+    <string name="deck_detail_delete_vocab_title">Delete vocabulary?</string>
+    <string name="deck_detail_delete_vocab_message">Delete "%1$s" from this deck? This action cannot be undone.</string>
+    <string name="deck_detail_learned_progress">Learned: %1$d/%2$d</string>
+    <string name="deck_detail_same_word_title">Same word, different meaning?</string>
+    <string name="deck_detail_existing_meanings">Existing meanings:</string>
+    <string name="deck_detail_add_new_meaning_prompt">Add "%1$s" as a new flashcard?</string>
+    <string name="deck_detail_add_new_meaning">Add new meaning</string>
+    <string name="deck_detail_listen">Listen</string>
+    <string name="deck_detail_favorite">Favorite</string>
+    <string name="deck_detail_example_sentence_label">Example Sentence:</string>
+    <string name="deck_detail_block_meaning">Meaning</string>
+    <string name="deck_detail_block_english_definition">English Definition</string>
+    <string name="deck_detail_block_example">Example</string>
+    <string name="deck_detail_block_collocation">Collocation</string>
+    <string name="deck_detail_block_related_words">Related Words</string>
+    <string name="deck_detail_block_note">Note</string>
+    <string name="deck_detail_import_summary_success">Import completed successfully.</string>
+    <string name="deck_detail_import_summary_partial">Import completed with some skipped rows.</string>
+    <string name="deck_detail_import_summary_none">No vocabularies were imported.</string>
+    <string name="deck_detail_import_report_file">File: %1$s</string>
+    <string name="deck_detail_import_report_total_rows">Total rows processed: %1$d</string>
+    <string name="deck_detail_import_report_imported">Imported successfully: %1$d</string>
+    <string name="deck_detail_import_report_duplicates">Skipped as duplicates: %1$d</string>
+    <string name="deck_detail_import_report_invalid_rows">Invalid rows: %1$d</string>
+    <string name="deck_detail_import_report_duplicate_samples">Duplicate samples:</string>
+    <string name="deck_detail_import_report_rows_to_fix">Rows that need fixing:</string>
+    <string name="deck_detail_import_failure_default">The selected CSV file could not be imported. Please check the file format and required columns.</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">App Settings</string>
+    <string name="settings_section_reminders">Reminders &amp; Notifications</string>
+    <string name="settings_daily_reminder">Daily Study Reminder</string>
+    <string name="settings_daily_reminder_desc">Get notified to achieve your daily word goals</string>
+    <string name="settings_preferred_time">Preferred Reminder Time</string>
+    <string name="settings_review_due">Review Cards Due</string>
+    <string name="settings_review_due_desc">Smart alerts based on Spaced Repetition interval tracking</string>
+    <string name="settings_section_theme">Visual Appearance</string>
+    <string name="settings_dark_mode">Dark Theme</string>
+    <string name="settings_dark_mode_desc">Switch between light and dark themes</string>
+    <string name="settings_language">Language / Ngôn ngữ</string>
+    <string name="settings_language_desc">Choose English or Vietnamese</string>
+    <string name="settings_section_dev">Developer Sandboxing</string>
+    <string name="settings_mock_mode">Enable Mock Services</string>
+    <string name="settings_mock_mode_desc">Simulate server data response for testing</string>
+    <string name="settings_notif_permission_denied">Notification permission denied</string>
+
+    <!-- Profile Screen -->
+    <string name="profile_title">My Profile</string>
+    <string name="profile_learning_goal">Learning Goal</string>
+    <string name="profile_target_level">Target Level</string>
+    <string name="profile_daily_words">Daily Target Words</string>
+    <string name="profile_app_settings">App Settings</string>
+    <string name="profile_sign_out">Sign out</string>
+    <string name="profile_logout_success">Logged out successfully</string>
+    <string name="profile_goal_updated">Daily goal updated!</string>
+    <string name="profile_words_count">%1$d words</string>
+    <string name="profile_change_avatar">Avatar Image URL (Optional)</string>
+    <string name="profile_change_name">Display Name</string>
+    <string name="profile_edit_avatar_title">Edit Profile Picture</string>
+    <string name="profile_edit_name_title">Edit Display Name</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_greeting">Hello, %1$s!</string>
+    <string name="dashboard_daily_quiz">Daily Quiz</string>
+    <string name="dashboard_daily_quiz_desc">Your daily vocabulary challenge is waiting!</string>
+    <string name="dashboard_daily_new">Daily New</string>
+    <string name="dashboard_deck_learning">Deck learning</string>
+    <string name="dashboard_learn_with_decks">Learn with decks</string>
+    <string name="dashboard_recent_deck">Recent deck</string>
+    <string name="dashboard_weekly_progress">Weekly Progress</string>
+    <string name="dashboard_no_cards_due">No cards due</string>
+    <string name="dashboard_continue">Continue</string>
+
+    <!-- Study and Practice -->
+    <string name="study_end_session">End review session</string>
+    <string name="study_next_card">View next card</string>
+    <string name="study_complete_session">Complete session</string>
+    <string name="study_quality_again">AGAIN</string>
+    <string name="study_quality_hard">HARD</string>
+    <string name="study_quality_good">GOOD</string>
+    <string name="study_quality_easy">EASY</string>
+    <string name="quiz_correct">Correct</string>
+    <string name="quiz_incorrect">Incorrect</string>
+    <string name="quiz_skipped">Skipped</string>
+    <string name="quiz_unable_to_load">Unable to load practice session</string>
+    <string name="quiz_loading_questions">Loading questions…</string>
+    <string name="quiz_practice_review">Practice Review</string>
+    <string name="quiz_type_word_to_meaning">Word to Meaning</string>
+    <string name="quiz_type_meaning_to_word">Meaning to Word</string>
+    <string name="quiz_type_fill_in_blank">Fill in the Blank</string>
+    <string name="quiz_type_listening_word">Listening Word</string>
+    <string name="quiz_your_answer">Your Answer: %1$s</string>
+    <string name="quiz_skipped_parentheses">(Skipped)</string>
+    <string name="quiz_correct_answer">Correct Answer: %1$s</string>
+    <string name="common_done">Done</string>
+    <string name="quiz_practice_completed">Practice completed!</string>
+    <string name="quiz_accuracy">Accuracy: %1$d%%</string>
+    <string name="quiz_correct_answers_label">Correct answers:</string>
+    <string name="quiz_wrong_answers_label">Wrong answers:</string>
+    <string name="quiz_skipped_answers_label">Skipped answers:</string>
+    <string name="quiz_time_taken_label">Time taken:</string>
+    <string name="quiz_btn_review_answers">Review Answers</string>
+    <string name="quiz_tap_to_listen">Tap to listen again</string>
+    <string name="quiz_enter_word_placeholder">Enter English word…</string>
+    <string name="quiz_cloze_correct">Correct!</string>
+    <string name="quiz_cloze_incorrect">Incorrect!</string>
+    <string name="quiz_cloze_correct_answer_label">Correct answer: %1$s</string>
+    <string name="quiz_meaning_label">Meaning: %1$s</string>
+    <string name="quiz_show_hint">Show Hint</string>
+    <string name="quiz_hint_label">Hint: %1$s</string>
+    <string name="quiz_btn_dont_know">Don\'t know?</string>
+    <string name="quiz_btn_answer">Answer</string>
+    <string name="quiz_question_number">Question %1$d / %2$d</string>
+    <string name="common_submit">Submit</string>
+
+    <!-- Analytics / Stats -->
+    <string name="analytics_title">Progress Insights</string>
+    <string name="analytics_weekly_frequency">Weekly Practice Frequency</string>
+    <string name="day_mon">Mon</string>
+    <string name="day_tue">Tue</string>
+    <string name="day_wed">Wed</string>
+    <string name="day_thu">Thu</string>
+    <string name="day_fri">Fri</string>
+    <string name="day_sat">Sat</string>
+    <string name="day_sun">Sun</string>
+    <string name="analytics_overall_stats">Overall Practice Statistics</string>
+    <string name="analytics_accuracy_rate">%1$s%% Accuracy Rate</string>
+    <string name="analytics_accuracy_desc">Calculated from your overall performance across all completed quiz sessions.</string>
+    <string name="analytics_sessions_completed">%1$d Sessions Completed</string>
+    <string name="analytics_sessions_desc">Total practice quizzes taken so far.</string>
+    <string name="analytics_history_title">Practice History (5 most recent)</string>
+    <string name="analytics_no_history">No completed practices found yet.</string>
+    <string name="analytics_deck_quiz">%1$s quiz</string>
+    <string name="analytics_practice_quiz">Practice quiz</string>
+    <string name="analytics_cancelled">Cancelled</string>
+    <string name="analytics_answers_count">%1$d / %2$d answers</string>
+
+    <!-- Profile Dialogs -->
+    <string name="profile_set_daily_goal">Set Daily Goal</string>
+    <string name="profile_select_words_desc">Select how many new words you want to study each day:</string>
+    <string name="profile_select_goal_desc">Select your primary learning pathway:</string>
+    <string name="profile_select_level_desc">Select your target score level:</string>
+    <string name="profile_goal_updated_success">Learning goal updated!</string>
+    <string name="profile_target_level_updated">Target level updated!</string>
+    <string name="profile_edit_title">Edit Profile</string>
+    <string name="profile_name_min_length">Name must be at least 2 characters</string>
+    <string name="profile_updated_success">Profile updated successfully!</string>
+
+    <!-- Practice Setup & Resume Dialogs -->
+    <string name="practice_resume_title">Resume practice?</string>
+    <string name="practice_resume_desc">You have an incomplete practice session in this deck. Would you like to resume it or start a new one?</string>
+    <string name="practice_btn_resume">Resume</string>
+    <string name="practice_btn_start_new">Start New</string>
+    <string name="practice_setup_title">Practice Settings</string>
+    <string name="practice_setup_num_questions">Number of questions:</string>
+    <string name="practice_setup_questions_count">%1$d questions</string>
+    <string name="practice_setup_question_types">Question types:</string>
+    <string name="practice_setup_type_mc">Multiple Choice (Word/Meaning)</string>
+    <string name="practice_setup_type_fib">Fill in the Blank</string>
+    <string name="practice_setup_type_listening">Listening Practice</string>
+    <string name="practice_setup_scope">Practice scope:</string>
+    <string name="practice_setup_scope_learned">Only learned words</string>
+    <string name="practice_setup_scope_all">All words in deck</string>
+    <string name="practice_setup_empty_deck_warning">This deck has no words yet. Please add words before practicing!</string>
+    <string name="practice_setup_btn_start">Start</string>
+
+    <!-- Auth & Registration Screens -->
+    <string name="auth_google_success">Google Sign-In successful!</string>
+    <string name="auth_google_null_token">Google Sign-In: ID token was null</string>
+    <string name="auth_google_failed">Google Sign-In failed: code %1$d\nMake sure SHA-1 is registered on GCP!</string>
+    <string name="auth_forgot_password_mock">Password recovery is mocked.</string>
+    <string name="auth_login_fields_required">Please enter email and password</string>
+    <string name="auth_google_button">Sign in with Google</string>
+    <string name="auth_or_divider"> OR </string>
+
+    <string name="register_title">Create Account</string>
+    <string name="register_subtitle">Join MinLish</string>
+    <string name="register_full_name">Full Name</string>
+    <string name="register_confirm_password">Confirm Password</string>
+    <string name="register_back_desc">Back to Login</string>
+    <string name="register_name_min_length">Full name must be at least 2 characters</string>
+    <string name="register_invalid_email">Invalid email address</string>
+    <string name="register_password_min_length">Password must be at least 8 characters</string>
+    <string name="register_password_strength_error">Password must contain at least 1 uppercase letter, 1 lowercase letter, and 1 digit</string>
+    <string name="register_passwords_dont_match">Passwords do not match</string>
+    <string name="register_button_text">Sign up</string>
+    <string name="register_already_have_account">Already have an account? </string>
+
+    <!-- Study Screen Localizations -->
+    <string name="study_preparing">Preparing your study session…</string>
+    <string name="study_loading">Loading cards and review data.</string>
+    <string name="study_hero_title">Flashcard Review</string>
+    <string name="study_hero_desc">Study in short bursts, review quickly, and keep your streak going every day.</string>
+    <string name="study_hear_pronunciation">Hear pronunciation</string>
+    <string name="study_tap_hint">Tap to see the meaning</string>
+    <string name="study_block_definition">Define: %1$s</string>
+    <string name="study_block_example">Example: %1$s</string>
+    <string name="study_finished_desc">You\'ve finished reviewing today\'s active cards. Keep going consistently to maintain a light but sustainable learning rhythm.</string>
+    <string name="study_session_title">Review session</string>
 </resources>
+

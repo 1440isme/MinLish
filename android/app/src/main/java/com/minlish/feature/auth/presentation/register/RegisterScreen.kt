@@ -71,12 +71,12 @@ fun RegisterScreen(
             val idToken = account?.idToken
             if (idToken != null) {
                 authViewModel.loginWithGoogle(idToken)
-                Toast.makeText(context, "Google Sign-In successful!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.auth_google_success), Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(context, "Google Sign-In: ID token was null", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, context.getString(R.string.auth_google_null_token), Toast.LENGTH_LONG).show()
             }
         } catch (e: ApiException) {
-            Toast.makeText(context, "Google Sign-In failed: code ${e.statusCode}\nMake sure SHA-1 is registered on GCP!", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, context.getString(R.string.auth_google_failed, e.statusCode), Toast.LENGTH_LONG).show()
         }
     }
 
@@ -113,21 +113,20 @@ fun RegisterScreen(
                 IconButton(onClick = onBackToLogin) {
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back to Login",
+                        contentDescription = stringResource(id = R.string.register_back_desc),
                         tint = TextPrimary
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Create Account",
+                    text = stringResource(id = R.string.register_title),
                     style = MinLishTypography.displayMedium.copy(fontSize = 22.sp),
                     color = TextPrimary
                 )
             }
 
-            // Main Title
             Text(
-                text = "Join MinLish",
+                text = stringResource(id = R.string.register_subtitle),
                 style = MinLishTypography.displayLarge.copy(
                     fontSize = 32.sp,
                     lineHeight = 38.sp,
@@ -145,7 +144,7 @@ fun RegisterScreen(
                 // Name
                 Column {
                     Text(
-                        text = "Full Name",
+                        text = stringResource(id = R.string.register_full_name),
                         style = MinLishTypography.bodySmall.copy(fontWeight = FontWeight.Medium),
                         color = TextSecondary,
                         modifier = Modifier.padding(start = 16.dp, bottom = 4.dp)
@@ -230,7 +229,7 @@ fun RegisterScreen(
                 // Confirm Password
                 Column {
                     Text(
-                        text = "Confirm Password",
+                        text = stringResource(id = R.string.register_confirm_password),
                         style = MinLishTypography.bodySmall.copy(fontWeight = FontWeight.Medium),
                         color = TextSecondary,
                         modifier = Modifier.padding(start = 16.dp, bottom = 4.dp)
@@ -274,15 +273,15 @@ fun RegisterScreen(
                     val passRegex = Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$")
 
                     if (trimmedName.length < 2) {
-                        Toast.makeText(context, "Full name must be at least 2 characters", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.register_name_min_length), Toast.LENGTH_SHORT).show()
                     } else if (trimmedEmail.isEmpty() || !trimmedEmail.contains("@")) {
-                        Toast.makeText(context, "Invalid email address", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.register_invalid_email), Toast.LENGTH_SHORT).show()
                     } else if (trimmedPass.length < 8) {
-                        Toast.makeText(context, "Password must be at least 8 characters", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.register_password_min_length), Toast.LENGTH_SHORT).show()
                     } else if (!trimmedPass.matches(passRegex)) {
-                        Toast.makeText(context, "Password must contain at least 1 uppercase letter, 1 lowercase letter, and 1 digit", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, context.getString(R.string.register_password_strength_error), Toast.LENGTH_LONG).show()
                     } else if (trimmedPass != confirmPassword) {
-                        Toast.makeText(context, "Passwords do not match", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.register_passwords_dont_match), Toast.LENGTH_SHORT).show()
                     } else {
                         authViewModel.register(trimmedEmail, trimmedPass, trimmedName)
                     }
@@ -305,7 +304,7 @@ fun RegisterScreen(
                     )
                 } else {
                     Text(
-                        text = "Sign up",
+                        text = stringResource(id = R.string.register_button_text),
                         style = MinLishTypography.labelLarge.copy(fontSize = 16.sp)
                     )
                 }
@@ -319,7 +318,7 @@ fun RegisterScreen(
             ) {
                 HorizontalDivider(modifier = Modifier.weight(1f), color = Color.Black.copy(alpha = 0.08f))
                 Text(
-                    text = " OR ",
+                    text = stringResource(id = R.string.auth_or_divider),
                     fontSize = 12.sp,
                     color = TextSecondary,
                     modifier = Modifier.padding(horizontal = 12.dp),
@@ -350,7 +349,7 @@ fun RegisterScreen(
                 GoogleLogo(modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = "Sign in with Google",
+                    text = stringResource(id = R.string.auth_google_button),
                     style = MinLishTypography.labelLarge.copy(fontSize = 16.sp),
                     color = TextPrimary
                 )
@@ -376,12 +375,12 @@ fun RegisterScreen(
                 modifier = Modifier.padding(bottom = 24.dp)
             ) {
                 Text(
-                    text = "Already have an account? ",
+                    text = stringResource(id = R.string.register_already_have_account),
                     style = MinLishTypography.bodySmall,
                     color = TextSecondary
                 )
                 Text(
-                    text = "Log in",
+                    text = stringResource(id = R.string.login_button_text),
                     style = MinLishTypography.bodySmall.copy(fontWeight = FontWeight.Bold),
                     color = TextPrimary,
                     modifier = Modifier.clickable { onBackToLogin() }

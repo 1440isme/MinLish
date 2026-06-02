@@ -12,7 +12,10 @@ export class ReviewLogResponseDto {
   @ApiProperty({ example: 'uuid-vocabulary' })
   vocabularyId: string;
 
-  @ApiProperty({ enum: ReviewRating, example: ReviewRating.HARD })
+  @ApiProperty({
+    enum: ReviewRating,
+    example: ReviewRating.HARD,
+  })
   rating: ReviewRating;
 
   @ApiProperty({ example: 3 })
@@ -39,7 +42,10 @@ export class ReviewLogResponseDto {
   @ApiProperty({ example: 2.36 })
   newEaseFactor: number;
 
-  @ApiPropertyOptional({ type: Date, nullable: true })
+  @ApiPropertyOptional({
+    type: Date,
+    nullable: true,
+  })
   oldDueAt?: Date | null;
 
   @ApiProperty({ type: Date })
@@ -55,4 +61,3 @@ export class ReviewLogResponseDto {
     Object.assign(this, partial);
   }
 }
-

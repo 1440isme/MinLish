@@ -22,7 +22,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minlish.core.component.BeeMascot
-import com.minlish.core.presentation.MinLishViewModel
+import androidx.compose.ui.res.stringResource
+import com.minlish.R
 import com.minlish.core.network.dto.PracticeQuestionDto
 import com.minlish.core.network.dto.PracticeAnswerDto
 import androidx.compose.foundation.lazy.LazyColumn
@@ -232,8 +233,9 @@ private fun playIncorrectSound() {
 fun PracticeQuizScreen(
     deckId: String,
     practiceType: String,
-    viewModel: MinLishViewModel,
-    onBack: () -> Unit
+    viewModel: PracticeQuizViewModel,
+    onBack: () -> Unit,
+    onSpeak: (String) -> Unit,
 ) {
     val questions by viewModel.quizQuestions.collectAsState()
     val index by viewModel.currentQuizIndex.collectAsState()
@@ -250,6 +252,10 @@ fun PracticeQuizScreen(
     var showReviewScreen by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
+
+    LaunchedEffect(deckId) {
+        viewModel.loadDeckVocabularies(deckId)
+    }
 
     // Handle auto-advance for correct answer
     LaunchedEffect(lastSubmitResult) {
@@ -278,7 +284,7 @@ fun PracticeQuizScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF9F6EE)),
+                .background(Color(0xFFFFF9F2)),
             contentAlignment = Alignment.Center
         ) {
             if (practiceError != null) {
@@ -293,7 +299,7 @@ fun PracticeQuizScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Unable to load practice session",
+                        text = stringResource(R.string.quiz_unable_to_load),
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                         color = Color(0xFF1C1C1A),
@@ -318,7 +324,7 @@ fun PracticeQuizScreen(
                             .fillMaxWidth()
                             .height(52.dp)
                     ) {
-                        Text("Back", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        Text(stringResource(R.string.common_back), fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     }
                 }
             } else {
@@ -326,7 +332,7 @@ fun PracticeQuizScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CircularProgressIndicator(color = Color(0xFFFBBF24))
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text("Loading questions...", color = Color(0xFF7C776E))
+                    Text(stringResource(R.string.quiz_loading_questions), color = Color(0xFF7C776E))
                 }
             }
         }
@@ -339,7 +345,7 @@ fun PracticeQuizScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFF9F6EE))
+                    .background(Color(0xFFFFF9F2))
                     .windowInsetsPadding(WindowInsets.statusBars)
                     .padding(24.dp)
             ) {
@@ -353,7 +359,7 @@ fun PracticeQuizScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Practice Review",
+                            text = stringResource(R.string.quiz_practice_review),
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF1C1C1A)
@@ -366,7 +372,7 @@ fun PracticeQuizScreen(
                                 .background(Color.White)
                                 .border(1.dp, Color(0xFF000000).copy(alpha = 0.05f), CircleShape)
                         ) {
-                            Icon(Icons.Default.Close, contentDescription = "Close", tint = Color(0xFF1C1C1A))
+                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_cancel), tint = Color(0xFF1C1C1A))
                         }
                     }
 
@@ -403,9 +409,9 @@ fun PracticeQuizScreen(
                                             else -> Color(0xFFEF4444) // Red
                                         }
                                         val badgeText = when {
-                                            isCorrect -> "Correct"
-                                            isSkipped -> "Skipped"
-                                            else -> "Incorrect"
+                                            isCorrect -> stringResource(R.string.quiz_correct)
+                                            isSkipped -> stringResource(R.string.quiz_skipped)
+                                            else -> stringResource(R.string.quiz_incorrect)
                                         }
                                         
                                         Box(
@@ -424,10 +430,10 @@ fun PracticeQuizScreen(
 
                                         // Display question type friendly text
                                         val qTypeText = when (answer.questionType) {
-                                            "WORD_TO_MEANING" -> "Word to Meaning"
-                                            "MEANING_TO_WORD" -> "Meaning to Word"
-                                            "FILL_IN_BLANK" -> "Fill in the Blank"
-                                            "LISTENING_WORD" -> "Listening Word"
+                                            "WORD_TO_MEANING" -> stringResource(R.string.quiz_type_word_to_meaning)
+                                            "MEANING_TO_WORD" -> stringResource(R.string.quiz_type_meaning_to_word)
+                                            "FILL_IN_BLANK" -> stringResource(R.string.quiz_type_fill_in_blank)
+                                            "LISTENING_WORD" -> stringResource(R.string.quiz_type_listening_word)
                                             else -> answer.questionType
                                         }
                                         Text(
@@ -480,7 +486,10 @@ fun PracticeQuizScreen(
                                                     verticalAlignment = Alignment.CenterVertically
                                                 ) {
                                                     Text(
-                                                        text = "Your Answer: ${answer.userAnswer ?: "(Skipped)"}",
+                                                        text = stringResource(
+                                                            R.string.quiz_your_answer,
+                                                            answer.userAnswer ?: stringResource(R.string.quiz_skipped_parentheses)
+                                                        ),
                                                         fontSize = 14.sp,
                                                         fontWeight = FontWeight.Medium,
                                                         color = Color(0xFF1C1C1A)
@@ -504,7 +513,7 @@ fun PracticeQuizScreen(
                                                         .padding(14.dp)
                                                 ) {
                                                     Text(
-                                                        text = "Correct Answer: ${answer.correctAnswer}",
+                                                        text = stringResource(R.string.quiz_correct_answer, answer.correctAnswer),
                                                         fontSize = 14.sp,
                                                         fontWeight = FontWeight.Bold,
                                                         color = Color(0xFF065F46)
@@ -581,7 +590,7 @@ fun PracticeQuizScreen(
                             .fillMaxWidth()
                             .height(52.dp)
                     ) {
-                        Text("Done", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text(stringResource(R.string.common_done), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
                 }
             }
@@ -591,7 +600,7 @@ fun PracticeQuizScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFF9F6EE))
+                    .background(Color(0xFFFFF9F2))
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -609,7 +618,7 @@ fun PracticeQuizScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "Practice completed!",
+                        text = stringResource(R.string.quiz_practice_completed),
                         fontSize = 26.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1C1C1A)
@@ -631,7 +640,7 @@ fun PracticeQuizScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
-                                    "Accuracy: ${it.accuracy.toInt()}%",
+                                    stringResource(R.string.quiz_accuracy, it.accuracy.toInt()),
                                     fontSize = 24.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (it.accuracy >= 80) Color(0xFF10B981) else Color(0xFFEF4444)
@@ -642,7 +651,7 @@ fun PracticeQuizScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Correct answers:", color = Color(0xFF7C776E))
+                                    Text(stringResource(R.string.quiz_correct_answers_label), color = Color(0xFF7C776E))
                                     Text("${it.correctAnswers}", fontWeight = FontWeight.Bold)
                                 }
                                 Spacer(modifier = Modifier.height(8.dp))
@@ -651,7 +660,7 @@ fun PracticeQuizScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Wrong answers:", color = Color(0xFF7C776E))
+                                    Text(stringResource(R.string.quiz_wrong_answers_label), color = Color(0xFF7C776E))
                                     Text("${it.wrongAnswers}", fontWeight = FontWeight.Bold)
                                 }
                                 Spacer(modifier = Modifier.height(8.dp))
@@ -660,7 +669,7 @@ fun PracticeQuizScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Skipped answers:", color = Color(0xFF7C776E))
+                                    Text(stringResource(R.string.quiz_skipped_answers_label), color = Color(0xFF7C776E))
                                     Text("${it.unanswered}", fontWeight = FontWeight.Bold)
                                 }
                                 Spacer(modifier = Modifier.height(8.dp))
@@ -669,7 +678,7 @@ fun PracticeQuizScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Time taken:", color = Color(0xFF7C776E))
+                                    Text(stringResource(R.string.quiz_time_taken_label), color = Color(0xFF7C776E))
                                     val minutes = it.timeTakenSeconds / 60
                                     val seconds = it.timeTakenSeconds % 60
                                     Text(String.format("%02d:%02d", minutes, seconds), fontWeight = FontWeight.Bold)
@@ -690,7 +699,7 @@ fun PracticeQuizScreen(
                             .fillMaxWidth()
                             .height(52.dp)
                     ) {
-                        Text("Review Answers", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text(stringResource(R.string.quiz_btn_review_answers), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -703,7 +712,7 @@ fun PracticeQuizScreen(
                             .fillMaxWidth()
                             .height(52.dp)
                     ) {
-                        Text("Back", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text(stringResource(R.string.common_back), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
                 }
             }
@@ -719,14 +728,14 @@ fun PracticeQuizScreen(
     // Trigger TTS for listening question format
     LaunchedEffect(currentQuestion.index, currentQuestion.questionType) {
         if (currentQuestion.questionType == "LISTENING_WORD" && vocab != null) {
-            viewModel.speak(vocab.word)
+            onSpeak(vocab.word)
         }
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF9F6EE))
+            .background(Color(0xFFFFF9F2))
             .windowInsetsPadding(WindowInsets.statusBars)
             .padding(24.dp)
     ) {
@@ -747,7 +756,7 @@ fun PracticeQuizScreen(
                         .background(Color.White)
                         .border(1.dp, Color(0xFF000000).copy(alpha = 0.05f), CircleShape)
                 ) {
-                    Icon(Icons.Default.Close, contentDescription = "Exit", tint = Color(0xFF1C1C1A))
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_back), tint = Color(0xFF1C1C1A))
                 }
 
                 IconButton(
@@ -778,7 +787,7 @@ fun PracticeQuizScreen(
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = "Correct: $correctCount",
+                        text = "${stringResource(R.string.quiz_correct)}: $correctCount",
                         color = Color(0xFF1C1C1A),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
@@ -795,7 +804,7 @@ fun PracticeQuizScreen(
                     modifier = Modifier.height(32.dp)
                 ) {
                     Text(
-                        text = "Submit",
+                        text = stringResource(R.string.common_submit),
                         color = Color.White,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
@@ -808,7 +817,7 @@ fun PracticeQuizScreen(
 
         // Progress text & indicator
         Text(
-            text = "Question ${index + 1} / ${questions.size}",
+            text = stringResource(R.string.quiz_question_number, index + 1, questions.size),
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             color = Color(0xFF7C776E),
@@ -844,7 +853,7 @@ fun PracticeQuizScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "Practice",
+            text = stringResource(R.string.deck_detail_practice),
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF1C1C1A),
@@ -871,7 +880,7 @@ fun PracticeQuizScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         IconButton(
                             onClick = {
-                                if (vocab != null) viewModel.speak(vocab.word)
+                                if (vocab != null) onSpeak(vocab.word)
                             },
                             modifier = Modifier
                                 .size(64.dp)
@@ -887,7 +896,7 @@ fun PracticeQuizScreen(
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Tap to listen again",
+                            text = stringResource(R.string.quiz_tap_to_listen),
                             fontSize = 12.sp,
                             color = Color(0xFF7C776E)
                         )
@@ -920,7 +929,7 @@ fun PracticeQuizScreen(
                     OutlinedTextField(
                         value = clozeAnswer,
                         onValueChange = { if (!isSubmitted) clozeAnswer = it },
-                        placeholder = { Text("Enter English word...") },
+                        placeholder = { Text(stringResource(R.string.quiz_enter_word_placeholder)) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("quiz_cloze_input"),
@@ -955,19 +964,23 @@ fun PracticeQuizScreen(
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text(
-                                    text = if (lastSubmitResult?.isCorrect == true) "Correct!" else "Incorrect!",
+                                    text = if (lastSubmitResult?.isCorrect == true) {
+                                        stringResource(R.string.quiz_cloze_correct)
+                                    } else {
+                                        stringResource(R.string.quiz_cloze_incorrect)
+                                    },
                                     fontWeight = FontWeight.Bold,
                                     color = if (lastSubmitResult?.isCorrect == true) Color(0xFF065F46) else Color(0xFF991B1B)
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "Correct answer: $correctAns",
+                                    text = stringResource(R.string.quiz_cloze_correct_answer_label, correctAns ?: ""),
                                     fontSize = 14.sp,
                                     color = Color(0xFF1C1C1A)
                                 )
                                 if (vocab != null && vocab.meaning.isNotEmpty()) {
                                     Text(
-                                        text = "Meaning: ${vocab.meaning}",
+                                        text = stringResource(R.string.quiz_meaning_label, vocab.meaning),
                                         fontSize = 13.sp,
                                         color = Color(0xFF7C776E)
                                     )
@@ -979,7 +992,7 @@ fun PracticeQuizScreen(
                         if (showHint) {
                             vocab?.let {
                                 Text(
-                                    text = "Hint: ${it.meaning}",
+                                    text = stringResource(R.string.quiz_hint_label, it.meaning),
                                     fontSize = 13.sp,
                                     color = Color(0xFF7C776E),
                                     modifier = Modifier.padding(start = 16.dp, top = 8.dp)
@@ -990,7 +1003,7 @@ fun PracticeQuizScreen(
                                 onClick = { showHint = true },
                                 modifier = Modifier.padding(start = 16.dp)
                             ) {
-                                Text("Show Hint", color = Color(0xFFFBBF24), fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.quiz_show_hint), color = Color(0xFFFBBF24), fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -1084,7 +1097,7 @@ fun PracticeQuizScreen(
                 shape = RoundedCornerShape(32.dp)
             ) {
                 Text(
-                    text = "Continue",
+                    text = stringResource(R.string.dashboard_continue),
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
                 )
@@ -1107,7 +1120,7 @@ fun PracticeQuizScreen(
                         border = BorderStroke(1.dp, Color(0xFFEF4444)),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444))
                     ) {
-                        Text("Don't know?", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Text(stringResource(R.string.quiz_btn_dont_know), fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
 
                     Button(
@@ -1124,7 +1137,7 @@ fun PracticeQuizScreen(
                         ),
                         shape = RoundedCornerShape(32.dp)
                     ) {
-                        Text("Answer", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        Text(stringResource(R.string.quiz_btn_answer), fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     }
                 }
             } else {
@@ -1140,7 +1153,7 @@ fun PracticeQuizScreen(
                     border = BorderStroke(1.dp, Color(0xFFEF4444)),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444))
                 ) {
-                    Text("Don't know?", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    Text(stringResource(R.string.quiz_btn_dont_know), fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 }
             }
         }

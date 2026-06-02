@@ -67,12 +67,12 @@ fun LoginScreen(
             val idToken = account?.idToken
             if (idToken != null) {
                 authViewModel.loginWithGoogle(idToken)
-                Toast.makeText(context, "Google Sign-In successful!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.auth_google_success), Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(context, "Google Sign-In: ID token was null", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, context.getString(R.string.auth_google_null_token), Toast.LENGTH_LONG).show()
             }
         } catch (e: ApiException) {
-            Toast.makeText(context, "Google Sign-In failed: code ${e.statusCode}\nMake sure SHA-1 is registered on GCP!", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, context.getString(R.string.auth_google_failed, e.statusCode), Toast.LENGTH_LONG).show()
         }
     }
 
@@ -209,7 +209,7 @@ fun LoginScreen(
                     color = TextSecondary,
                     modifier = Modifier
                         .clickable {
-                            Toast.makeText(context, "Password recovery is mocked.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.auth_forgot_password_mock), Toast.LENGTH_SHORT).show()
                         }
                         .padding(horizontal = 8.dp)
                 )
@@ -219,7 +219,7 @@ fun LoginScreen(
             Button(
                 onClick = {
                     if (email.trim().isEmpty() || password.trim().isEmpty()) {
-                        Toast.makeText(context, "Please enter email and password", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.auth_login_fields_required), Toast.LENGTH_SHORT).show()
                     } else {
                         authViewModel.login(email.trim(), password)
                     }
@@ -257,7 +257,7 @@ fun LoginScreen(
             ) {
                 HorizontalDivider(modifier = Modifier.weight(1f), color = Color.Black.copy(alpha = 0.08f))
                 Text(
-                    text = " OR ",
+                    text = stringResource(id = R.string.auth_or_divider),
                     fontSize = 12.sp,
                     color = TextSecondary,
                     modifier = Modifier.padding(horizontal = 12.dp),
@@ -288,7 +288,7 @@ fun LoginScreen(
                 GoogleLogo(modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = "Sign in with Google",
+                    text = stringResource(id = R.string.auth_google_button),
                     style = MinLishTypography.labelLarge.copy(fontSize = 16.sp),
                     color = TextPrimary
                 )

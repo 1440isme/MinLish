@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.FiberNew
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
@@ -21,14 +22,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.minlish.core.data.model.RecentStudyDeckEntity
 import com.minlish.core.component.GiraffeMascot
-import com.minlish.core.presentation.MinLishViewModel
 import com.minlish.ui.theme.MinLishTheme
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.ui.res.stringResource
+import com.minlish.R
 
 @Composable
 fun DashboardScreen(
-    viewModel: MinLishViewModel,
+    viewModel: DashboardViewModel,
     onStartDailyQuiz: () -> Unit,
     onStartDailyNew: () -> Unit,
     onNavigateToDecks: () -> Unit,
@@ -41,22 +43,27 @@ fun DashboardScreen(
     val recentStudyDeck by viewModel.recentStudyDeck.collectAsState()
 
     LaunchedEffect(Unit) {
+        viewModel.fetchDashboardAnalytics()
         viewModel.refreshRecentStudyDeck()
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF9F6EE))
+            .background(Color(0xFFFFF9F2))
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 16.dp)
+            .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 100.dp)
     ) {
-        // Rovio Streak Weekly tracker at the very top!
-        RovioWeeklyTracker(streakCount = stats.streak)
+        // Rovio Streak Weekly tracker
+        //Thêm mảng 7 ngày vào tracker
+        RovioWeeklyTracker(
+            streakCount = stats.streak,
+            weeklyActiveDays = stats.weeklyActiveDays
+        )
 
         // Greeting Header
         Text(
-            text = "Hello, $name!",
+            text = stringResource(R.string.dashboard_greeting, name),
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF1C1C1A),
@@ -116,7 +123,7 @@ fun DashboardScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.PlayArrow,
-                            contentDescription = "Play Quiz",
+                            contentDescription = stringResource(R.string.dashboard_daily_quiz),
                             tint = Color.White,
                             modifier = Modifier.size(24.dp)
                         )
@@ -126,7 +133,7 @@ fun DashboardScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Daily Quiz",
+                    text = stringResource(R.string.dashboard_daily_quiz),
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1C1C1A)
@@ -135,7 +142,7 @@ fun DashboardScreen(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "Your daily vocabulary challenge is waiting!",
+                    text = stringResource(R.string.dashboard_daily_quiz_desc),
                     fontSize = 14.sp,
                     color = Color(0xFF7C776E)
                 )
@@ -166,7 +173,7 @@ fun DashboardScreen(
                         modifier = Modifier.fillMaxSize()
                     ) {
                         Text(
-                            text = "Daily New",
+                            text = stringResource(R.string.dashboard_daily_new),
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF1C1C1A),
@@ -182,7 +189,7 @@ fun DashboardScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "$wordsGoal words",
+                                text = stringResource(R.string.profile_words_count, wordsGoal),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF1C1C1A)
@@ -225,7 +232,7 @@ fun DashboardScreen(
                         .padding(horizontal = 18.dp, vertical = 16.dp)
                 ) {
                     Text(
-                        text = "Deck learning",
+                        text = stringResource(R.string.dashboard_deck_learning),
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1C1C1A),
@@ -234,7 +241,7 @@ fun DashboardScreen(
                     Spacer(modifier = Modifier.height(6.dp))
 
                     Text(
-                        text = "Learn with decks",
+                        text = stringResource(R.string.dashboard_learn_with_decks),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color(0xFF7C776E),
@@ -307,7 +314,7 @@ private fun RecentDeckCard(
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "Recent deck",
+                        text = stringResource(R.string.dashboard_recent_deck),
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1C1C1A)
@@ -321,7 +328,7 @@ private fun RecentDeckCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "${recentDeck.dueReviewCount} cards due • $learnedWords/$totalWords learned",
+                        text = stringResource(R.string.dashboard_recent_deck_desc, recentDeck.dueReviewCount, learnedWords, totalWords),
                         fontSize = 13.sp,
                         color = Color(0xFF7C776E)
                     )
@@ -342,7 +349,7 @@ private fun RecentDeckCard(
                 shape = RoundedCornerShape(20.dp)
             ) {
                 Text(
-                    text = if (isCompleted) "No cards due" else "Continue",
+                    text = if (isCompleted) stringResource(R.string.dashboard_no_cards_due) else stringResource(R.string.dashboard_continue),
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp
                 )
@@ -355,12 +362,12 @@ private fun RecentDeckCard(
 @Composable
 fun DashboardScreenPreview() {
     MinLishTheme {
-        // Mock data for preview could be added here
+        // Mock data for preview
     }
 }
 
 @Composable
-fun RovioWeeklyTracker(streakCount: Int) {
+fun RovioWeeklyTracker(streakCount: Int, weeklyActiveDays: List<Boolean>) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -378,14 +385,14 @@ fun RovioWeeklyTracker(streakCount: Int) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Weekly Progress",
+                    text = stringResource(R.string.dashboard_weekly_progress),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1C1C1A)
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "$streakCount days",
+                        text = stringResource(R.string.dashboard_streak_days, streakCount),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF7C776E)
@@ -393,7 +400,7 @@ fun RovioWeeklyTracker(streakCount: Int) {
                     Spacer(modifier = Modifier.width(4.dp))
                     Icon(
                         imageVector = Icons.Default.LocalFireDepartment,
-                        contentDescription = "Study streak",
+                        contentDescription = stringResource(R.string.dashboard_streak_label),
                         tint = Color(0xFFF97316),
                         modifier = Modifier.size(16.dp)
                     )
@@ -406,53 +413,48 @@ fun RovioWeeklyTracker(streakCount: Int) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                val daysList = remember(streakCount) {
-                    val list = mutableListOf<Triple<String, String, Boolean>>()
-                    val sdfNum = SimpleDateFormat("dd", Locale.US)
-                    val sdfName = SimpleDateFormat("E", Locale.US)
+                // Danh sách 7 ngày hiển thị chữ cái đầu
+                val daysOfWeek = listOf("M", "T", "W", "T", "F", "S", "S")
 
-                    for (i in 3 downTo 0) {
-                        val cal = Calendar.getInstance()
-                        cal.add(Calendar.DAY_OF_YEAR, -i)
 
-                        // Nếu số ngày i nằm trong phạm vi chuỗi ngày streak thật, tự thắp sáng chấm tròn vàng
-                        val finished = i < streakCount
-                        list.add(Triple(sdfNum.format(cal.time), sdfName.format(cal.time), finished))
-                    }
-                    list
-                }
-
-                daysList.forEach { (num, day, finished) ->
+                daysOfWeek.forEachIndexed { index, dayLabel ->
+                    // Tránh lỗi Index nếu danh sách mảng chưa kịp update
+                    val isActive = weeklyActiveDays.getOrElse(index) { false }
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            num,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (finished) Color(0xFF1C1C1A) else Color(0xFF7C776E).copy(alpha = 0.6f)
-                        )
-                        Text(
-                            day,
-                            fontSize = 11.sp,
-                            color = Color(0xFF7C776E)
+                            text = dayLabel,
+                            fontSize = 13.sp,
+                            fontWeight = if (isActive) FontWeight.Bold else FontWeight.SemiBold,
+                            color = if (isActive) Color(0xFF1C1C1A) else Color(0xFF7C776E).copy(alpha = 0.6f)
                         )
                         
                         // Circle Indicator
                         Box(
                             modifier = Modifier
-                                .size(24.dp)
+                                .size(28.dp)
                                 .clip(CircleShape)
                                 .background(
-                                    if (finished) Color(0xFFFBBF24) else Color.White
+                                    if (isActive) Color(0xFFFBBF24) else Color.White
                                 )
                                 .border(
                                     width = 1.5.dp,
-                                    color = if (finished) Color(0xFFFBBF24) else Color(0xFFE0E7FF),
+                                    color = if (isActive) Color(0xFFFBBF24) else Color(0xFFE0E7FF),
                                     shape = CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isActive) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Active",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
                                 )
-                        )
+                            }
+                        }
                     }
                 }
             }

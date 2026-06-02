@@ -6,6 +6,7 @@ import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -23,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -30,10 +32,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.minlish.R
 import com.minlish.core.data.model.AddVocabularyResult
 import com.minlish.core.data.model.VocabularyEntity
-import com.minlish.core.presentation.MinLishViewModel
-import com.minlish.core.presentation.SameWordWarningState
 import kotlinx.coroutines.launch
 
 private val partOfSpeechOptions = listOf(
@@ -53,10 +54,11 @@ private val partOfSpeechOptions = listOf(
 @Composable
 fun DeckDetailScreen(
     deckId: String,
-    viewModel: MinLishViewModel,
+    viewModel: DeckDetailViewModel,
     onBack: () -> Unit,
     onStartStudy: () -> Unit,
-    onStartQuiz: (String) -> Unit
+    onStartQuiz: (String) -> Unit,
+    onSpeak: (String) -> Unit,
 ) {
     val deck by viewModel.selectedDeck.collectAsState()
     val vocabs by viewModel.vocabulariesInSelectedDeck.collectAsState()
@@ -88,6 +90,22 @@ fun DeckDetailScreen(
         selectedImportFileName = uri?.let { resolveDisplayName(context, it) }
     }
 
+    val csvTemplateLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        val saved = writeSampleCsvTemplate(context, uri)
+        coroutineScope.launch {
+            snackbarHostState.showSnackbar(
+                if (saved) {
+                    context.getString(R.string.deck_detail_csv_template_saved)
+                } else {
+                    context.getString(R.string.deck_detail_csv_template_save_failed)
+                }
+            )
+        }
+    }
+
     LaunchedEffect(deckId) {
         viewModel.selectDeck(deckId)
         viewModel.refreshFavoritedIds()
@@ -116,28 +134,29 @@ fun DeckDetailScreen(
     val learnedWords = (totalWords - newWordsAvailable).coerceIn(0, totalWords)
     val learnedProgress = if (totalWords == 0) 0f else learnedWords.toFloat() / totalWords.toFloat()
     val emptyDeckMessage = when {
-        canManageWords -> "This deck is empty. Add a word manually or import a CSV file to get started."
-        isFavoritesDeck -> "You have not favorited any vocabulary yet. Tap the heart icon on a word card to save it here."
-        else -> "This deck does not contain any vocabulary yet."
+        canManageWords -> stringResource(R.string.deck_detail_empty_manageable)
+        isFavoritesDeck -> stringResource(R.string.deck_detail_empty_favorites)
+        else -> stringResource(R.string.deck_detail_empty_default)
     }
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        containerColor = if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFF4F9F8),
+        containerColor = if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFFFF9F2),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFF4F9F8))
-                .padding(16.dp)
+                .background(if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFFFF9F2))
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
@@ -151,10 +170,10 @@ fun DeckDetailScreen(
 
                 if (deck!!.deckType == "USER" && !isFavoritesDeck) {
                     IconButton(onClick = { showEditDeckDialog = true }) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit Deck", tint = accentTeal)
+                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.deck_detail_edit_deck), tint = accentTeal)
                     }
                     IconButton(onClick = { showDeleteDeckConfirm = true }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete Deck", tint = Color.Red)
+                        Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.deck_detail_delete_deck), tint = Color.Red)
                     }
                 }
             }
@@ -182,7 +201,7 @@ fun DeckDetailScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.AutoStories, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Learn", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.deck_detail_learn), fontSize = 15.sp, fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -198,7 +217,7 @@ fun DeckDetailScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(22.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Practice", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.deck_detail_practice), fontSize = 15.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -218,7 +237,7 @@ fun DeckDetailScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Add Manual Word", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.deck_detail_add_manual_word), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
 
@@ -230,7 +249,7 @@ fun DeckDetailScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.UploadFile, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Import CSV", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.deck_detail_import_csv), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }
@@ -247,6 +266,7 @@ fun DeckDetailScreen(
 
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = PaddingValues(bottom = 100.dp),
                 modifier = Modifier.weight(1f)
             ) {
                 items(vocabs) { vocab ->
@@ -257,7 +277,7 @@ fun DeckDetailScreen(
                         isFavorited = isFavorited,
                         showFavorite = true,
                         onClick = { selectedVocabulary = vocab },
-                        onSpeak = { viewModel.speak(vocab.word) },
+                        onSpeak = { onSpeak(vocab.word) },
                         onToggleFavorite = {
                             viewModel.toggleFavorite(vocab) { _, error ->
                                 error?.let { msg ->
@@ -317,13 +337,13 @@ fun DeckDetailScreen(
                     modifier = Modifier.padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Edit Deck", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.deck_detail_edit_deck), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(16.dp))
 
                     OutlinedTextField(
                         value = dName,
                         onValueChange = { dName = it },
-                        label = { Text("Deck Name") },
+                        label = { Text(stringResource(R.string.decks_field_name)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
@@ -333,7 +353,7 @@ fun DeckDetailScreen(
                     OutlinedTextField(
                         value = dDesc,
                         onValueChange = { dDesc = it },
-                        label = { Text("Description") },
+                        label = { Text(stringResource(R.string.decks_field_description)) },
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -342,7 +362,7 @@ fun DeckDetailScreen(
                     OutlinedTextField(
                         value = dTags,
                         onValueChange = { dTags = it },
-                        label = { Text("Tags (comma separated)") },
+                        label = { Text(stringResource(R.string.decks_field_tags)) },
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -353,7 +373,7 @@ fun DeckDetailScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         TextButton(onClick = { showEditDeckDialog = false }) {
-                            Text("Cancel")
+                            Text(stringResource(R.string.common_cancel))
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
@@ -366,7 +386,7 @@ fun DeckDetailScreen(
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = accentTeal)
                         ) {
-                            Text("Save")
+                            Text(stringResource(R.string.common_save))
                         }
                     }
                 }
@@ -377,13 +397,13 @@ fun DeckDetailScreen(
     if (showDeleteDeckConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteDeckConfirm = false },
-            title = { Text("Delete deck?") },
+            title = { Text(stringResource(R.string.deck_detail_delete_deck_title)) },
             text = {
-                Text("Delete \"${deck!!.name}\" and remove it from your personal decks? This action cannot be undone.")
+                Text(stringResource(R.string.deck_detail_delete_deck_message, deck!!.name))
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDeckConfirm = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.common_cancel))
                 }
             },
             confirmButton = {
@@ -395,7 +415,7 @@ fun DeckDetailScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626))
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.common_delete))
                 }
             },
         )
@@ -428,13 +448,13 @@ fun DeckDetailScreen(
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Add English Vocabulary", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.deck_detail_add_vocab_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
                         value = nWord,
                         onValueChange = { nWord = it },
-                        label = { Text("Vocabulary (Word)") },
+                        label = { Text(stringResource(R.string.deck_detail_field_word)) },
                         modifier = Modifier.fillMaxWidth().testTag("vocab_word_input"),
                         singleLine = true
                     )
@@ -443,7 +463,7 @@ fun DeckDetailScreen(
                     OutlinedTextField(
                         value = nPron,
                         onValueChange = { nPron = it },
-                        label = { Text("Pronunciation") },
+                        label = { Text(stringResource(R.string.deck_detail_field_pronunciation)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
@@ -457,7 +477,7 @@ fun DeckDetailScreen(
                             value = nPartOfSpeech,
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("Part of Speech") },
+                            label = { Text(stringResource(R.string.deck_detail_field_part_of_speech)) },
                             trailingIcon = {
                                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = partOfSpeechExpanded)
                             },
@@ -484,7 +504,7 @@ fun DeckDetailScreen(
                     OutlinedTextField(
                         value = nMeaning,
                         onValueChange = { nMeaning = it },
-                        label = { Text("Meaning (Vietnamese)") },
+                        label = { Text(stringResource(R.string.deck_detail_field_meaning)) },
                         modifier = Modifier.fillMaxWidth().testTag("vocab_meaning_input"),
                         singleLine = true
                     )
@@ -493,7 +513,7 @@ fun DeckDetailScreen(
                     OutlinedTextField(
                         value = nDesc,
                         onValueChange = { nDesc = it },
-                        label = { Text("English Definition") },
+                        label = { Text(stringResource(R.string.deck_detail_field_english_definition)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -501,7 +521,7 @@ fun DeckDetailScreen(
                     OutlinedTextField(
                         value = nExample,
                         onValueChange = { nExample = it },
-                        label = { Text("Example Sentence") },
+                        label = { Text(stringResource(R.string.deck_detail_field_example_sentence)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -509,7 +529,7 @@ fun DeckDetailScreen(
                     OutlinedTextField(
                         value = nColloc,
                         onValueChange = { nColloc = it },
-                        label = { Text("Common Collocations (semicolon separated)") },
+                        label = { Text(stringResource(R.string.deck_detail_field_collocations)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -517,7 +537,7 @@ fun DeckDetailScreen(
                     OutlinedTextField(
                         value = nRel,
                         onValueChange = { nRel = it },
-                        label = { Text("Related Words") },
+                        label = { Text(stringResource(R.string.deck_detail_field_related_words)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -525,7 +545,7 @@ fun DeckDetailScreen(
                     OutlinedTextField(
                         value = nNote,
                         onValueChange = { nNote = it },
-                        label = { Text("Personal Memory Notes") },
+                        label = { Text(stringResource(R.string.deck_detail_field_notes)) },
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -536,7 +556,7 @@ fun DeckDetailScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         TextButton(onClick = { showWordDialog = false }) {
-                            Text("Cancel")
+                            Text(stringResource(R.string.common_cancel))
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
@@ -557,7 +577,7 @@ fun DeckDetailScreen(
                                         when (result) {
                                             is AddVocabularyResult.Success -> {
                                                 coroutineScope.launch {
-                                                    snackbarHostState.showSnackbar("Word added")
+                                                    snackbarHostState.showSnackbar(context.getString(R.string.deck_detail_word_added))
                                                 }
                                                 showWordDialog = false
                                             }
@@ -578,14 +598,14 @@ fun DeckDetailScreen(
                                     }
                                 } else {
                                     coroutineScope.launch {
-                                        snackbarHostState.showSnackbar("Word and Meaning are mandatory!")
+                                        snackbarHostState.showSnackbar(context.getString(R.string.deck_detail_word_meaning_required))
                                     }
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = accentTeal),
                             modifier = Modifier.testTag("vocab_save_button")
                         ) {
-                            Text("Add")
+                            Text(stringResource(R.string.common_add))
                         }
                     }
                 }
@@ -605,14 +625,45 @@ fun DeckDetailScreen(
                     modifier = Modifier.padding(18.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Import Vocabularies from CSV", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.deck_detail_import_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Choose a .csv file from your device. Required columns: word, meaning.",
+                        text = stringResource(R.string.deck_detail_import_description),
                         fontSize = 11.sp,
                         color = Color.Gray,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = stringResource(R.string.deck_detail_import_help),
+                        fontSize = 11.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedButton(
+                        onClick = { csvTemplateLauncher.launch("minlish-import-template.csv") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, accentTeal.copy(alpha = 0.45f))
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.Download,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = accentTeal
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                stringResource(R.string.deck_detail_download_sample_csv),
+                                fontWeight = FontWeight.SemiBold,
+                                color = accentTeal
+                            )
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedButton(
@@ -623,7 +674,7 @@ fun DeckDetailScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.AttachFile, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Choose CSV File", fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.deck_detail_choose_csv_file), fontWeight = FontWeight.SemiBold)
                         }
                     }
 
@@ -641,22 +692,22 @@ fun DeckDetailScreen(
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
-                                text = "Selected file",
+                                text = stringResource(R.string.deck_detail_selected_file),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color.Gray
                             )
                             Text(
-                                text = selectedImportFileName ?: "No CSV file selected yet",
+                                text = selectedImportFileName ?: stringResource(R.string.deck_detail_no_csv_selected),
                                 fontSize = 13.sp,
                                 fontWeight = if (selectedImportFileName == null) FontWeight.Normal else FontWeight.SemiBold,
                                 color = if (selectedImportFileName == null) Color.Gray else MaterialTheme.colorScheme.onSurface,
                             )
                             Text(
                                 text = if (selectedImportFileName == null) {
-                                    "Choose a .csv file to continue."
+                                    stringResource(R.string.deck_detail_choose_csv_prompt)
                                 } else {
-                                    "Ready to import into this deck."
+                                    stringResource(R.string.deck_detail_ready_to_import)
                                 },
                                 fontSize = 11.sp,
                                 color = Color.Gray
@@ -675,7 +726,7 @@ fun DeckDetailScreen(
                             selectedImportUri = null
                             selectedImportFileName = null
                         }) {
-                            Text("Cancel")
+                            Text(stringResource(R.string.common_cancel))
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
@@ -684,7 +735,8 @@ fun DeckDetailScreen(
                                     viewModel.importCsv(deckId, importUri) { res ->
                                         if (res.success || res.importedCount > 0) {
                                             importReportMessage = formatImportReport(
-                                                fileName = selectedImportFileName ?: "Selected CSV file",
+                                                context = context,
+                                                fileName = selectedImportFileName ?: context.getString(R.string.deck_detail_selected_csv_fallback),
                                                 response = res
                                             )
                                             showImportReport = true
@@ -692,7 +744,7 @@ fun DeckDetailScreen(
                                             selectedImportUri = null
                                             selectedImportFileName = null
                                         } else {
-                                            val errMsg = formatImportFailureMessage(res)
+                                            val errMsg = formatImportFailureMessage(context, res)
                                             coroutineScope.launch {
                                                 snackbarHostState.showSnackbar(errMsg)
                                             }
@@ -702,14 +754,14 @@ fun DeckDetailScreen(
                                         }
                                     }
                                 } ?: coroutineScope.launch {
-                                    snackbarHostState.showSnackbar("Please choose a CSV file before importing.")
+                                    snackbarHostState.showSnackbar(context.getString(R.string.deck_detail_import_choose_file_first))
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = accentTeal),
                             modifier = Modifier.testTag("csv_import_submit"),
                             enabled = selectedImportUri != null
                         ) {
-                            Text("Import")
+                            Text(stringResource(R.string.deck_detail_import_button))
                         }
                     }
                 }
@@ -745,13 +797,13 @@ fun DeckDetailScreen(
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Edit Vocabulary", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.deck_detail_edit_vocab_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
                         value = nWord,
                         onValueChange = { nWord = it },
-                        label = { Text("Vocabulary (Word)") },
+                        label = { Text(stringResource(R.string.deck_detail_field_word)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
@@ -760,7 +812,7 @@ fun DeckDetailScreen(
                     OutlinedTextField(
                         value = nPron,
                         onValueChange = { nPron = it },
-                        label = { Text("Pronunciation") },
+                        label = { Text(stringResource(R.string.deck_detail_field_pronunciation)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
@@ -774,7 +826,7 @@ fun DeckDetailScreen(
                             value = nPartOfSpeech,
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("Part of Speech") },
+                            label = { Text(stringResource(R.string.deck_detail_field_part_of_speech)) },
                             trailingIcon = {
                                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = partOfSpeechExpanded)
                             },
@@ -801,7 +853,7 @@ fun DeckDetailScreen(
                     OutlinedTextField(
                         value = nMeaning,
                         onValueChange = { nMeaning = it },
-                        label = { Text("Meaning (Vietnamese)") },
+                        label = { Text(stringResource(R.string.deck_detail_field_meaning)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
@@ -810,7 +862,7 @@ fun DeckDetailScreen(
                     OutlinedTextField(
                         value = nDesc,
                         onValueChange = { nDesc = it },
-                        label = { Text("English Definition") },
+                        label = { Text(stringResource(R.string.deck_detail_field_english_definition)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -818,7 +870,7 @@ fun DeckDetailScreen(
                     OutlinedTextField(
                         value = nExample,
                         onValueChange = { nExample = it },
-                        label = { Text("Example Sentence") },
+                        label = { Text(stringResource(R.string.deck_detail_field_example_sentence)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -826,7 +878,7 @@ fun DeckDetailScreen(
                     OutlinedTextField(
                         value = nColloc,
                         onValueChange = { nColloc = it },
-                        label = { Text("Common Collocations (semicolon separated)") },
+                        label = { Text(stringResource(R.string.deck_detail_field_collocations)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -834,7 +886,7 @@ fun DeckDetailScreen(
                     OutlinedTextField(
                         value = nRel,
                         onValueChange = { nRel = it },
-                        label = { Text("Related Words") },
+                        label = { Text(stringResource(R.string.deck_detail_field_related_words)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -842,7 +894,7 @@ fun DeckDetailScreen(
                     OutlinedTextField(
                         value = nNote,
                         onValueChange = { nNote = it },
-                        label = { Text("Personal Memory Notes") },
+                        label = { Text(stringResource(R.string.deck_detail_field_notes)) },
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -853,7 +905,7 @@ fun DeckDetailScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         TextButton(onClick = { editingVocabulary = null }) {
-                            Text("Cancel")
+                            Text(stringResource(R.string.common_cancel))
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
@@ -875,13 +927,13 @@ fun DeckDetailScreen(
                                     editingVocabulary = null
                                 } else {
                                     coroutineScope.launch {
-                                        snackbarHostState.showSnackbar("Word and Meaning are mandatory!")
+                                        snackbarHostState.showSnackbar(context.getString(R.string.deck_detail_word_meaning_required))
                                     }
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = accentTeal)
                         ) {
-                            Text("Save")
+                            Text(stringResource(R.string.common_save))
                         }
                     }
                 }
@@ -898,7 +950,7 @@ fun DeckDetailScreen(
                     when (result) {
                         is AddVocabularyResult.Success -> {
                             coroutineScope.launch {
-                                snackbarHostState.showSnackbar("New meaning added")
+                                snackbarHostState.showSnackbar(context.getString(R.string.deck_detail_new_meaning_added))
                             }
                         }
                         is AddVocabularyResult.DuplicateExact,
@@ -907,7 +959,7 @@ fun DeckDetailScreen(
                                 snackbarHostState.showSnackbar(
                                     (result as? AddVocabularyResult.Failure)?.message
                                         ?: (result as? AddVocabularyResult.DuplicateExact)?.message
-                                        ?: "Could not add word"
+                                        ?: context.getString(R.string.deck_detail_could_not_add_word)
                                 )
                             }
                         }
@@ -921,11 +973,11 @@ fun DeckDetailScreen(
     if (showImportReport) {
         AlertDialog(
             onDismissRequest = { showImportReport = false },
-            title = { Text("Import report") },
+            title = { Text(stringResource(R.string.deck_detail_import_report_title)) },
             text = { Text(importReportMessage) },
             confirmButton = {
                 TextButton(onClick = { showImportReport = false }) {
-                    Text("OK")
+                    Text(stringResource(R.string.common_ok))
                 }
             },
         )
@@ -934,11 +986,11 @@ fun DeckDetailScreen(
     pendingDeleteVocabulary?.let { vocab ->
         AlertDialog(
             onDismissRequest = { pendingDeleteVocabulary = null },
-            title = { Text("Delete vocabulary?") },
-            text = { Text("Delete \"${vocab.word}\" from this deck? This action cannot be undone.") },
+            title = { Text(stringResource(R.string.deck_detail_delete_vocab_title)) },
+            text = { Text(stringResource(R.string.deck_detail_delete_vocab_message, vocab.word)) },
             dismissButton = {
                 TextButton(onClick = { pendingDeleteVocabulary = null }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.common_cancel))
                 }
             },
             confirmButton = {
@@ -949,7 +1001,7 @@ fun DeckDetailScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626))
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.common_delete))
                 }
             },
         )
@@ -987,7 +1039,7 @@ private fun DeckLearningProgressHeader(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(
-            text = "Learned: $learnedWords/$totalWords",
+            text = stringResource(R.string.deck_detail_learned_progress, learnedWords, totalWords),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -1021,26 +1073,26 @@ fun SameWordDifferentMeaningDialog(
     val existingText = warning.existingItems.joinToString("\n") { "• ${it.word}: ${it.meaning}" }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Same word, different meaning?") },
+        title = { Text(stringResource(R.string.deck_detail_same_word_title)) },
         text = {
             Column {
                 Text(warning.message)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Existing meanings:", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                Text(stringResource(R.string.deck_detail_existing_meanings), fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                 Text(existingText, fontSize = 12.sp)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    "Add \"${warning.pending.meaning}\" as a new flashcard?",
+                    stringResource(R.string.deck_detail_add_new_meaning_prompt, warning.pending.meaning),
                     fontSize = 12.sp,
                     color = Color.Gray,
                 )
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
         },
         confirmButton = {
-            Button(onClick = onConfirm) { Text("Add new meaning") }
+            Button(onClick = onConfirm) { Text(stringResource(R.string.deck_detail_add_new_meaning)) }
         },
     )
 }
@@ -1076,7 +1128,7 @@ fun VocabItemCard(
                     }
                     Spacer(modifier = Modifier.width(6.dp))
                     IconButton(onClick = onSpeak, modifier = Modifier.size(24.dp)) {
-                        Icon(Icons.Default.VolumeUp, contentDescription = "Listen", modifier = Modifier.size(16.dp), tint = Color(0xFF0D9488))
+                        Icon(Icons.Default.VolumeUp, contentDescription = stringResource(R.string.deck_detail_listen), modifier = Modifier.size(16.dp), tint = Color(0xFF0D9488))
                     }
                 }
 
@@ -1085,7 +1137,7 @@ fun VocabItemCard(
                         IconButton(onClick = onToggleFavorite, modifier = Modifier.size(24.dp)) {
                             Icon(
                                 imageVector = if (isFavorited) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                contentDescription = "Favorite",
+                                contentDescription = stringResource(R.string.deck_detail_favorite),
                                 modifier = Modifier.size(18.dp),
                                 tint = if (isFavorited) Color(0xFFE11D48) else Color.Gray,
                             )
@@ -1118,7 +1170,7 @@ fun VocabItemCard(
                         .padding(8.dp)
                 ) {
                     Column {
-                        Text("Example Sentence:", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color.Gray)
+                        Text(stringResource(R.string.deck_detail_example_sentence_label), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color.Gray)
                         Text(text = vocab.example, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
@@ -1183,12 +1235,12 @@ private fun VocabularyDetailSheet(
             }
         }
 
-        VocabularyDetailBlock("Meaning", vocab.meaning)
-        VocabularyDetailBlock("English Definition", vocab.descriptionEn)
-        VocabularyDetailBlock("Example", vocab.example)
-        VocabularyDetailBlock("Collocation", vocab.collocation)
-        VocabularyDetailBlock("Related Words", vocab.relatedWords)
-        VocabularyDetailBlock("Note", vocab.note)
+        VocabularyDetailBlock(stringResource(R.string.deck_detail_block_meaning), vocab.meaning)
+        VocabularyDetailBlock(stringResource(R.string.deck_detail_block_english_definition), vocab.descriptionEn)
+        VocabularyDetailBlock(stringResource(R.string.deck_detail_block_example), vocab.example)
+        VocabularyDetailBlock(stringResource(R.string.deck_detail_block_collocation), vocab.collocation)
+        VocabularyDetailBlock(stringResource(R.string.deck_detail_block_related_words), vocab.relatedWords)
+        VocabularyDetailBlock(stringResource(R.string.deck_detail_block_note), vocab.note)
 
         if (canManageWords) {
             Spacer(modifier = Modifier.height(4.dp))
@@ -1203,7 +1255,7 @@ private fun VocabularyDetailSheet(
                 ) {
                     Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Edit")
+                    Text(stringResource(R.string.common_edit))
                 }
                 Button(
                     onClick = onDelete,
@@ -1213,7 +1265,7 @@ private fun VocabularyDetailSheet(
                 ) {
                     Icon(Icons.Default.DeleteOutline, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Delete")
+                    Text(stringResource(R.string.common_delete))
                 }
             }
         }
@@ -1258,27 +1310,36 @@ private fun resolveDisplayName(context: Context, uri: Uri): String {
     return "import.csv"
 }
 
-private fun formatImportReport(fileName: String, response: com.minlish.core.data.model.ImportCsvResponse): String {
+private fun formatImportReport(
+    context: Context,
+    fileName: String,
+    response: com.minlish.core.data.model.ImportCsvResponse,
+): String {
     val summaryLine = when {
         response.importedCount > 0 && response.duplicateCount == 0 && response.failedCount == 0 ->
-            "Import completed successfully."
+            context.getString(R.string.deck_detail_import_summary_success)
         response.importedCount > 0 ->
-            "Import completed with some skipped rows."
-        else -> "No vocabularies were imported."
+            context.getString(R.string.deck_detail_import_summary_partial)
+        else -> context.getString(R.string.deck_detail_import_summary_none)
     }
 
     return buildString {
         append(summaryLine)
-        append("\n\nFile: $fileName")
+        append("\n\n")
+        append(context.getString(R.string.deck_detail_import_report_file, fileName))
         if (response.totalRows > 0) {
-            append("\nTotal rows processed: ${response.totalRows}")
+            append("\n")
+            append(context.getString(R.string.deck_detail_import_report_total_rows, response.totalRows))
         }
-        append("\nImported successfully: ${response.importedCount}")
+        append("\n")
+        append(context.getString(R.string.deck_detail_import_report_imported, response.importedCount))
         if (response.duplicateCount > 0) {
-            append("\nSkipped as duplicates: ${response.duplicateCount}")
+            append("\n")
+            append(context.getString(R.string.deck_detail_import_report_duplicates, response.duplicateCount))
         }
         if (response.failedCount > 0) {
-            append("\nInvalid rows: ${response.failedCount}")
+            append("\n")
+            append(context.getString(R.string.deck_detail_import_report_invalid_rows, response.failedCount))
         }
 
         response.duplicateSamples
@@ -1286,7 +1347,8 @@ private fun formatImportReport(fileName: String, response: com.minlish.core.data
             ?.take(3)
             ?.let { samples ->
                 if (samples.isNotEmpty()) {
-                    append("\n\nDuplicate samples:")
+                    append("\n\n")
+                    append(context.getString(R.string.deck_detail_import_report_duplicate_samples))
                     samples.forEach { append("\n• $it") }
                 }
             }
@@ -1296,14 +1358,34 @@ private fun formatImportReport(fileName: String, response: com.minlish.core.data
             ?.take(3)
             ?.let { errors ->
                 if (errors.isNotEmpty()) {
-                    append("\n\nRows that need fixing:")
+                    append("\n\n")
+                    append(context.getString(R.string.deck_detail_import_report_rows_to_fix))
                     errors.forEach { append("\n• $it") }
                 }
             }
     }
 }
 
-private fun formatImportFailureMessage(response: com.minlish.core.data.model.ImportCsvResponse): String {
+private fun formatImportFailureMessage(
+    context: Context,
+    response: com.minlish.core.data.model.ImportCsvResponse,
+): String {
     val firstError = response.errors?.firstOrNull()?.takeIf { it.isNotBlank() }
-    return firstError ?: "The selected CSV file could not be imported. Please check the file format and required columns."
+    return firstError ?: context.getString(R.string.deck_detail_import_failure_default)
+}
+
+private fun writeSampleCsvTemplate(context: Context, uri: Uri): Boolean {
+    val sampleCsv = buildString {
+        appendLine("word,meaning,pronunciation,description_en,example,collocation,related_words,note,part_of_speech")
+        appendLine("\"budget\",\"ngân sách\",\"/ˈbʌdʒɪt/\",\"an estimate of income and expenditure\",\"We need to reduce the budget.\",\"tight budget\",\"finance;cost\",\"common in business English\",\"noun\"")
+        appendLine("\"delay\",\"trì hoãn\",\"/dɪˈleɪ/\",\"to make something happen later\",\"The flight was delayed.\",\"delay a plan\",\"postpone;defer\",\"can be verb or noun\",\"verb\"")
+    }
+
+    return runCatching {
+        context.contentResolver.openOutputStream(uri)?.bufferedWriter(Charsets.UTF_8).use { writer ->
+            checkNotNull(writer) { "Output stream is unavailable" }
+            writer.write(sampleCsv)
+            writer.flush()
+        }
+    }.isSuccess
 }

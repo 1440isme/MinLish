@@ -8,7 +8,10 @@ export class ReviewHistoryQueryDto {
   @IsString()
   vocabularyId?: string;
 
-  @ApiPropertyOptional({ example: 20, description: 'Maximum logs to return' })
+  @ApiPropertyOptional({
+    example: 20,
+    description: 'Maximum logs to return',
+  })
   @IsOptional()
   @Transform(({ value }) => Number(value))
   @IsInt()
@@ -16,4 +19,3 @@ export class ReviewHistoryQueryDto {
   @Max(100)
   limit?: number;
 }
-

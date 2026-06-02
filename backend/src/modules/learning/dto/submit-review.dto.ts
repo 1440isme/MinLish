@@ -7,7 +7,10 @@ export class SubmitReviewDto {
   @IsString()
   vocabularyId: string;
 
-  @ApiProperty({ enum: ReviewRating, example: ReviewRating.GOOD })
+  @ApiProperty({
+    enum: ReviewRating,
+    example: ReviewRating.GOOD,
+  })
   @IsEnum(ReviewRating)
   rating: ReviewRating;
 
@@ -18,4 +21,3 @@ export class SubmitReviewDto {
   @IsISO8601({ strict: true })
   reviewedAt: string;
 }
-

@@ -55,6 +55,7 @@ export class AnalyticsService {
         reviewWordsCount: true,
         correctCount: true,
         wrongCount: true,
+        practiceSessionsCount: true,
       },
     });
 
@@ -91,6 +92,42 @@ export class AnalyticsService {
     const dailyGoal = user.dailyNewWordsGoal || 10;
     const progressPercent = Math.min(100, Math.round((todayNewWords / dailyGoal) * 100));
 
+
+    // Tính mảng Weekly progress ( từ thứ 2 -> chủ nhật )
+    const dayOfWeek = todayDate.getDay(); // 0: Chủ nhật, 1: Thứ 2...
+    const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Đưa Thứ 2 về Index 0
+    const startOfWeek = new Date(todayDate);
+    startOfWeek.setDate(todayDate.getDate() - diffToMonday);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+    const weekActivities = await this.prisma.dailyActivity.findMany({
+      where: {
+        userId,
+        activityDate: { gte: startOfWeek, lte: endOfWeek },
+        OR: [
+          { newWordsCount: { gt: 0 } },
+          { reviewWordsCount: { gt: 0 } },
+          { practiceSessionsCount: { gt: 0 } },
+        ],
+      },
+      select: { activityDate: true },
+    });
+
+    const activeDatesSet = new Set(weekActivities.map((a) => a.activityDate.toISOString().split('T')[0]));
+
+    // Mảng 7 phần tử (true/false) đại diện cho Thứ 2 -> Chủ Nhật
+    const weeklyActiveDays : boolean[] = [];
+    for (let i = 0; i < 7; i++) {
+      const checkDate = new Date(startOfWeek);
+      checkDate.setDate(startOfWeek.getDate() + i);
+      weeklyActiveDays.push(activeDatesSet.has(checkDate.toISOString().split('T')[0]));
+    }
+
+    //Tổng bài practice đã làm
+    const totalPractices = aggregates._sum.practiceSessionsCount || 0;
+
     //Trả về 7 trường dữ liệu mà class DashBoardAnalyticsDto trên android cần
     return {
       totalLearned,
@@ -100,6 +137,8 @@ export class AnalyticsService {
       accuracy: parseFloat(accuracy.toFixed(1)), // Lấy 1 chữ số thập phân (Ví dụ: 92.5)
       streak,
       progressPercent,
+      weeklyActiveDays,
+      totalPractices,
     };
   }
 
@@ -191,7 +230,7 @@ export class AnalyticsService {
         practiceType: session.practiceType, // Ví dụ: "MULTIPLE_CHOICE"
         totalQuestions: session.totalQuestions,
         correctAnswers: session.correctAnswers,
-
+        status: session.status,
         finishedAt: session.finishedAt ? new Date(session.finishedAt).getTime() : 0,
       }));
     }
