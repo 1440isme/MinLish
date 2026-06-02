@@ -61,6 +61,7 @@ enum PracticeType {
   MULTIPLE_CHOICE
   FILL_IN_BLANK
   LISTENING
+  MIXED
 }
 
 enum PracticeSessionStatus {

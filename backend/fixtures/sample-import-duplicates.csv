@@ -1,0 +1,6 @@
+word,pronunciation,meaning,description_en,example,collocation,related_words,note,part_of_speech
+budget,/ˈbʌdʒ.ɪt/,ngân sách,An amount of money available for a particular purpose,The team must stay within the budget this quarter.,stay within budget;annual budget,finance;cost,Use this row as the first valid insert,noun
+budget,/ˈbʌdʒ.ɪt/,ngân sách,An amount of money available for a particular purpose,The team must stay within the budget this quarter.,stay within budget;annual budget,finance;cost,Exact duplicate in the same CSV file,noun
+budget,/ˈbʌdʒ.ɪt/,bản dự toán,A plan showing how money will be spent next month,She prepared a detailed budget for the campaign.,prepare a budget;detailed budget,estimate;plan,Same word but different meaning should be allowed,noun
+delay,/dɪˈleɪ/,trì hoãn,To make something happen later than expected,Bad weather may delay the shipment.,delay the shipment;delay a meeting,postpone;hold up,Valid row for first import,verb
+delay,/dɪˈleɪ/,trì hoãn,To make something happen later than expected,Bad weather may delay the shipment.,delay the shipment;delay a meeting,postpone;hold up,Exact duplicate in the same CSV file,verb

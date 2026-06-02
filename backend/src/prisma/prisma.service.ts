@@ -20,6 +20,7 @@ function parseDatabaseUrl(url: string) {
     password: decodeURIComponent(parsed.password),
     database: parsed.pathname.replace(/^\//, ''),
     connectionLimit: 10,
+    allowPublicKeyRetrieval: true,
   };
 }
 
@@ -32,8 +33,7 @@ export class PrismaService
 
   constructor() {
     const databaseUrl =
-      process.env.DATABASE_URL ||
-      'mysql://root:root@localhost:3306/minlish';
+      process.env.DATABASE_URL || 'mysql://root:root@localhost:3306/minlish';
 
     const connectionOpts = parseDatabaseUrl(databaseUrl);
     const adapter = new PrismaMariaDb(connectionOpts);

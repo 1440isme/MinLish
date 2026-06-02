@@ -11,6 +11,19 @@ export enum VocabularyDifficulty {
   HARD = 'HARD',
 }
 
+export enum VocabularyPartOfSpeech {
+  NOUN = 'noun',
+  VERB = 'verb',
+  ADJECTIVE = 'adjective',
+  ADVERB = 'adverb',
+  PRONOUN = 'pronoun',
+  PREPOSITION = 'preposition',
+  CONJUNCTION = 'conjunction',
+  INTERJECTION = 'interjection',
+  PHRASE = 'phrase',
+  OTHER = 'other',
+}
+
 // ----------------------------------------------------------------
 // Vocabulary Entity
 // ----------------------------------------------------------------
@@ -27,8 +40,7 @@ export class VocabularyEntity {
   @ApiPropertyOptional({
     example: 'uuid-original-vocab',
     nullable: true,
-    description:
-      'ID vocabulary gốc nếu đây là bản copy/favorite',
+    description: 'ID vocabulary gốc nếu đây là bản copy/favorite',
   })
   @Expose()
   sourceVocabularyId?: string | null;
@@ -59,7 +71,9 @@ export class VocabularyEntity {
   @Expose()
   descriptionEn?: string | null;
 
-  @ApiPropertyOptional({ example: 'I have an appointment with the manager at 9 a.m.' })
+  @ApiPropertyOptional({
+    example: 'I have an appointment with the manager at 9 a.m.',
+  })
   @Expose()
   example?: string | null;
 
@@ -93,9 +107,12 @@ export class VocabularyEntity {
   @Expose()
   difficulty?: VocabularyDifficulty | null;
 
-  @ApiPropertyOptional({ example: 'noun' })
+  @ApiPropertyOptional({
+    enum: VocabularyPartOfSpeech,
+    example: VocabularyPartOfSpeech.NOUN,
+  })
   @Expose()
-  partOfSpeech?: string | null;
+  partOfSpeech?: VocabularyPartOfSpeech | null;
 
   @ApiProperty({ type: Date })
   @Expose()

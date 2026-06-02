@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { VocabularyEntity } from '../../vocabularies/entities/vocabulary.entity';
 
 // ----------------------------------------------------------------
@@ -10,6 +10,7 @@ export enum PracticeType {
   MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
   FILL_IN_BLANK = 'FILL_IN_BLANK',
   LISTENING = 'LISTENING',
+  MIXED = 'MIXED',
 }
 
 export enum PracticeSessionStatus {
@@ -69,6 +70,7 @@ export class PracticeSessionEntity {
     description: 'Tỉ lệ đúng (%)',
   })
   @Expose()
+  @Transform(({ value }) => value ? Number(value) : 0)
   accuracy: number;
 
   @ApiProperty({
