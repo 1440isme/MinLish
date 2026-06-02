@@ -64,7 +64,6 @@ fun DeckDetailScreen(
     val vocabs by viewModel.vocabulariesInSelectedDeck.collectAsState()
     val deckLearningProgress by viewModel.selectedDeckLearningProgress.collectAsState()
     val isLoadingDetail by viewModel.isLoadingDeckDetail.collectAsState()
-    val sameWordWarning by viewModel.sameWordWarning.collectAsState()
     val favoritedIds by viewModel.favoritedSourceIds.collectAsState()
     val lastErrorMessage by viewModel.lastErrorMessage.collectAsState()
 
@@ -77,12 +76,31 @@ fun DeckDetailScreen(
     var pendingDeleteVocabulary by remember { mutableStateOf<VocabularyEntity?>(null) }
     var selectedVocabulary by remember { mutableStateOf<VocabularyEntity?>(null) }
     var editingVocabulary by remember { mutableStateOf<VocabularyEntity?>(null) }
+    var localSameWordWarning by remember { mutableStateOf<SameWordWarningState?>(null) }
+    var addWordErrorMessage by remember { mutableStateOf<String?>(null) }
+    var pendingAddSnackbarMessage by remember { mutableStateOf<String?>(null) }
+    var addWord by remember { mutableStateOf("") }
+    var addPronunciation by remember { mutableStateOf("") }
+    var addPartOfSpeech by remember { mutableStateOf(partOfSpeechOptions.first()) }
+    var addMeaning by remember { mutableStateOf("") }
+    var addDescriptionEn by remember { mutableStateOf("") }
+    var addExample by remember { mutableStateOf("") }
+    var addCollocation by remember { mutableStateOf("") }
+    var addRelatedWords by remember { mutableStateOf("") }
+    var addNote by remember { mutableStateOf("") }
+    var addPartOfSpeechExpanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
     var selectedImportUri by remember { mutableStateOf<Uri?>(null) }
     var selectedImportFileName by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
-
+    val csvTemplateSavedText = stringResource(R.string.deck_detail_csv_template_saved)
+    val csvTemplateSaveFailedText = stringResource(R.string.deck_detail_csv_template_save_failed)
+    val wordAddedText = stringResource(R.string.deck_detail_word_added)
+    val duplicateVocabText = stringResource(R.string.deck_detail_duplicate_vocab)
+    val wordMeaningRequiredText = stringResource(R.string.deck_detail_word_meaning_required)
+    val selectedCsvFallbackText = stringResource(R.string.deck_detail_selected_csv_fallback)
+    val importChooseFileFirstText = stringResource(R.string.deck_detail_import_choose_file_first)
     val csvPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -98,9 +116,9 @@ fun DeckDetailScreen(
         coroutineScope.launch {
             snackbarHostState.showSnackbar(
                 if (saved) {
-                    context.getString(R.string.deck_detail_csv_template_saved)
+                    csvTemplateSavedText
                 } else {
-                    context.getString(R.string.deck_detail_csv_template_save_failed)
+                    csvTemplateSaveFailedText
                 }
             )
         }
@@ -118,7 +136,35 @@ fun DeckDetailScreen(
         }
     }
 
+    LaunchedEffect(showWordDialog, pendingAddSnackbarMessage) {
+        val message = pendingAddSnackbarMessage
+        if (!showWordDialog && !message.isNullOrBlank()) {
+            snackbarHostState.showSnackbar(message)
+            pendingAddSnackbarMessage = null
+        }
+    }
+
     val accentTeal = Color(0xFF0D9488)
+    val resetAddWordDialogForm = {
+        addWord = ""
+        addPronunciation = ""
+        addPartOfSpeech = partOfSpeechOptions.first()
+        addMeaning = ""
+        addDescriptionEn = ""
+        addExample = ""
+        addCollocation = ""
+        addRelatedWords = ""
+        addNote = ""
+        addPartOfSpeechExpanded = false
+        addWordErrorMessage = null
+        localSameWordWarning = null
+    }
+    val closeAddWordDialog = {
+        showWordDialog = false
+        addPartOfSpeechExpanded = false
+        addWordErrorMessage = null
+        localSameWordWarning = null
+    }
 
     if (deck == null || isLoadingDetail) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -140,7 +186,14 @@ fun DeckDetailScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier
+                    .navigationBarsPadding()
+                    .padding(bottom = 88.dp, start = 16.dp, end = 16.dp),
+            )
+        },
         containerColor = if (isSystemInDarkTheme()) Color(0xFF0F1E1B) else Color(0xFFFFF9F2),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { innerPadding ->
@@ -230,7 +283,10 @@ fun DeckDetailScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     OutlinedButton(
-                        onClick = { showWordDialog = true },
+                        onClick = {
+                            resetAddWordDialogForm()
+                            showWordDialog = true
+                        },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
                     ) {
@@ -409,9 +465,10 @@ fun DeckDetailScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        viewModel.deleteCustomDeck(deckId)
+                        viewModel.deleteCustomDeck(deckId) {
+                            onBack()
+                        }
                         showDeleteDeckConfirm = false
-                        onBack()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626))
                 ) {
@@ -423,18 +480,7 @@ fun DeckDetailScreen(
 
     // MANUAL WORD DIALOG MODAL
     if (showWordDialog) {
-        var nWord by remember { mutableStateOf("") }
-        var nPron by remember { mutableStateOf("") }
-        var nPartOfSpeech by remember { mutableStateOf(partOfSpeechOptions.first()) }
-        var nMeaning by remember { mutableStateOf("") }
-        var nDesc by remember { mutableStateOf("") }
-        var nExample by remember { mutableStateOf("") }
-        var nColloc by remember { mutableStateOf("") }
-        var nRel by remember { mutableStateOf("") }
-        var nNote by remember { mutableStateOf("") }
-        var partOfSpeechExpanded by remember { mutableStateOf(false) }
-
-        Dialog(onDismissRequest = { showWordDialog = false }) {
+        Dialog(onDismissRequest = closeAddWordDialog) {
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -452,8 +498,12 @@ fun DeckDetailScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
-                        value = nWord,
-                        onValueChange = { nWord = it },
+                        value = addWord,
+                        onValueChange = {
+                            addWord = it
+                            addWordErrorMessage = null
+                            localSameWordWarning = null
+                        },
                         label = { Text(stringResource(R.string.deck_detail_field_word)) },
                         modifier = Modifier.fillMaxWidth().testTag("vocab_word_input"),
                         singleLine = true
@@ -461,8 +511,12 @@ fun DeckDetailScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
-                        value = nPron,
-                        onValueChange = { nPron = it },
+                        value = addPronunciation,
+                        onValueChange = {
+                            addPronunciation = it
+                            addWordErrorMessage = null
+                            localSameWordWarning = null
+                        },
                         label = { Text(stringResource(R.string.deck_detail_field_pronunciation)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
@@ -470,30 +524,32 @@ fun DeckDetailScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     ExposedDropdownMenuBox(
-                        expanded = partOfSpeechExpanded,
-                        onExpandedChange = { partOfSpeechExpanded = !partOfSpeechExpanded }
+                        expanded = addPartOfSpeechExpanded,
+                        onExpandedChange = { addPartOfSpeechExpanded = !addPartOfSpeechExpanded }
                     ) {
                         OutlinedTextField(
-                            value = nPartOfSpeech,
+                            value = addPartOfSpeech,
                             onValueChange = {},
                             readOnly = true,
                             label = { Text(stringResource(R.string.deck_detail_field_part_of_speech)) },
                             trailingIcon = {
-                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = partOfSpeechExpanded)
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = addPartOfSpeechExpanded)
                             },
                             modifier = Modifier.menuAnchor().fillMaxWidth(),
                             singleLine = true
                         )
                         ExposedDropdownMenu(
-                            expanded = partOfSpeechExpanded,
-                            onDismissRequest = { partOfSpeechExpanded = false }
+                            expanded = addPartOfSpeechExpanded,
+                            onDismissRequest = { addPartOfSpeechExpanded = false }
                         ) {
                             partOfSpeechOptions.forEach { option ->
                                 DropdownMenuItem(
                                     text = { Text(option) },
                                     onClick = {
-                                        nPartOfSpeech = option
-                                        partOfSpeechExpanded = false
+                                        addPartOfSpeech = option
+                                        addWordErrorMessage = null
+                                        localSameWordWarning = null
+                                        addPartOfSpeechExpanded = false
                                     }
                                 )
                             }
@@ -502,8 +558,12 @@ fun DeckDetailScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
-                        value = nMeaning,
-                        onValueChange = { nMeaning = it },
+                        value = addMeaning,
+                        onValueChange = {
+                            addMeaning = it
+                            addWordErrorMessage = null
+                            localSameWordWarning = null
+                        },
                         label = { Text(stringResource(R.string.deck_detail_field_meaning)) },
                         modifier = Modifier.fillMaxWidth().testTag("vocab_meaning_input"),
                         singleLine = true
@@ -511,43 +571,167 @@ fun DeckDetailScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
-                        value = nDesc,
-                        onValueChange = { nDesc = it },
+                        value = addDescriptionEn,
+                        onValueChange = {
+                            addDescriptionEn = it
+                            addWordErrorMessage = null
+                            localSameWordWarning = null
+                        },
                         label = { Text(stringResource(R.string.deck_detail_field_english_definition)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
-                        value = nExample,
-                        onValueChange = { nExample = it },
+                        value = addExample,
+                        onValueChange = {
+                            addExample = it
+                            addWordErrorMessage = null
+                            localSameWordWarning = null
+                        },
                         label = { Text(stringResource(R.string.deck_detail_field_example_sentence)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
-                        value = nColloc,
-                        onValueChange = { nColloc = it },
+                        value = addCollocation,
+                        onValueChange = {
+                            addCollocation = it
+                            addWordErrorMessage = null
+                            localSameWordWarning = null
+                        },
                         label = { Text(stringResource(R.string.deck_detail_field_collocations)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
-                        value = nRel,
-                        onValueChange = { nRel = it },
+                        value = addRelatedWords,
+                        onValueChange = {
+                            addRelatedWords = it
+                            addWordErrorMessage = null
+                            localSameWordWarning = null
+                        },
                         label = { Text(stringResource(R.string.deck_detail_field_related_words)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
-                        value = nNote,
-                        onValueChange = { nNote = it },
+                        value = addNote,
+                        onValueChange = {
+                            addNote = it
+                            addWordErrorMessage = null
+                            localSameWordWarning = null
+                        },
                         label = { Text(stringResource(R.string.deck_detail_field_notes)) },
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    addWordErrorMessage?.let { message ->
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f),
+                            ),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.35f)),
+                        ) {
+                            Text(
+                                text = message,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                            )
+                        }
+                    }
+
+                    localSameWordWarning?.let { warning ->
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f),
+                            ),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.35f)),
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                            ) {
+                                Text(
+                                    text = stringResource(
+                                        R.string.deck_detail_same_word_warning_inline,
+                                        warning.pending.word,
+                                    ),
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                if (warning.existingItems.isNotEmpty()) {
+                                    Text(
+                                        text = stringResource(
+                                            R.string.deck_detail_existing_meanings_inline,
+                                            warning.existingItems.joinToString("; ") { it.meaning },
+                                        ),
+                                        color = MaterialTheme.colorScheme.onErrorContainer,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium,
+                                    )
+                                }
+                                Text(
+                                    text = stringResource(R.string.deck_detail_add_new_meaning_prompt),
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                                Text(
+                                    text = stringResource(R.string.deck_detail_add_new_meaning_hint),
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                                Button(
+                                    onClick = {
+                                        viewModel.confirmAddDifferentMeaning(warning.pending) { result ->
+                                            when (result) {
+                                                is AddVocabularyResult.Success -> {
+                                                    closeAddWordDialog()
+                                                    resetAddWordDialogForm()
+                                                    pendingAddSnackbarMessage = wordAddedText
+                                                }
+                                            is AddVocabularyResult.DuplicateExact -> {
+                                                localSameWordWarning = null
+                                                addWordErrorMessage = if (result.code == "DUPLICATE_VOCABULARY") {
+                                                    duplicateVocabText
+                                                } else {
+                                                    result.message
+                                                }
+                                            }
+                                                is AddVocabularyResult.SameWordDifferentMeaning -> {
+                                                    addWordErrorMessage = null
+                                                    localSameWordWarning = SameWordWarningState(
+                                                        existingItems = result.existingItems,
+                                                        pending = result.pendingRequest,
+                                                    )
+                                                }
+                                                is AddVocabularyResult.Failure -> {
+                                                    localSameWordWarning = null
+                                                    addWordErrorMessage = result.message
+                                                }
+                                            }
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = accentTeal),
+                                    shape = RoundedCornerShape(10.dp),
+                                ) {
+                                    Text(stringResource(R.string.deck_detail_confirm_add_new_meaning))
+                                }
+                            }
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -555,57 +739,67 @@ fun DeckDetailScreen(
                         horizontalArrangement = Arrangement.End,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        TextButton(onClick = { showWordDialog = false }) {
+                        TextButton(onClick = closeAddWordDialog) {
                             Text(stringResource(R.string.common_cancel))
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
                             onClick = {
-                                if (nWord.isNotEmpty() && nMeaning.isNotEmpty()) {
-                                    viewModel.addCustomVocabulary(
-                                        deckId = deckId,
-                                        word = nWord,
-                                        pronunciation = nPron,
-                                        partOfSpeech = nPartOfSpeech,
-                                        meaning = nMeaning,
-                                        descEn = nDesc,
-                                        example = nExample,
-                                        collocation = nColloc,
-                                        related = nRel,
-                                        note = nNote,
-                                    ) { result ->
+                                if (addWord.isNotEmpty() && addMeaning.isNotEmpty()) {
+                                    addWordErrorMessage = null
+                                    val onResult: (AddVocabularyResult) -> Unit = { result ->
                                         when (result) {
                                             is AddVocabularyResult.Success -> {
-                                                coroutineScope.launch {
-                                                    snackbarHostState.showSnackbar(context.getString(R.string.deck_detail_word_added))
-                                                }
-                                                showWordDialog = false
+                                                closeAddWordDialog()
+                                                resetAddWordDialogForm()
+                                                pendingAddSnackbarMessage = wordAddedText
                                             }
                                             is AddVocabularyResult.DuplicateExact -> {
-                                                coroutineScope.launch {
-                                                    snackbarHostState.showSnackbar(result.message)
+                                                addWordErrorMessage = if (result.code == "DUPLICATE_VOCABULARY") {
+                                                    duplicateVocabText
+                                                } else {
+                                                    result.message
                                                 }
                                             }
                                             is AddVocabularyResult.SameWordDifferentMeaning -> {
-                                                showWordDialog = false
+                                                addWordErrorMessage = null
+                                                localSameWordWarning = SameWordWarningState(
+                                                    existingItems = result.existingItems,
+                                                    pending = result.pendingRequest,
+                                                )
                                             }
                                             is AddVocabularyResult.Failure -> {
-                                                coroutineScope.launch {
-                                                    snackbarHostState.showSnackbar(result.message)
-                                                }
+                                                localSameWordWarning = null
+                                                addWordErrorMessage = result.message
                                             }
                                         }
                                     }
-                                } else {
-                                    coroutineScope.launch {
-                                        snackbarHostState.showSnackbar(context.getString(R.string.deck_detail_word_meaning_required))
+
+                                    if (localSameWordWarning == null) {
+                                        viewModel.addCustomVocabulary(
+                                            deckId = deckId,
+                                            word = addWord,
+                                            pronunciation = addPronunciation,
+                                            partOfSpeech = addPartOfSpeech,
+                                            meaning = addMeaning,
+                                            descEn = addDescriptionEn,
+                                            example = addExample,
+                                            collocation = addCollocation,
+                                            related = addRelatedWords,
+                                            note = addNote,
+                                            onResult = onResult,
+                                        )
                                     }
+                                } else {
+                                    addWordErrorMessage = wordMeaningRequiredText
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = accentTeal),
                             modifier = Modifier.testTag("vocab_save_button")
                         ) {
-                            Text(stringResource(R.string.common_add))
+                            Text(
+                                stringResource(R.string.common_add)
+                            )
                         }
                     }
                 }
@@ -736,7 +930,7 @@ fun DeckDetailScreen(
                                         if (res.success || res.importedCount > 0) {
                                             importReportMessage = formatImportReport(
                                                 context = context,
-                                                fileName = selectedImportFileName ?: context.getString(R.string.deck_detail_selected_csv_fallback),
+                                                fileName = selectedImportFileName ?: selectedCsvFallbackText,
                                                 response = res
                                             )
                                             showImportReport = true
@@ -754,7 +948,7 @@ fun DeckDetailScreen(
                                         }
                                     }
                                 } ?: coroutineScope.launch {
-                                    snackbarHostState.showSnackbar(context.getString(R.string.deck_detail_import_choose_file_first))
+                                    snackbarHostState.showSnackbar(importChooseFileFirstText)
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = accentTeal),
@@ -927,7 +1121,7 @@ fun DeckDetailScreen(
                                     editingVocabulary = null
                                 } else {
                                     coroutineScope.launch {
-                                        snackbarHostState.showSnackbar(context.getString(R.string.deck_detail_word_meaning_required))
+                                        snackbarHostState.showSnackbar(wordMeaningRequiredText)
                                     }
                                 }
                             },
@@ -939,35 +1133,6 @@ fun DeckDetailScreen(
                 }
             }
         }
-    }
-
-    sameWordWarning?.let { warning ->
-        SameWordDifferentMeaningDialog(
-            warning = warning,
-            onDismiss = { viewModel.dismissSameWordWarning() },
-            onConfirm = {
-                viewModel.confirmAddDifferentMeaning { result ->
-                    when (result) {
-                        is AddVocabularyResult.Success -> {
-                            coroutineScope.launch {
-                                snackbarHostState.showSnackbar(context.getString(R.string.deck_detail_new_meaning_added))
-                            }
-                        }
-                        is AddVocabularyResult.DuplicateExact,
-                        is AddVocabularyResult.Failure -> {
-                            coroutineScope.launch {
-                                snackbarHostState.showSnackbar(
-                                    (result as? AddVocabularyResult.Failure)?.message
-                                        ?: (result as? AddVocabularyResult.DuplicateExact)?.message
-                                        ?: context.getString(R.string.deck_detail_could_not_add_word)
-                                )
-                            }
-                        }
-                        else -> Unit
-                    }
-                }
-            },
-        )
     }
 
     if (showImportReport) {
@@ -1062,39 +1227,6 @@ private fun DeckLearningProgressHeader(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
-}
-
-@Composable
-fun SameWordDifferentMeaningDialog(
-    warning: SameWordWarningState,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
-) {
-    val existingText = warning.existingItems.joinToString("\n") { "• ${it.word}: ${it.meaning}" }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.deck_detail_same_word_title)) },
-        text = {
-            Column {
-                Text(warning.message)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(stringResource(R.string.deck_detail_existing_meanings), fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                Text(existingText, fontSize = 12.sp)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    stringResource(R.string.deck_detail_add_new_meaning_prompt, warning.pending.meaning),
-                    fontSize = 12.sp,
-                    color = Color.Gray,
-                )
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
-        },
-        confirmButton = {
-            Button(onClick = onConfirm) { Text(stringResource(R.string.deck_detail_add_new_meaning)) }
-        },
-    )
 }
 
 @Composable

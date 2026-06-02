@@ -4,7 +4,10 @@ import com.minlish.core.network.dto.ExistingVocabularyItemDto
 
 sealed class AddVocabularyResult {
     data class Success(val vocabulary: VocabularyEntity) : AddVocabularyResult()
-    data class DuplicateExact(val message: String) : AddVocabularyResult()
+    data class DuplicateExact(
+        val message: String,
+        val code: String? = null,
+    ) : AddVocabularyResult()
     data class SameWordDifferentMeaning(
         val message: String,
         val existingItems: List<ExistingVocabularyItemDto>,

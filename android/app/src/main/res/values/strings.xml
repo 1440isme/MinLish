@@ -88,6 +88,7 @@
     <string name="deck_detail_field_related_words">Related Words</string>
     <string name="deck_detail_field_notes">Personal Memory Notes</string>
     <string name="deck_detail_word_added">Word added</string>
+    <string name="deck_detail_duplicate_vocab">This word already exists in this deck.</string>
     <string name="deck_detail_word_meaning_required">Word and Meaning are mandatory!</string>
     <string name="deck_detail_import_title">Import Vocabularies from CSV</string>
     <string name="deck_detail_import_description">Choose a .csv file from your device. Required columns: word, meaning.</string>
@@ -107,10 +108,12 @@
     <string name="deck_detail_delete_vocab_title">Delete vocabulary?</string>
     <string name="deck_detail_delete_vocab_message">Delete "%1$s" from this deck? This action cannot be undone.</string>
     <string name="deck_detail_learned_progress">Learned: %1$d/%2$d</string>
-    <string name="deck_detail_same_word_title">Same word, different meaning?</string>
+    <string name="deck_detail_same_word_warning_inline">"%1$s" already exists in this deck with a different meaning.</string>
     <string name="deck_detail_existing_meanings">Existing meanings:</string>
-    <string name="deck_detail_add_new_meaning_prompt">Add "%1$s" as a new flashcard?</string>
-    <string name="deck_detail_add_new_meaning">Add new meaning</string>
+    <string name="deck_detail_existing_meanings_inline">Existing meaning in this deck: %1$s</string>
+    <string name="deck_detail_add_new_meaning_prompt">If the meaning you entered is different from the existing meaning, you can confirm to create another flashcard for this word.</string>
+    <string name="deck_detail_add_new_meaning_hint">Review it once more before confirming.</string>
+    <string name="deck_detail_confirm_add_new_meaning">Confirm add new meaning</string>
     <string name="deck_detail_listen">Listen</string>
     <string name="deck_detail_favorite">Favorite</string>
     <string name="deck_detail_example_sentence_label">Example Sentence:</string>

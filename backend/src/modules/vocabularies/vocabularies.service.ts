@@ -166,7 +166,7 @@ export class VocabulariesService {
       throw new BadRequestException({
         code: ErrorCodes.WORD_EXISTS_WITH_DIFFERENT_MEANING,
         message:
-          'Từ này đã tồn tại với nghĩa khác. Bạn có muốn bổ sung nghĩa mới không?',
+          'Từ này đã tồn tại trong deck với nghĩa khác. Nếu đây là nghĩa mới, bạn có thể xác nhận để thêm tiếp.',
         existingItems: sameWordDifferentMeaning,
       });
     }

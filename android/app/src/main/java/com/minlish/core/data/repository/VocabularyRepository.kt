@@ -210,7 +210,10 @@ class VocabularyRepository(
         val code = apiError?.code
         val message = apiError?.message ?: ApiErrorParser.humanMessage(e)
         return when (code) {
-            "DUPLICATE_VOCABULARY" -> AddVocabularyResult.DuplicateExact(message)
+            "DUPLICATE_VOCABULARY" -> AddVocabularyResult.DuplicateExact(
+                message = message,
+                code = code,
+            )
             "WORD_EXISTS_WITH_DIFFERENT_MEANING" -> AddVocabularyResult.SameWordDifferentMeaning(
                 message = message,
                 existingItems = apiError.existingItems.orEmpty(),

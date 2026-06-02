@@ -19,6 +19,9 @@ object ApiErrorParser {
     fun parseBody(body: String): ApiErrorDto? {
         return try {
             val json = gson.fromJson(body, JsonObject::class.java)
+            if (json.has("code") || json.has("existingItems")) {
+                return parseJsonObject(json)
+            }
             val messageEl = json.get("message") ?: return gson.fromJson(body, ApiErrorDto::class.java)
             when {
                 messageEl.isJsonObject -> parseJsonObject(messageEl.asJsonObject)
