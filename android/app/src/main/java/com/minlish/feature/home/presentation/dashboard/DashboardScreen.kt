@@ -52,7 +52,7 @@ fun DashboardScreen(
             .fillMaxSize()
             .background(Color(0xFFFFF9F2))
             .verticalScroll(rememberScrollState())
-            .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 100.dp)
+            .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 140.dp)
     ) {
         // Rovio Streak Weekly tracker
         //Thêm mảng 7 ngày vào tracker

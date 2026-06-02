@@ -38,6 +38,7 @@ import com.minlish.core.network.dto.CreateSessionResponse
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import com.minlish.core.utils.showToast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -180,11 +181,11 @@ fun MinLishAppContent(
                     Card(
                         onClick = {
                             if (learnedWordsCount < 4) {
-                                android.widget.Toast.makeText(
+                                showToast(
                                     context,
                                     context.getString(R.string.practice_mode_not_enough_learned_words, learnedWordsCount),
                                     android.widget.Toast.LENGTH_LONG
-                                ).show()
+                                )
                             } else {
                                 practiceScope = "LEARNED_ONLY"
                                 showPracticeScopeSelectionDialog = false
@@ -231,11 +232,11 @@ fun MinLishAppContent(
                     Card(
                         onClick = {
                             if (totalWordsInDeck < 4) {
-                                android.widget.Toast.makeText(
+                                showToast(
                                     context,
                                     context.getString(R.string.practice_mode_not_enough_all_words, totalWordsInDeck),
                                     android.widget.Toast.LENGTH_LONG
-                                ).show()
+                                )
                             } else {
                                 practiceScope = "ALL"
                                 showPracticeScopeSelectionDialog = false
@@ -405,11 +406,11 @@ fun MinLishAppContent(
                         targetSetupDeckId?.let { deckId ->
                             if (totalWordsInDeck == 0) {
                                 showSetupDialog = false
-                                android.widget.Toast.makeText(
+                                showToast(
                                     context,
                                     context.getString(R.string.practice_setup_empty_deck_warning),
                                     android.widget.Toast.LENGTH_LONG
-                                ).show()
+                                )
                                 return@let
                             }
                             practiceViewModel.startNewPracticeSession(deckId, types, questionCount, practiceScope)
@@ -585,29 +586,55 @@ fun MinLishAppContent(
 
                     // Floating Island Tab Bar overlay
                     if (currentScreen != "study" && currentScreen != "practice_quiz") {
+                        val navBarHeight = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                        val isThreeButtonNav = navBarHeight > 20.dp
+
                         Box(
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
                                 .fillMaxWidth()
-                                .navigationBarsPadding()
-                                .background(Color.Transparent),
+                                .then(
+                                    if (isThreeButtonNav) {
+                                        Modifier.background(Color.Transparent)
+                                    } else {
+                                        Modifier.navigationBarsPadding() // Float above gesture bar
+                                    }
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
                             Surface(
-                                shape = RoundedCornerShape(24.dp), // Fully rounded corners all around for an aligned island
+                                shape = if (isThreeButtonNav) {
+                                    RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp, bottomStart = 0.dp, bottomEnd = 0.dp) // Docked flat bottom
+                                } else {
+                                    RoundedCornerShape(24.dp) // Fully rounded capsule
+                                },
                                 tonalElevation = 8.dp,
                                 shadowElevation = 8.dp,
-                                color = Color(0xFFFFF9F2), // System warm yellow/cream background (slightly lighter)
-                                border = BorderStroke(1.dp, Color(0xFFE8E2DA)), // Soft matching outline border
+                                color = Color(0xFFFFF9F2), // System warm yellow/cream background
+                                border = BorderStroke(1.dp, Color(0xFFE8E2DA)),
                                 modifier = Modifier
-                                    .padding(start = 24.dp, end = 24.dp, bottom = 0.dp) // Aligns with the 24.dp padding of cards
-                                    .fillMaxWidth()
+                                    .then(
+                                        if (isThreeButtonNav) {
+                                            Modifier.fillMaxWidth() // Stretch to full width
+                                        } else {
+                                            Modifier
+                                                .padding(start = 24.dp, end = 24.dp, bottom = 4.dp) // Floating island aligned to cards
+                                                .fillMaxWidth()
+                                        }
+                                    )
                             ) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 8.dp, vertical = 8.dp), // Matched horizontal (8.dp) and vertical (8.dp) padding for uniform margins
-                                    horizontalArrangement = Arrangement.SpaceBetween, // Pins end items exactly to the padding boundaries
+                                        .then(
+                                            if (isThreeButtonNav) {
+                                                Modifier.navigationBarsPadding() // Inner padding to place items above system buttons
+                                            } else {
+                                                Modifier
+                                            }
+                                        )
+                                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     val screens = listOf("home", "decks", "analytics", "profile")
@@ -638,7 +665,7 @@ fun MinLishAppContent(
                                             horizontalAlignment = Alignment.CenterHorizontally,
                                             verticalArrangement = Arrangement.Center,
                                             modifier = Modifier
-                                                .width(72.dp) // Fixed width to ensure all active backgrounds are perfectly uniform and balanced!
+                                                .width(72.dp)
                                                 .clip(RoundedCornerShape(16.dp))
                                                 .background(
                                                     if (isSelected) Color(0xFF0D9488).copy(alpha = 0.12f) else Color.Transparent

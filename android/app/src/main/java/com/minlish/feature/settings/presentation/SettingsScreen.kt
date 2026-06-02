@@ -5,6 +5,7 @@ import android.app.TimePickerDialog
 import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.Toast
+import com.minlish.core.utils.showToast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -58,7 +59,7 @@ fun SettingsScreen(viewModel: ProfileSettingsViewModel, onBackClick: () -> Unit)
                 NotificationScheduler.scheduleDailyReminder(context, cleanTime)
             }
         } else {
-            Toast.makeText(context, context.getString(R.string.settings_notif_permission_denied), Toast.LENGTH_LONG).show()
+            showToast(context, context.getString(R.string.settings_notif_permission_denied), Toast.LENGTH_LONG)
         }
     }
 
