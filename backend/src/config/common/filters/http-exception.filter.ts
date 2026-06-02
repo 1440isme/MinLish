@@ -19,6 +19,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
     let code = 'INTERNAL_SERVER_ERROR';
+    let extraPayload: Record<string, unknown> = {};
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
@@ -30,6 +31,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
           ? resObj.message.join(', ')
           : resObj.message || exception.message;
         code = resObj.code || resObj.error || 'BAD_REQUEST';
+        const { message: _message, code: _code, error: _error, statusCode: _statusCode, ...rest } = resObj;
+        extraPayload = rest;
       } else {
         message = exceptionResponse || exception.message;
         code = 'BAD_REQUEST';
@@ -48,6 +51,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     response.status(status).json({
       code: formattedCode,
       message,
+      ...extraPayload,
     });
   }
 }

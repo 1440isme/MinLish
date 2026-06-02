@@ -35,18 +35,11 @@ class DeckDetailViewModel(
     private val _lastErrorMessage = MutableStateFlow<String?>(null)
     val lastErrorMessage: StateFlow<String?> = _lastErrorMessage
 
-    private val _sameWordWarning = MutableStateFlow<SameWordWarningState?>(null)
-    val sameWordWarning: StateFlow<SameWordWarningState?> = _sameWordWarning
-
     private val _favoritedSourceIds = MutableStateFlow<Set<String>>(emptySet())
     val favoritedSourceIds: StateFlow<Set<String>> = _favoritedSourceIds
 
     fun clearLastError() {
         _lastErrorMessage.value = null
-    }
-
-    fun dismissSameWordWarning() {
-        _sameWordWarning.value = null
     }
 
     fun selectDeck(deckId: String) {
@@ -91,10 +84,11 @@ class DeckDetailViewModel(
             vocabularyRepository.isFavorited(sourceId)
     }
 
-    fun deleteCustomDeck(deckId: String) {
+    fun deleteCustomDeck(deckId: String, onDeleted: () -> Unit = {}) {
         viewModelScope.launch {
             try {
                 vocabularyRepository.deleteDeck(deckId)
+                onDeleted()
             } catch (e: Exception) {
                 _lastErrorMessage.value = ApiErrorParser.humanMessage(e, "Failed to delete deck")
             }
@@ -141,14 +135,6 @@ class DeckDetailViewModel(
             when (result) {
                 is AddVocabularyResult.Success -> {
                     selectDeck(deckId)
-                    _sameWordWarning.value = null
-                }
-                is AddVocabularyResult.SameWordDifferentMeaning -> {
-                    _sameWordWarning.value = SameWordWarningState(
-                        message = result.message,
-                        existingItems = result.existingItems,
-                        pending = result.pendingRequest,
-                    )
                 }
                 else -> Unit
             }
@@ -156,21 +142,15 @@ class DeckDetailViewModel(
         }
     }
 
-    fun confirmAddDifferentMeaning(onResult: (AddVocabularyResult) -> Unit) {
-        val warning = _sameWordWarning.value ?: return
+    fun confirmAddDifferentMeaning(
+        pending: PendingVocabularyRequest,
+        onResult: (AddVocabularyResult) -> Unit,
+    ) {
         viewModelScope.launch {
-            val result = vocabularyRepository.confirmAddVocabularyWithDifferentMeaning(warning.pending)
+            val result = vocabularyRepository.confirmAddVocabularyWithDifferentMeaning(pending)
             when (result) {
                 is AddVocabularyResult.Success -> {
-                    selectDeck(warning.pending.deckId)
-                    _sameWordWarning.value = null
-                }
-                is AddVocabularyResult.SameWordDifferentMeaning -> {
-                    _sameWordWarning.value = SameWordWarningState(
-                        message = result.message,
-                        existingItems = result.existingItems,
-                        pending = result.pendingRequest,
-                    )
+                    selectDeck(pending.deckId)
                 }
                 else -> Unit
             }
@@ -265,7 +245,6 @@ class DeckDetailViewModel(
 }
 
 data class SameWordWarningState(
-    val message: String,
     val existingItems: List<ExistingVocabularyItemDto>,
     val pending: PendingVocabularyRequest,
 )

@@ -86,6 +86,7 @@
     <string name="deck_detail_field_related_words">Từ liên quan</string>
     <string name="deck_detail_field_notes">Ghi chú ghi nhớ cá nhân</string>
     <string name="deck_detail_word_added">Đã thêm từ</string>
+    <string name="deck_detail_duplicate_vocab">Từ này đã tồn tại trong deck.</string>
     <string name="deck_detail_word_meaning_required">Từ vựng và nghĩa là bắt buộc!</string>
     <string name="deck_detail_import_title">Import từ vựng từ CSV</string>
     <string name="deck_detail_import_description">Chọn file .csv từ thiết bị của bạn. Các cột bắt buộc: word, meaning.</string>
@@ -105,10 +106,12 @@
     <string name="deck_detail_delete_vocab_title">Xóa từ vựng?</string>
     <string name="deck_detail_delete_vocab_message">Xóa "%1$s" khỏi deck này? Hành động này không thể hoàn tác.</string>
     <string name="deck_detail_learned_progress">Đã học: %1$d/%2$d</string>
-    <string name="deck_detail_same_word_title">Cùng từ, khác nghĩa?</string>
+    <string name="deck_detail_same_word_warning_inline">Từ "%1$s" đã tồn tại trong deck với nghĩa khác.</string>
     <string name="deck_detail_existing_meanings">Các nghĩa hiện có:</string>
-    <string name="deck_detail_add_new_meaning_prompt">Thêm "%1$s" như một flashcard mới?</string>
-    <string name="deck_detail_add_new_meaning">Thêm nghĩa mới</string>
+    <string name="deck_detail_existing_meanings_inline">Nghĩa đã có trong deck: %1$s</string>
+    <string name="deck_detail_add_new_meaning_prompt">Nếu nghĩa bạn đang nhập khác với nghĩa đã có, bạn có thể xác nhận để tạo thêm một flashcard mới cho từ này.</string>
+    <string name="deck_detail_add_new_meaning_hint">Hãy kiểm tra lại trước khi xác nhận thêm.</string>
+    <string name="deck_detail_confirm_add_new_meaning">Xác nhận thêm nghĩa mới</string>
     <string name="deck_detail_listen">Nghe phát âm</string>
     <string name="deck_detail_favorite">Yêu thích</string>
     <string name="deck_detail_example_sentence_label">Câu ví dụ:</string>
