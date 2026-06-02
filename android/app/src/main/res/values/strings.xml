@@ -273,6 +273,15 @@
     <string name="practice_setup_empty_deck_warning">This deck has no words yet. Please add words before practicing!</string>
     <string name="practice_setup_btn_start">Start</string>
 
+    <string name="practice_mode_selection_title">Select Practice Mode</string>
+    <string name="practice_mode_selection_desc">Choose how you want to review vocabulary in this deck:</string>
+    <string name="practice_mode_learned_words">Learned Words</string>
+    <string name="practice_mode_learned_words_desc">Review words you have already studied in this deck.</string>
+    <string name="practice_mode_all_words">All Words</string>
+    <string name="practice_mode_all_words_desc">Practice with all vocabularies available in this deck.</string>
+    <string name="practice_mode_not_enough_learned_words">You must learn at least 4 words in this deck first. Currently learned: %1$d.</string>
+    <string name="practice_mode_not_enough_all_words">This deck must have at least 4 words to practice. Current words: %1$d.</string>
+
     <!-- Auth & Registration Screens -->
     <string name="auth_google_success">Google Sign-In successful!</string>
     <string name="auth_google_null_token">Google Sign-In: ID token was null</string>
