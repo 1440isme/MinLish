@@ -295,6 +295,9 @@
     <!-- Study Screen Localizations -->
     <string name="study_preparing">Preparing your study session…</string>
     <string name="study_loading">Loading cards and review data.</string>
+    <string name="study_submitting_review">Saving your review…</string>
+    <string name="study_submitting_review_desc">Updating card progress and scheduling the next review.</string>
+    <string name="study_checking_next_session">Checking for more cards…</string>
     <string name="study_hero_title">Flashcard Review</string>
     <string name="study_hero_desc">Study in short bursts, review quickly, and keep your streak going every day.</string>
     <string name="study_hear_pronunciation">Hear pronunciation</string>

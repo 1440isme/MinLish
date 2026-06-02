@@ -52,8 +52,14 @@ class StudyFlashcardsViewModel(
     private val _isLoadingStudySession = MutableStateFlow(false)
     val isLoadingStudySession: StateFlow<Boolean> = _isLoadingStudySession
 
+    private val _isSubmittingReview = MutableStateFlow(false)
+    val isSubmittingReview: StateFlow<Boolean> = _isSubmittingReview
+
     private val _canContinueStudySession = MutableStateFlow(false)
     val canContinueStudySession: StateFlow<Boolean> = _canContinueStudySession
+
+    private val _isCheckingStudyContinuation = MutableStateFlow(false)
+    val isCheckingStudyContinuation: StateFlow<Boolean> = _isCheckingStudyContinuation
 
     private val _lastErrorMessage = MutableStateFlow<String?>(null)
     val lastErrorMessage: StateFlow<String?> = _lastErrorMessage
@@ -87,6 +93,9 @@ class StudyFlashcardsViewModel(
         activeStudySessionMode = StudySessionMode.MIXED
         activeStudySessionDeckId = deckId
         _isLoadingStudySession.value = true
+        _isSubmittingReview.value = false
+        _isCheckingStudyContinuation.value = false
+        _canContinueStudySession.value = false
         viewModelScope.launch {
             try {
                 val words = vocabularyRepository.getDueReviewAndNewWords(
@@ -94,7 +103,6 @@ class StudyFlashcardsViewModel(
                     deckId = deckId,
                 )
                 launchStudyCards(words)
-                _canContinueStudySession.value = false
                 _lastErrorMessage.value = null
             } catch (e: Exception) {
                 clearStudyCards()
@@ -107,6 +115,9 @@ class StudyFlashcardsViewModel(
         activeStudySessionMode = StudySessionMode.DAILY_REVIEW
         activeStudySessionDeckId = deckId
         _isLoadingStudySession.value = true
+        _isSubmittingReview.value = false
+        _isCheckingStudyContinuation.value = false
+        _canContinueStudySession.value = false
         viewModelScope.launch {
             try {
                 val words = vocabularyRepository.getDueReviewWords(
@@ -114,7 +125,6 @@ class StudyFlashcardsViewModel(
                     deckId = deckId,
                 )
                 launchStudyCards(words)
-                _canContinueStudySession.value = false
                 _lastErrorMessage.value = null
             } catch (e: Exception) {
                 clearStudyCards()
@@ -127,6 +137,9 @@ class StudyFlashcardsViewModel(
         activeStudySessionMode = StudySessionMode.DAILY_NEW
         activeStudySessionDeckId = deckId
         _isLoadingStudySession.value = true
+        _isSubmittingReview.value = false
+        _isCheckingStudyContinuation.value = false
+        _canContinueStudySession.value = false
         viewModelScope.launch {
             try {
                 val words = vocabularyRepository.getNewWords(
@@ -134,7 +147,6 @@ class StudyFlashcardsViewModel(
                     deckId = deckId,
                 )
                 launchStudyCards(words)
-                _canContinueStudySession.value = false
                 _lastErrorMessage.value = null
             } catch (e: Exception) {
                 clearStudyCards()
@@ -150,6 +162,8 @@ class StudyFlashcardsViewModel(
         _isCardFlipped.value = false
         _isStudyReplayMode.value = true
         _canReplayStudySession.value = true
+        _isSubmittingReview.value = false
+        _isCheckingStudyContinuation.value = false
         _lastErrorMessage.value = null
     }
 
@@ -179,7 +193,9 @@ class StudyFlashcardsViewModel(
     }
 
     fun submitReviewRating(vocabId: String, rating: String) {
+        if (_isSubmittingReview.value) return
         viewModelScope.launch {
+            _isSubmittingReview.value = true
             try {
                 vocabularyRepository.processVocabReview(vocabId, rating)
                 if (_currentCardIndex.value < _activeFlashcards.value.size - 1) {
@@ -192,6 +208,8 @@ class StudyFlashcardsViewModel(
                 _lastErrorMessage.value = null
             } catch (e: Exception) {
                 _lastErrorMessage.value = e.message ?: "Failed to submit review"
+            } finally {
+                _isSubmittingReview.value = false
             }
         }
     }
@@ -202,6 +220,8 @@ class StudyFlashcardsViewModel(
         _isCardFlipped.value = false
         _isStudyReplayMode.value = false
         _isLoadingStudySession.value = false
+        _isSubmittingReview.value = false
+        _isCheckingStudyContinuation.value = false
         replayableStudyCards = words
         _canReplayStudySession.value = words.isNotEmpty()
     }
@@ -212,6 +232,8 @@ class StudyFlashcardsViewModel(
         _isCardFlipped.value = false
         _isStudyReplayMode.value = false
         _isLoadingStudySession.value = false
+        _isSubmittingReview.value = false
+        _isCheckingStudyContinuation.value = false
         replayableStudyCards = emptyList()
         _canReplayStudySession.value = false
         _canContinueStudySession.value = false
@@ -219,10 +241,12 @@ class StudyFlashcardsViewModel(
 
     private fun refreshStudyContinuationAvailability() {
         val mode = activeStudySessionMode ?: run {
+            _isCheckingStudyContinuation.value = false
             _canContinueStudySession.value = false
             return
         }
         val deckId = activeStudySessionDeckId
+        _isCheckingStudyContinuation.value = true
 
         viewModelScope.launch {
             _canContinueStudySession.value = try {
@@ -241,6 +265,8 @@ class StudyFlashcardsViewModel(
                 }
             } catch (_: Exception) {
                 false
+            } finally {
+                _isCheckingStudyContinuation.value = false
             }
         }
     }

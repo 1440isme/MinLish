@@ -90,11 +90,21 @@ fun StudyFlashcardsScreen(
     val isFlipped by viewModel.isCardFlipped.collectAsState()
     val isReplayMode by viewModel.isStudyReplayMode.collectAsState()
     val isLoading by viewModel.isLoadingStudySession.collectAsState()
+    val isSubmittingReview by viewModel.isSubmittingReview.collectAsState()
+    val isCheckingContinue by viewModel.isCheckingStudyContinuation.collectAsState()
     val canReplay by viewModel.canReplayStudySession.collectAsState()
     val canContinue by viewModel.canContinueStudySession.collectAsState()
 
     if (isLoading) {
         StudyLoadingState()
+        return
+    }
+
+    if (cards.isEmpty() && isCheckingContinue) {
+        StudyLoadingState(
+            title = stringResource(R.string.study_checking_next_session),
+            description = stringResource(R.string.study_loading),
+        )
         return
     }
 
@@ -149,6 +159,7 @@ fun StudyFlashcardsScreen(
             )
         } else {
             RatingPanel(
+                enabled = !isSubmittingReview,
                 onRate = { rating ->
                     viewModel.submitReviewRating(currentCard.vocabulary.id, rating)
                 },
@@ -160,6 +171,17 @@ fun StudyFlashcardsScreen(
 
 @Composable
 private fun StudyLoadingState() {
+    StudyLoadingState(
+        title = stringResource(id = R.string.study_preparing),
+        description = stringResource(id = R.string.study_loading),
+    )
+}
+
+@Composable
+private fun StudyLoadingState(
+    title: String,
+    description: String,
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -185,13 +207,13 @@ private fun StudyLoadingState() {
                     trackColor = Color(0xFFECE7DE),
                 )
                 Text(
-                    text = stringResource(id = R.string.study_preparing),
+                    text = title,
                     color = TextPrimary,
                     style = MaterialTheme.typography.titleMedium,
                     textAlign = TextAlign.Center,
                 )
                 Text(
-                    text = stringResource(id = R.string.study_loading),
+                    text = description,
                     color = TextSecondary,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
@@ -518,6 +540,7 @@ private fun FlashcardBack(vocabulary: VocabularyEntity) {
 
 @Composable
 private fun RatingPanel(
+    enabled: Boolean,
     onRate: (String) -> Unit,
 ) {
     val ratings = remember {
@@ -538,6 +561,7 @@ private fun RatingPanel(
                 rowItems.forEach { rating ->
                     RatingChoiceButton(
                         rating = rating,
+                        enabled = enabled,
                         modifier = Modifier
                             .weight(1f)
                             .testTag("rating_${rating.label.lowercase()}_btn"),
@@ -552,11 +576,13 @@ private fun RatingPanel(
 @Composable
 private fun RatingChoiceButton(
     rating: RatingUi,
+    enabled: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     OutlinedButton(
         onClick = onClick,
+        enabled = enabled,
         modifier = modifier.height(54.dp),
         shape = RoundedCornerShape(24.dp),
         colors = ButtonDefaults.outlinedButtonColors(containerColor = rating.fillColor),

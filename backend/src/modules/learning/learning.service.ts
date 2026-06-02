@@ -52,6 +52,10 @@ function isUniqueConstraintError(error: unknown): boolean {
   return error.code === 'P2002';
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 @Injectable()
 export class LearningService {
   constructor(
@@ -210,13 +214,24 @@ export class LearningService {
       user.id,
       dto.vocabularyId,
     );
+    await this.findOrCreateReviewCard(this.prisma, user.id, vocabulary.id);
 
     const result = await this.prisma.$transaction(async (tx) => {
-      const reviewCard = await this.findOrCreateReviewCard(
-        tx,
-        user.id,
-        vocabulary.id,
-      );
+      const reviewCard = await tx.reviewCard.findUnique({
+        where: {
+          userId_vocabularyId: {
+            userId: user.id,
+            vocabularyId: vocabulary.id,
+          },
+        },
+      });
+
+      if (!reviewCard) {
+        throw new NotFoundException({
+          code: ErrorCodes.REVIEW_CARD_NOT_FOUND,
+          message: 'Review card không tồn tại',
+        });
+      }
 
       if (reviewCard.status === ReviewCardStatus.SUSPENDED) {
         throw new ConflictException({
@@ -488,16 +503,22 @@ export class LearningService {
     vocabularyId: string,
   ): Promise<ReviewCard> {
     const now = new Date();
-    try {
-      return await tx.reviewCard.upsert({
-        where: {
-          userId_vocabularyId: {
-            userId,
-            vocabularyId,
-          },
+    const existingCard = await tx.reviewCard.findUnique({
+      where: {
+        userId_vocabularyId: {
+          userId,
+          vocabularyId,
         },
-        update: {},
-        create: {
+      },
+    });
+
+    if (existingCard) {
+      return existingCard;
+    }
+
+    try {
+      return await tx.reviewCard.create({
+        data: {
           userId,
           vocabularyId,
           status: ReviewCardStatus.NEW,
@@ -512,7 +533,27 @@ export class LearningService {
         throw error;
       }
 
-      const existingCard = await tx.reviewCard.findUnique({
+      const createdByAnotherRequest = await this.findReviewCardWithRetry(
+        userId,
+        vocabularyId,
+      );
+
+      if (createdByAnotherRequest) {
+        return createdByAnotherRequest;
+      }
+
+      throw error;
+    }
+  }
+
+  private async findReviewCardWithRetry(
+    userId: string,
+    vocabularyId: string,
+    maxAttempts = 5,
+    delayMs = 40,
+  ): Promise<ReviewCard | null> {
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const reviewCard = await this.prisma.reviewCard.findUnique({
         where: {
           userId_vocabularyId: {
             userId,
@@ -521,12 +562,16 @@ export class LearningService {
         },
       });
 
-      if (existingCard) {
-        return existingCard;
+      if (reviewCard) {
+        return reviewCard;
       }
 
-      throw error;
+      if (attempt < maxAttempts - 1) {
+        await sleep(delayMs);
+      }
     }
+
+    return null;
   }
 
   private normalizeReviewedAt(reviewedAt: string): Date {
