@@ -182,8 +182,8 @@ class StudyFlashcardsViewModel(
 
     fun goToNextReplayCard() {
         if (_currentCardIndex.value < _activeFlashcards.value.size - 1) {
-            _currentCardIndex.value += 1
             _isCardFlipped.value = false
+            _currentCardIndex.value += 1
         } else {
             _activeFlashcards.value = emptyList()
             _isCardFlipped.value = false
@@ -199,8 +199,8 @@ class StudyFlashcardsViewModel(
             try {
                 vocabularyRepository.processVocabReview(vocabId, rating)
                 if (_currentCardIndex.value < _activeFlashcards.value.size - 1) {
-                    _currentCardIndex.value += 1
                     _isCardFlipped.value = false
+                    _currentCardIndex.value += 1
                 } else {
                     _activeFlashcards.value = emptyList()
                     refreshStudyContinuationAvailability()

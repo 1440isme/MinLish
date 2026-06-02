@@ -1,5 +1,11 @@
 package com.minlish.feature.learning.presentation
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -142,7 +148,7 @@ fun StudyFlashcardsScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        FlashcardSurface(
+        FlashcardStage(
             card = currentCard,
             isFlipped = isFlipped,
             onFlip = { viewModel.flipCard() },
@@ -159,7 +165,6 @@ fun StudyFlashcardsScreen(
             )
         } else {
             RatingPanel(
-                enabled = !isSubmittingReview,
                 onRate = { rating ->
                     viewModel.submitReviewRating(currentCard.vocabulary.id, rating)
                 },
@@ -353,6 +358,41 @@ private fun StudyMetricPill(
 }
 
 @Composable
+private fun FlashcardStage(
+    card: VocabularyWithReviewCard,
+    isFlipped: Boolean,
+    onFlip: () -> Unit,
+    onSpeak: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    AnimatedContent(
+        targetState = card,
+        transitionSpec = {
+            ContentTransform(
+                targetContentEnter = slideInHorizontally(
+                    animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+                    initialOffsetX = { fullWidth -> fullWidth },
+                ) + fadeIn(animationSpec = tween(durationMillis = 220)),
+                initialContentExit = slideOutHorizontally(
+                    animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing),
+                    targetOffsetX = { fullWidth -> -fullWidth / 4 },
+                ) + fadeOut(animationSpec = tween(durationMillis = 180)),
+            )
+        },
+        modifier = modifier.fillMaxWidth(),
+        label = "flashcard-slide",
+    ) { animatedCard ->
+        FlashcardSurface(
+            card = animatedCard,
+            isFlipped = isFlipped,
+            onFlip = onFlip,
+            onSpeak = onSpeak,
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
+}
+
+@Composable
 private fun FlashcardSurface(
     card: VocabularyWithReviewCard,
     isFlipped: Boolean,
@@ -540,7 +580,6 @@ private fun FlashcardBack(vocabulary: VocabularyEntity) {
 
 @Composable
 private fun RatingPanel(
-    enabled: Boolean,
     onRate: (String) -> Unit,
 ) {
     val ratings = remember {
@@ -561,7 +600,6 @@ private fun RatingPanel(
                 rowItems.forEach { rating ->
                     RatingChoiceButton(
                         rating = rating,
-                        enabled = enabled,
                         modifier = Modifier
                             .weight(1f)
                             .testTag("rating_${rating.label.lowercase()}_btn"),
@@ -576,13 +614,11 @@ private fun RatingPanel(
 @Composable
 private fun RatingChoiceButton(
     rating: RatingUi,
-    enabled: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     OutlinedButton(
         onClick = onClick,
-        enabled = enabled,
         modifier = modifier.height(54.dp),
         shape = RoundedCornerShape(24.dp),
         colors = ButtonDefaults.outlinedButtonColors(containerColor = rating.fillColor),
@@ -614,16 +650,16 @@ private fun ReplayPanel(
         colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
         shape = RoundedCornerShape(24.dp),
     ) {
-        Icon(
-            imageVector = if (isLastCard) Icons.Default.CheckCircle else Icons.Default.ArrowForward,
-            contentDescription = null,
-            tint = Color.White,
-        )
-        Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = if (isLastCard) stringResource(R.string.study_end_session) else stringResource(R.string.study_next_card),
             color = Color.White,
             fontWeight = FontWeight.Bold,
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Icon(
+            imageVector = if (isLastCard) Icons.Default.CheckCircle else Icons.Default.ArrowForward,
+            contentDescription = null,
+            tint = Color.White,
         )
     }
 }
