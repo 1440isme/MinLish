@@ -293,6 +293,9 @@
     <!-- Study Screen Localizations -->
     <string name="study_preparing">Đang chuẩn bị lượt học của bạn…</string>
     <string name="study_loading">Đang tải thẻ từ và dữ liệu ôn tập.</string>
+    <string name="study_submitting_review">Đang lưu kết quả ôn tập…</string>
+    <string name="study_submitting_review_desc">Đang cập nhật tiến độ thẻ và lịch ôn tiếp theo.</string>
+    <string name="study_checking_next_session">Đang kiểm tra thẻ tiếp theo…</string>
     <string name="study_hero_title">Ôn tập Flashcard</string>
     <string name="study_hero_desc">Học từng đợt ngắn, ôn tập nhanh chóng và duy trì chuỗi học mỗi ngày.</string>
     <string name="study_hear_pronunciation">Nghe phát âm</string>
