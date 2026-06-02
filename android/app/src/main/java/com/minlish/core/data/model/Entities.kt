@@ -69,7 +69,9 @@ data class DashboardAnalyticsDto(
     val streak: Int,
     val progressPercent: Int,
     val weeklyActiveDays: List<Boolean> = List(7) { false }, // mảng 7 ngày lấy từ server
-    val totalPractices: Int = 0   //tổng số lượng baài practice đã làm
+    val totalPractices: Int = 0,   //tổng số lượng baài practice đã làm
+    val weeklyPracticeCounts: List<Int> = List(7) { 0 },
+    val weeklyAccuracyHistory: List<Float> = emptyList()
 )
 
 data class RecentStudyDeckEntity(

@@ -222,7 +222,7 @@
 
     <!-- Analytics / Stats -->
     <string name="analytics_title">Tiến độ học tập</string>
-    <string name="analytics_weekly_frequency">Tần suất luyện tập hàng tuần</string>
+    <string name="analytics_weekly_frequency">Tần suất luyện tập tuần này</string>
     <string name="day_mon">T2</string>
     <string name="day_tue">T3</string>
     <string name="day_wed">T4</string>
@@ -233,14 +233,21 @@
     <string name="analytics_overall_stats">Thống kê luyện tập chung</string>
     <string name="analytics_accuracy_rate">Tỷ lệ chính xác: %1$s%%</string>
     <string name="analytics_accuracy_desc">Được tính toán từ hiệu suất làm bài của bạn trên tất cả các lượt trắc nghiệm đã hoàn thành.</string>
-    <string name="analytics_sessions_completed">Đã hoàn thành %1$d lượt</string>
-    <string name="analytics_sessions_desc">Tổng số lượt trắc nghiệm luyện tập đã làm từ trước đến nay.</string>
+    <string name="analytics_sessions_completed">Đã hoàn thành %1$d bài luyện tập tuần này</string>
+    <string name="analytics_sessions_desc">Tổng số bài luyện tập đã làm trong tuần này.</string>
     <string name="analytics_history_title">Lịch sử luyện tập (5 lượt gần nhất)</string>
     <string name="analytics_no_history">Chưa tìm thấy lịch sử luyện tập nào.</string>
     <string name="analytics_deck_quiz">Trắc nghiệm: %1$s</string>
     <string name="analytics_practice_quiz">Trắc nghiệm luyện tập</string>
     <string name="analytics_cancelled">Đã hủy</string>
     <string name="analytics_answers_count">%1$d / %2$d đáp án</string>
+    <string name="analytics_weekly_stats_title">Thống kê luyện tập tuần này</string>
+    <string name="analytics_current_week_accuracy">Tỷ lệ chính xác tuần này: %1$s%%</string>
+    <string name="analytics_current_week_desc">Chỉ số độ chính xác thực tế được tính toán trong tuần này của bạn.</string>
+    <string name="analytics_performance_trend_title">Phong độ 4 tuần gần nhất</string>
+    <string name="analytics_trend_this_week">Tuần này</string>
+    <string name="analytics_trend_weeks_ago">%1$d tuần trước</string>
+    <string name="analytics_lifelong_milestones">Tổng số lần luyện tập bạn đã tích lũy trên MinLish.</string>
 
     <!-- Profile Dialogs -->
     <string name="profile_set_daily_goal">Thiết lập mục tiêu hàng ngày</string>

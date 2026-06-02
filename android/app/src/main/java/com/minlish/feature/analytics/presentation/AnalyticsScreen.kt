@@ -1,5 +1,6 @@
 package com.minlish.feature.analytics.presentation
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -47,7 +49,7 @@ fun AnalyticsScreen(
     }
     val accentTeal = Color(0xFF0D9488)
 
-    //Tổng số practice đã thực hiện :
+    //Chữ in số lượng trên đỉnh biểu đồ
     val density = androidx.compose.ui.platform.LocalDensity.current
     val textPaint = remember(density) {
         android.graphics.Paint().apply {
@@ -60,43 +62,9 @@ fun AnalyticsScreen(
     }
 
     //Tính toán tần suất học trong tuần
-    val volumes = remember(listPractices) {
-        val counts = FloatArray(7) { 0f } // Khởi tạo mảng 7 ngày: Mon=0, Tue=1 ... Sun=6
-
-        // 1. Tìm mốc 00:00:00 của ngày Thứ Hai đầu tuần này
-        val currentCal = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-
-            // Ép hệ thống coi Thứ Hai là ngày đầu tuần theo chuẩn Việt Nam/Anh
-            firstDayOfWeek = Calendar.MONDAY
-
-            // Lùi độ số ngày về đúng Thứ Hai đầu tuần gần nhất
-            while (get(Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
-                add(Calendar.DAY_OF_YEAR, -1)
-            }
-        }
-
-        val startOfWeekMs = currentCal.timeInMillis // Điểm bắt đầu: Thứ Hai 00:00
-        val endOfWeekMs = startOfWeekMs + (7L * 24 * 60 * 60 * 1000) // Điểm kết thúc: Chủ Nhật 23:59 (Sau 7 ngày)
-
-        // 2. Vòng lặp phân loại bài tập vào đúng các thứ trong tuần
-        listPractices.forEach { session ->
-            // Bảo vệ an toàn: Kiểm tra nếu mốc bài làm nằm trọn trong tuần này
-            if (session.finishedAt in startOfWeekMs until endOfWeekMs) {
-                val sessionCal = Calendar.getInstance().apply { timeInMillis = session.finishedAt }
-                val dayOfWeek = sessionCal.get(Calendar.DAY_OF_WEEK)
-
-                // Ánh xạ ngày chuẩn xác sang index mảng (Mon=0, Tue=1 ... Sun=6)
-                val index = if (dayOfWeek == Calendar.SUNDAY) 6 else dayOfWeek - 2
-                if (index in 0..6) {
-                    counts[index] += 1f // Tăng chiều cao thêm 1 đơn vị cho cột thứ đó
-                }
-            }
-        }
-        counts.toList()
+    //Nhận thẳng mảng số lượng bài làm đã gộp theo tuần từ bảng DailyActivity
+    val volumes = remember(stats.weeklyPracticeCounts) {
+        stats.weeklyPracticeCounts.map { it.toFloat() }
     }
 
     //Phòng trường hợp chia cho 0 nếu tuần này chưa làm bài nào
@@ -144,7 +112,7 @@ fun AnalyticsScreen(
                     val spacing = (size.width - (barWidth * days.size)) / (days.size + 1)
 
                     days.forEachIndexed { i, _ ->
-                        val volume = volumes[i]
+                        val volume = volumes.getOrElse(i) {0f}
                         val barHeight = (volume / maxVolume) * (size.height - 30.dp.toPx())
 
                         val startX = spacing + i * (barWidth + spacing)
@@ -206,16 +174,19 @@ fun AnalyticsScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Accuracy dialing info card
+        // Accuracy dialing info card : accuracy theo tuần + lịch sử so sánh 4 tuần + tổng số bài làm
         Card(
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = RoundedCornerShape(24.dp),
+            border = BorderStroke(1.dp, Color(0xFF000000).copy(alpha = 0.05f))
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = stringResource(R.string.analytics_overall_stats),
+                    text = stringResource(R.string.analytics_weekly_stats_title),
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1C1C1A)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -225,42 +196,87 @@ fun AnalyticsScreen(
                         imageVector = Icons.Default.Analytics,
                         contentDescription = null,
                         tint = accentTeal,
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(44.dp)
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         val formattedAccuracy = String.format(Locale.US, "%.1f", stats.accuracy)
                         Text(
-                            text = stringResource(R.string.analytics_accuracy_rate, formattedAccuracy),
+                            text = stringResource(R.string.analytics_current_week_accuracy, formattedAccuracy),
                             fontWeight = FontWeight.Bold,
-                            fontSize = 17.sp,
+                            fontSize = 16.sp,
                             color = accentTeal
                         )
                         Text(
-                            text = stringResource(R.string.analytics_accuracy_desc),
+                            text = stringResource(R.string.analytics_current_week_desc),
                             fontSize = 11.sp,
                             color = Color.Gray
                         )
+                    }
+                }
+
+                // Biểu đồ hàng ngang so sánh accuracy
+                if (stats.weeklyAccuracyHistory.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider(color = Color.Black.copy(alpha = 0.03f))
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = stringResource(R.string.analytics_performance_trend_title),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF7C776E)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        stats.weeklyAccuracyHistory.forEachIndexed { idx, acc ->
+                            val label = when(idx) {
+                                3 -> stringResource(R.string.analytics_trend_this_week)
+                                else -> stringResource(R.string.analytics_trend_weeks_ago, 3 - idx)
+                            }
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (idx == 3) accentTeal.copy(alpha = 0.1f) else Color(0xFFF3F4F6))
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        text = "$acc%",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (idx == 3) accentTeal else Color(0xFF1C1C1A)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(text = label, fontSize = 10.sp, color = Color.Gray)
+                            }
+                        }
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 HorizontalDivider(color = Color.Black.copy(alpha = 0.05f))
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Dòng 2: Tổng số bài làm
+                // Dòng 2: Tổng số bài làm đó giờ
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = androidx.compose.material.icons.Icons.Default.EmojiEvents,
                         contentDescription = null,
                         tint = Color(0xFFF59E0B),
-                        modifier = Modifier.size(40.dp)
+                        modifier = Modifier.size(44.dp)
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
+                        val weeklyTotalSessions = stats.weeklyPracticeCounts.sum()
                         Text(
-                            text = stringResource(R.string.analytics_sessions_completed, stats.totalPractices),
+                            text = stringResource(R.string.analytics_sessions_completed, weeklyTotalSessions),
                             fontWeight = FontWeight.Bold,
-                            fontSize = 17.sp,
+                            fontSize = 16.sp,
                             color = Color(0xFFD97706)
                         )
                         Text(

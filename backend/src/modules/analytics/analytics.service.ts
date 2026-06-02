@@ -77,56 +77,99 @@ export class AnalyticsService {
 
     const totalLearned = aggregates._sum.newWordsCount || 0;
     const totalReview = aggregates._sum.reviewWordsCount || 0;
-
-    // Tính tỷ lệ chính xác Accuracy = (Số câu đúng / Tổng số câu đúng + sai) * 100
-    const totalCorrect = aggregates._sum.correctCount || 0;
-    const totalWrong = aggregates._sum.wrongCount || 0;
-    const totalAnswers = totalCorrect + totalWrong;
-    const accuracy = totalAnswers > 0 ? (totalCorrect / totalAnswers) * 100 : 0.0; // Mặc định 80% nếu chưa làm câu nào
+    const totalPractices = aggregates._sum.practiceSessionsCount || 0;
 
     // Tính chuỗi ngày học liên tục (Streak) bằng thuật toán đếm lùi ngày
     const streak = await this.calculateStreak(userId, user.timezone);
-
-    // Tính % tiến độ mục tiêu ngày = (Số từ mới đã học hôm nay / Mục tiêu ngày của User) * 100
+    // Tính % tiến độ mục tiêu ngày
     const todayNewWords = todayActivity ? todayActivity.newWordsCount : 0;
     const dailyGoal = user.dailyNewWordsGoal || 10;
     const progressPercent = Math.min(100, Math.round((todayNewWords / dailyGoal) * 100));
 
-
-    // Tính mảng Weekly progress ( từ thứ 2 -> chủ nhật )
-    const dayOfWeek = todayDate.getDay(); // 0: Chủ nhật, 1: Thứ 2...
-    const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Đưa Thứ 2 về Index 0
+    // Xử lý logic mốc tuần hiện tại ( từ thứ 2 -> chủ nhật )
+    const dayOfWeek = todayDate.getDay();
+    const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     const startOfWeek = new Date(todayDate);
     startOfWeek.setDate(todayDate.getDate() - diffToMonday);
 
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
 
+    // Kéo hoa động tuần này về kèm trường đếm số lượng
     const weekActivities = await this.prisma.dailyActivity.findMany({
       where: {
         userId,
         activityDate: { gte: startOfWeek, lte: endOfWeek },
-        OR: [
-          { newWordsCount: { gt: 0 } },
-          { reviewWordsCount: { gt: 0 } },
-          { practiceSessionsCount: { gt: 0 } },
-        ],
       },
-      select: { activityDate: true },
+      select: {
+          activityDate: true,
+          practiceSessionsCount: true,
+          correctCount: true,
+          wrongCount: true
+      },
     });
 
-    const activeDatesSet = new Set(weekActivities.map((a) => a.activityDate.toISOString().split('T')[0]));
+    const weekActivityMap = new Map<string, any>();
+    weekActivities.forEach(act => {
+      weekActivityMap.set(act.activityDate.toISOString().split('T')[0], act);
+    });
 
-    // Mảng 7 phần tử (true/false) đại diện cho Thứ 2 -> Chủ Nhật
-    const weeklyActiveDays : boolean[] = [];
+    // Tính mảng Weekly Active Days (Cho Dashboard) và Weekly Practice Counts (Cho cột đồ thị Stats)
+    const weeklyActiveDays: boolean[] = [];
+    const weeklyPracticeCounts: number[] = [];
+
+    let weekCorrect = 0;
+    let weekWrong = 0;
+
     for (let i = 0; i < 7; i++) {
       const checkDate = new Date(startOfWeek);
       checkDate.setDate(startOfWeek.getDate() + i);
-      weeklyActiveDays.push(activeDatesSet.has(checkDate.toISOString().split('T')[0]));
+      const dateStr = checkDate.toISOString().split('T')[0];
+      const act = weekActivityMap.get(dateStr);
+
+      if (act) {
+        const hasData = act.newWordsCount > 0 || act.reviewWordsCount > 0 || act.practiceSessionsCount > 0;
+        weeklyActiveDays.push(hasData);
+        weeklyPracticeCounts.push(act.practiceSessionsCount || 0); // Lấy số lượng bài làm từ DB bài tập tích lũy
+
+        // Tích lũy câu đúng/sai để phục vụ tính toán Accuracy riêng tuần này
+        weekCorrect += act.correctCount || 0;
+        weekWrong += act.wrongCount || 0;
+      } else {
+        weeklyActiveDays.push(false);
+        weeklyPracticeCounts.push(0); // Nếu ngày đó trống hoạt động, tự trả về 0 để reset tuần mới
+      }
     }
 
-    //Tổng bài practice đã làm
-    const totalPractices = aggregates._sum.practiceSessionsCount || 0;
+    // Tính toán Accuracy trong tuần
+    const weekTotalAnswers = weekCorrect + weekWrong;
+    const accuracy = weekTotalAnswers > 0 ? (weekCorrect / weekTotalAnswers) * 100 : 0.0;
+
+    // Quét lịch sử Accuracy của 4 tuần gần nhất để vẽ biểu đồ
+    const weeklyAccuracyHistory: number[] = [];
+    for (let w = 3; w >= 0; w--) {
+      const wStart = new Date(startOfWeek);
+      wStart.setDate(startOfWeek.getDate() - (w * 7));
+      const wEnd = new Date(wStart);
+      wEnd.setDate(wStart.getDate() + 6);
+
+      const pastActivities = await this.prisma.dailyActivity.aggregate({
+        where: {
+          userId,
+          activityDate: { gte: wStart, lte: wEnd }
+        },
+        _sum: {
+          correctCount: true,
+          wrongCount: true
+        }
+      });
+
+      const pCorrect = pastActivities._sum.correctCount || 0;
+      const pWrong = pastActivities._sum.wrongCount || 0;
+      const pTotal = pCorrect + pWrong;
+      const pAccuracy = pTotal > 0 ? (pCorrect / pTotal) * 100 : 0.0;
+      weeklyAccuracyHistory.push(parseFloat(pAccuracy.toFixed(1)));
+    }
 
     //Trả về 7 trường dữ liệu mà class DashBoardAnalyticsDto trên android cần
     return {
@@ -139,6 +182,8 @@ export class AnalyticsService {
       progressPercent,
       weeklyActiveDays,
       totalPractices,
+      weeklyPracticeCounts,
+      weeklyAccuracyHistory,
     };
   }
 
@@ -217,7 +262,7 @@ export class AnalyticsService {
     async getPracticeHistory(userId: string) {
       // Prisma lấy dữ liệu từ bảng lưu lịch sử làm bài tập, include thêm tên deck
       const sessions = await this.prisma.practiceSession.findMany({
-        where: { userId: userId },
+        where: { userId: userId, status: 'COMPLETED' },
         include: { deck: { select: { name: true } } },
         orderBy: { finishedAt: 'desc' }, // Sắp xếp bài mới làm xếp lên đỉnh
         take: 5, // Chỉ lấy đúng 5 trận gần nhất để nhẹ máy

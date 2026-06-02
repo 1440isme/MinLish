@@ -67,7 +67,19 @@ class DashboardViewModel(
     )
 
     private val _dashboardAnalytics = MutableStateFlow(
-        DashboardAnalyticsDto(0, 0, 0, 0, 0.0f, 0, 0),
+        DashboardAnalyticsDto(
+            totalLearned = 0,
+            totalReview = 0,
+            dueToday = 0,
+            dailyGoal = 10,
+            accuracy = 0.0f,
+            streak = 0,
+            progressPercent = 0,
+            weeklyActiveDays = List(7) { false },
+            totalPractices = 0,
+            weeklyPracticeCounts = List(7) { 0 },
+            weeklyAccuracyHistory = emptyList()
+        ),
     )
     val dashboardAnalytics: StateFlow<DashboardAnalyticsDto> = _dashboardAnalytics
 

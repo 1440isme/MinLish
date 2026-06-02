@@ -235,14 +235,21 @@
     <string name="analytics_overall_stats">Overall Practice Statistics</string>
     <string name="analytics_accuracy_rate">%1$s%% Accuracy Rate</string>
     <string name="analytics_accuracy_desc">Calculated from your overall performance across all completed quiz sessions.</string>
-    <string name="analytics_sessions_completed">%1$d Sessions Completed</string>
-    <string name="analytics_sessions_desc">Total practice quizzes taken so far.</string>
+    <string name="analytics_sessions_completed">%1$d Sessions Completed This Week</string>
+    <string name="analytics_sessions_desc">Total practice quizzes taken during this week.</string>
     <string name="analytics_history_title">Practice History (5 most recent)</string>
     <string name="analytics_no_history">No completed practices found yet.</string>
     <string name="analytics_deck_quiz">%1$s quiz</string>
     <string name="analytics_practice_quiz">Practice quiz</string>
     <string name="analytics_cancelled">Cancelled</string>
     <string name="analytics_answers_count">%1$d / %2$d answers</string>
+    <string name="analytics_weekly_stats_title">Weekly Practice Statistics</string>
+    <string name="analytics_current_week_accuracy">%1$s%% Current Week Accuracy</string>
+    <string name="analytics_current_week_desc">Your real-time accuracy metric calculated for this week.</string>
+    <string name="analytics_performance_trend_title">4-Week Performance Trend</string>
+    <string name="analytics_trend_this_week">This Week</string>
+    <string name="analytics_trend_weeks_ago">%1$d wks ago</string>
+    <string name="analytics_lifelong_milestones">Your lifelong learning milestones recorded in MinLish.</string>
 
     <!-- Profile Dialogs -->
     <string name="profile_set_daily_goal">Set Daily Goal</string>
