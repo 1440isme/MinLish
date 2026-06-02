@@ -271,6 +271,15 @@
     <string name="practice_setup_empty_deck_warning">Bộ từ này hiện chưa có từ nào. Vui lòng thêm từ trước khi luyện tập!</string>
     <string name="practice_setup_btn_start">Bắt đầu</string>
 
+    <string name="practice_mode_selection_title">Chọn chế độ luyện tập</string>
+    <string name="practice_mode_selection_desc">Vui lòng chọn phạm vi từ vựng bạn muốn luyện tập:</string>
+    <string name="practice_mode_learned_words">Từ đã học</string>
+    <string name="practice_mode_learned_words_desc">Ôn tập các từ vựng bạn đã từng học qua trong bộ này.</string>
+    <string name="practice_mode_all_words">Cả bộ từ</string>
+    <string name="practice_mode_all_words_desc">Luyện tập trắc nghiệm với toàn bộ các từ trong bộ từ này.</string>
+    <string name="practice_mode_not_enough_learned_words">Bạn cần học ít nhất 4 từ trong bộ này để bắt đầu. Số từ đã học hiện tại: %1$d.</string>
+    <string name="practice_mode_not_enough_all_words">Bộ từ cần có ít nhất 4 từ để bắt đầu luyện tập. Số từ hiện tại: %1$d.</string>
+
     <!-- Auth & Registration Screens -->
     <string name="auth_google_success">Đăng nhập Google thành công!</string>
     <string name="auth_google_null_token">Đăng nhập Google: ID token bị rỗng</string>

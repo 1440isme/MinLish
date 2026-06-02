@@ -31,6 +31,7 @@ import com.minlish.feature.practice.presentation.PracticeQuizViewModel
 import com.minlish.feature.profile.presentation.ProfileScreen
 import com.minlish.feature.profile.presentation.ProfileSettingsViewModel
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import com.minlish.core.network.dto.CreateSessionResponse
@@ -84,6 +85,8 @@ fun MinLishAppContent(
     var activeSessionResponse by remember { mutableStateOf<CreateSessionResponse?>(null) }
 
     var showSetupDialog by remember { mutableStateOf(false) }
+    var showPracticeScopeSelectionDialog by remember { mutableStateOf(false) }
+    var practiceScope by remember { mutableStateOf("LEARNED_ONLY") }
     var targetSetupDeckId by remember { mutableStateOf<String?>(null) }
 
 
@@ -136,7 +139,7 @@ fun MinLishAppContent(
                         activeSessionResponse?.session?.id?.let { sessionId ->
                             practiceViewModel.cancelActiveSession(sessionId) {
                                 targetSetupDeckId = detailDeckId
-                                showSetupDialog = true
+                                showPracticeScopeSelectionDialog = true
                             }
                         }
                     },
@@ -151,19 +154,154 @@ fun MinLishAppContent(
         )
     }
 
+    // Dialog for choosing practice scope first
+    if (showPracticeScopeSelectionDialog) {
+        val vocabList by deckDetailViewModel.vocabulariesInSelectedDeck.collectAsState()
+        val totalWordsInDeck = vocabList.size
+        val deckLearningProgress by deckDetailViewModel.selectedDeckLearningProgress.collectAsState()
+        val newWordsAvailable = deckLearningProgress?.newWordsAvailable ?: totalWordsInDeck
+        val learnedWordsCount = (totalWordsInDeck - newWordsAvailable).coerceIn(0, totalWordsInDeck)
+
+        AlertDialog(
+            onDismissRequest = { showPracticeScopeSelectionDialog = false },
+            title = {
+                Text(
+                    stringResource(R.string.practice_mode_selection_title),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            },
+            text = {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Card 1: Only Learned Words
+                    Card(
+                        onClick = {
+                            if (learnedWordsCount < 4) {
+                                android.widget.Toast.makeText(
+                                    context,
+                                    context.getString(R.string.practice_mode_not_enough_learned_words, learnedWordsCount),
+                                    android.widget.Toast.LENGTH_LONG
+                                ).show()
+                            } else {
+                                practiceScope = "LEARNED_ONLY"
+                                showPracticeScopeSelectionDialog = false
+                                showSetupDialog = true
+                            }
+                        },
+                        modifier = Modifier.weight(1f).height(115.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxSize().padding(12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF0D9488).copy(alpha = 0.1f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.School,
+                                    contentDescription = null,
+                                    tint = Color(0xFF0D9488),
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                stringResource(R.string.practice_mode_learned_words),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = Color(0xFF1C1C1A),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+
+                    // Card 2: All Words in Deck
+                    Card(
+                        onClick = {
+                            if (totalWordsInDeck < 4) {
+                                android.widget.Toast.makeText(
+                                    context,
+                                    context.getString(R.string.practice_mode_not_enough_all_words, totalWordsInDeck),
+                                    android.widget.Toast.LENGTH_LONG
+                                ).show()
+                            } else {
+                                practiceScope = "ALL"
+                                showPracticeScopeSelectionDialog = false
+                                showSetupDialog = true
+                            }
+                        },
+                        modifier = Modifier.weight(1f).height(115.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxSize().padding(12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF0D9488).copy(alpha = 0.1f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Book,
+                                    contentDescription = null,
+                                    tint = Color(0xFF0D9488),
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                stringResource(R.string.practice_mode_all_words),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = Color(0xFF1C1C1A),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            shape = RoundedCornerShape(24.dp),
+            containerColor = Color.White
+        )
+    }
+
     // Dialog for practice setup configuration
     if (showSetupDialog) {
         val vocabList by deckDetailViewModel.vocabulariesInSelectedDeck.collectAsState()
         val totalWordsInDeck = vocabList.size
+        val deckLearningProgress by deckDetailViewModel.selectedDeckLearningProgress.collectAsState()
+        val newWordsAvailable = deckLearningProgress?.newWordsAvailable ?: totalWordsInDeck
+        val learnedWordsCount = (totalWordsInDeck - newWordsAvailable).coerceIn(0, totalWordsInDeck)
 
-        var questionCount by remember(totalWordsInDeck) {
-            mutableStateOf(if (totalWordsInDeck > 10) 10 else totalWordsInDeck)
+        val maxAllowedQuestions = if (practiceScope == "LEARNED_ONLY") learnedWordsCount else totalWordsInDeck
+
+        var questionCount by remember(maxAllowedQuestions) {
+            mutableStateOf(if (maxAllowedQuestions > 10) 10 else maxAllowedQuestions)
         }
 
         var isMultipleChoiceChecked by remember { mutableStateOf(true) }
         var isFillInBlankChecked by remember { mutableStateOf(true) }
         var isListeningChecked by remember { mutableStateOf(true) }
-        var practiceScope by remember { mutableStateOf("LEARNED_ONLY") }
 
         AlertDialog(
             onDismissRequest = { showSetupDialog = false },
@@ -191,8 +329,8 @@ fun MinLishAppContent(
                         Slider(
                             value = questionCount.toFloat(),
                             onValueChange = { questionCount = it.toInt() },
-                            valueRange = 1f..totalWordsInDeck.coerceAtLeast(1).toFloat(),
-                            steps = if (totalWordsInDeck > 1) totalWordsInDeck - 2 else 0,
+                            valueRange = 1f..maxAllowedQuestions.coerceAtLeast(1).toFloat(),
+                            steps = if (maxAllowedQuestions > 1) maxAllowedQuestions - 2 else 0,
                             modifier = Modifier.weight(1f),
                             colors = SliderDefaults.colors(
                                 thumbColor = Color(0xFFFBBF24),
@@ -252,41 +390,6 @@ fun MinLishAppContent(
                             colors = CheckboxDefaults.colors(checkedColor = Color(0xFFFBBF24))
                         )
                         Text(stringResource(R.string.practice_setup_type_listening), fontSize = 14.sp)
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        stringResource(R.string.practice_setup_scope),
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = practiceScope == "LEARNED_ONLY",
-                            onClick = { practiceScope = "LEARNED_ONLY" },
-                            colors = RadioButtonDefaults.colors(selectedColor = Color(0xFFFBBF24))
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.practice_setup_scope_learned), fontSize = 14.sp)
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = practiceScope == "ALL",
-                            onClick = { practiceScope = "ALL" },
-                            colors = RadioButtonDefaults.colors(selectedColor = Color(0xFFFBBF24))
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.practice_setup_scope_all), fontSize = 14.sp)
                     }
                 }
             },
@@ -419,7 +522,7 @@ fun MinLishAppContent(
                                                         showResumeDialog = true
                                                     } else {
                                                         targetSetupDeckId = deckId
-                                                        showSetupDialog = true
+                                                        showPracticeScopeSelectionDialog = true
                                                     }
                                                 }
                                             } else {
