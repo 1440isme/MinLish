@@ -13,6 +13,7 @@ class AuthRepository(
 ) {
     suspend fun loginWithGoogle(idToken: String): AuthResponse {
         val response = authApiService.loginWithGoogle(GoogleLoginRequest(idToken))
+        val isNewUser = response.user.learningGoal.isNullOrBlank()
         tokenManager.saveAuthResponse(
             accessToken = response.accessToken,
             refreshToken = response.refreshToken,
@@ -23,7 +24,7 @@ class AuthRepository(
             isOnboarded = true,
             currentLevelId = response.user.currentLevelId,
             targetLevelId = response.user.targetLevelId,
-            hasShownGoalSetup = true
+            hasShownGoalSetup = !isNewUser
         )
         return response
     }
