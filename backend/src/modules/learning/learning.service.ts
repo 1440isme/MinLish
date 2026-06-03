@@ -44,6 +44,17 @@ const deckWithLearningLevelInclude = {
   },
 } as const;
 
+const DAILY_NEW_LEVEL_PREFIXES: Record<string, string[]> = {
+  TOEIC_450: ['TOEIC 450'],
+  TOEIC_600: ['TOEIC 450', 'TOEIC 600'],
+  TOEIC_750: ['TOEIC 450', 'TOEIC 600', 'TOEIC 750'],
+  TOEIC_900: ['TOEIC 450', 'TOEIC 600', 'TOEIC 750', 'TOEIC 900'],
+  IELTS_4_0: ['IELTS 4.0'],
+  IELTS_5_5: ['IELTS 4.0', 'IELTS 5.5'],
+  IELTS_6_5: ['IELTS 4.0', 'IELTS 5.5', 'IELTS 6.5'],
+  IELTS_7_0: ['IELTS 4.0', 'IELTS 5.5', 'IELTS 6.5', 'IELTS 7.0'],
+};
+
 function isUniqueConstraintError(error: unknown): boolean {
   if (typeof error !== 'object' || error === null || !('code' in error)) {
     return false;
@@ -170,6 +181,7 @@ export class LearningService {
     }
 
     const deckId = latestReview.vocabulary.deckId;
+    const newWordsWhere = await this.buildNewWordsWhere(user, deckId);
     const [deck, dueReviewCount, newWordsAvailable] = await this.prisma.$transaction([
       this.prisma.deck.findFirst({
         where: {
@@ -182,7 +194,7 @@ export class LearningService {
         where: this.buildDueCardsWhere(user.id, deckId),
       }),
       this.prisma.vocabulary.count({
-        where: this.buildNewWordsWhere(user.id, deckId),
+        where: newWordsWhere,
       }),
     ]);
 
@@ -353,7 +365,7 @@ export class LearningService {
   ): Promise<DailyPlanResponseDto> {
     const newWordsGoal = Math.min(Math.max(requestedNewWordsGoal, 1), 100);
     const dueWhere = this.buildDueCardsWhere(user.id, deckId);
-    const newWordsWhere = this.buildNewWordsWhere(user.id, deckId);
+    const newWordsWhere = await this.buildNewWordsWhere(user, deckId);
 
     const [dueReviewCount, dueCards, newWordsAvailable, newWords] =
       await this.prisma.$transaction([
@@ -409,28 +421,66 @@ export class LearningService {
     };
   }
 
-  private buildNewWordsWhere(
-    currentUserId: string,
+  private async buildNewWordsWhere(
+    user: User,
     deckId?: string | null,
-  ): Prisma.VocabularyWhereInput {
+  ): Promise<Prisma.VocabularyWhereInput> {
+    const deckWhere = deckId
+      ? { id: deckId }
+      : await this.buildDailyNewDeckWhere(user);
+
     return {
       deletedAt: null,
-      ...(deckId
-        ? { deckId }
-        : {
-            deck: {
-              deletedAt: null,
-              OR: [
-                { deckType: DeckType.SYSTEM },
-                { deckType: DeckType.USER, ownerUserId: currentUserId },
-              ],
-            },
-          }),
+      deck: deckWhere,
       reviewCards: {
         none: {
-          userId: currentUserId,
+          userId: user.id,
         },
       },
+    };
+  }
+
+  private async buildDailyNewDeckWhere(
+    user: User,
+  ): Promise<Prisma.DeckWhereInput> {
+    const levelId = user.targetLevelId ?? user.currentLevelId ?? null;
+
+    if (!levelId) {
+      return {
+        deletedAt: null,
+        deckType: DeckType.SYSTEM,
+      };
+    }
+
+    const level = await this.prisma.learningLevel.findFirst({
+      where: {
+        id: levelId,
+        isActive: true,
+      },
+      select: {
+        code: true,
+      },
+    });
+
+    const prefixes = level
+      ? DAILY_NEW_LEVEL_PREFIXES[level.code] ?? []
+      : [];
+
+    if (prefixes.length === 0) {
+      return {
+        deletedAt: null,
+        deckType: DeckType.SYSTEM,
+      };
+    }
+
+    return {
+      deletedAt: null,
+      deckType: DeckType.SYSTEM,
+      OR: prefixes.map((prefix) => ({
+        name: {
+          startsWith: `${prefix} - `,
+        },
+      })),
     };
   }
 
