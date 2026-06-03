@@ -22,6 +22,7 @@ class TokenManager(private val context: Context) {
         val CURRENT_LEVEL_ID = stringPreferencesKey("current_level_id")
         val TARGET_LEVEL_ID = stringPreferencesKey("target_level_id")
         val AVATAR_URL = stringPreferencesKey("avatar_url")
+        val HAS_SHOWN_GOAL_SETUP = booleanPreferencesKey("has_shown_goal_setup")
     }
 
     val accessToken: Flow<String?> = context.dataStore.data.map { preferences ->
@@ -50,6 +51,10 @@ class TokenManager(private val context: Context) {
 
     val isOnboarded: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[IS_ONBOARDED] ?: false
+    }
+
+    val hasShownGoalSetup: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[HAS_SHOWN_GOAL_SETUP] ?: false
     }
 
     val currentLevelId: Flow<String> = context.dataStore.data.map { preferences ->
@@ -82,7 +87,8 @@ class TokenManager(private val context: Context) {
         isOnboarded: Boolean,
         currentLevelId: String? = null,
         targetLevelId: String? = null,
-        avatarUrl: String? = null
+        avatarUrl: String? = null,
+        hasShownGoalSetup: Boolean? = null
     ) {
         context.dataStore.edit { preferences ->
             preferences[ACCESS_TOKEN] = accessToken
@@ -95,6 +101,9 @@ class TokenManager(private val context: Context) {
             preferences[CURRENT_LEVEL_ID] = currentLevelId ?: ""
             preferences[TARGET_LEVEL_ID] = targetLevelId ?: ""
             preferences[AVATAR_URL] = avatarUrl ?: ""
+            if (hasShownGoalSetup != null) {
+                preferences[HAS_SHOWN_GOAL_SETUP] = hasShownGoalSetup
+            }
         }
     }
 
@@ -141,6 +150,12 @@ class TokenManager(private val context: Context) {
         }
     }
 
+    suspend fun saveHasShownGoalSetup(shown: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[HAS_SHOWN_GOAL_SETUP] = shown
+        }
+    }
+
     suspend fun clearAuth() {
         context.dataStore.edit { preferences ->
             preferences.remove(ACCESS_TOKEN)
@@ -151,6 +166,7 @@ class TokenManager(private val context: Context) {
             preferences.remove(CURRENT_LEVEL_ID)
             preferences.remove(TARGET_LEVEL_ID)
             preferences.remove(AVATAR_URL)
+            preferences.remove(HAS_SHOWN_GOAL_SETUP)
         }
     }
 }

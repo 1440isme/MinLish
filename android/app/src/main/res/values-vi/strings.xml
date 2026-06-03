@@ -254,6 +254,7 @@
     <string name="profile_select_words_desc">Chọn số lượng từ mới bạn muốn học mỗi ngày:</string>
     <string name="profile_select_goal_desc">Chọn lộ trình học tập chính của bạn:</string>
     <string name="profile_select_level_desc">Chọn trình độ điểm số mục tiêu của bạn:</string>
+    <string name="dashboard_goal_setup_hint">Bạn có thể tùy chỉnh lại mục tiêu ở cài đặt</string>
     <string name="profile_goal_updated_success">Đã cập nhật mục tiêu học tập!</string>
     <string name="profile_target_level_updated">Đã cập nhật trình độ mục tiêu!</string>
     <string name="profile_edit_title">Chỉnh sửa hồ sơ</string>

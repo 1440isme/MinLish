@@ -256,6 +256,7 @@
     <string name="profile_select_words_desc">Select how many new words you want to study each day:</string>
     <string name="profile_select_goal_desc">Select your primary learning pathway:</string>
     <string name="profile_select_level_desc">Select your target score level:</string>
+    <string name="dashboard_goal_setup_hint">You can change your goals later in your Profile settings.</string>
     <string name="profile_goal_updated_success">Learning goal updated!</string>
     <string name="profile_target_level_updated">Target level updated!</string>
     <string name="profile_edit_title">Edit Profile</string>

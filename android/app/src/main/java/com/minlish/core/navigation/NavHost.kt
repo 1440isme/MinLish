@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.minlish.MinLishApplication
@@ -62,8 +63,19 @@ fun MinLishAppContent(
     val isOnboarded by mainViewModel.isOnboarded.collectAsState()
     val databaseAnalytics by dashboardViewModel.dashboardAnalytics.collectAsState()
 
+    var currentScreen by remember { mutableStateOf("home") }
+    var detailDeckId by remember { mutableStateOf<String?>(null) }
+    var activeQuizDeckId by remember { mutableStateOf<String?>(null) }
+    var activeQuizType by remember { mutableStateOf("MULTIPLE_CHOICE") }
+    var activeStudyDeckId by remember { mutableStateOf<String?>(null) }
+
+    val decksLazyListState = rememberLazyListState()
+    var deckDetailBackScreen by remember { mutableStateOf("decks") }
+    var decksSelectedGoalFilter by remember { mutableStateOf("MY_DECKS") }
+    var decksSearchKey by remember { mutableStateOf("") }
+
     LaunchedEffect(isOnboarded) {
-        if (isOnboarded) {
+        if (isOnboarded == true) {
             dashboardViewModel.fetchLearningLevels()
             dashboardViewModel.fetchDashboardAnalytics()
             dashboardViewModel.refreshRecentStudyDeck()
@@ -72,14 +84,13 @@ fun MinLishAppContent(
             profileSettingsViewModel.fetchNotificationSettings()
             profileSettingsViewModel.fetchLearningLevels()
             practiceViewModel.fetchPracticeHistory()
+        } else if (isOnboarded == false) {
+            currentScreen = "home"
+            detailDeckId = null
+            activeQuizDeckId = null
+            activeStudyDeckId = null
         }
     }
-
-    var currentScreen by remember { mutableStateOf("home") }
-    var detailDeckId by remember { mutableStateOf<String?>(null) }
-    var activeQuizDeckId by remember { mutableStateOf<String?>(null) }
-    var activeQuizType by remember { mutableStateOf("MULTIPLE_CHOICE") }
-    var activeStudyDeckId by remember { mutableStateOf<String?>(null) }
 
     // Dialog state variables
     var showResumeDialog by remember { mutableStateOf(false) }
@@ -441,7 +452,16 @@ fun MinLishAppContent(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
-        if (!isOnboarded) {
+        if (isOnboarded == null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFFFFF9F2)),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = Color(0xFF0D9488))
+            }
+        } else if (isOnboarded == false) {
             if (isRegisterMode) {
                 RegisterScreen(
                     authViewModel = authViewModel,
@@ -493,6 +513,7 @@ fun MinLishAppContent(
                                 onOpenRecentDeck = { deckId ->
                                     deckDetailViewModel.selectDeck(deckId)
                                     detailDeckId = deckId
+                                    deckDetailBackScreen = "home"
                                     currentScreen = "deck_detail"
                                 }
                             )
@@ -501,15 +522,21 @@ fun MinLishAppContent(
                                 onDeckClick = { deckId ->
                                     deckDetailViewModel.selectDeck(deckId)
                                     detailDeckId = deckId
+                                    deckDetailBackScreen = "decks"
                                     currentScreen = "deck_detail"
-                                }
+                                },
+                                lazyListState = decksLazyListState,
+                                selectedGoalFilter = decksSelectedGoalFilter,
+                                onGoalFilterChange = { decksSelectedGoalFilter = it },
+                                searchKey = decksSearchKey,
+                                onSearchKeyChange = { decksSearchKey = it }
                             )
                             "deck_detail" -> {
                                 detailDeckId?.let { deckId ->
                                     DeckDetailScreen(
                                         deckId = deckId,
                                         viewModel = deckDetailViewModel,
-                                        onBack = { currentScreen = "decks"; detailDeckId = null },
+                                        onBack = { currentScreen = deckDetailBackScreen; detailDeckId = null },
                                         onStartStudy = {
                                             activeStudyDeckId = deckId
                                             studyViewModel.startStudySession(deckId)

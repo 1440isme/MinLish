@@ -13,6 +13,7 @@ class AuthRepository(
 ) {
     suspend fun loginWithGoogle(idToken: String): AuthResponse {
         val response = authApiService.loginWithGoogle(GoogleLoginRequest(idToken))
+        val isNewUser = response.user.learningGoal.isNullOrBlank()
         tokenManager.saveAuthResponse(
             accessToken = response.accessToken,
             refreshToken = response.refreshToken,
@@ -22,7 +23,8 @@ class AuthRepository(
             dailyGoal = response.user.dailyNewWordsGoal,
             isOnboarded = true,
             currentLevelId = response.user.currentLevelId,
-            targetLevelId = response.user.targetLevelId
+            targetLevelId = response.user.targetLevelId,
+            hasShownGoalSetup = !isNewUser
         )
         return response
     }
@@ -38,7 +40,8 @@ class AuthRepository(
             dailyGoal = response.user.dailyNewWordsGoal,
             isOnboarded = true,
             currentLevelId = response.user.currentLevelId,
-            targetLevelId = response.user.targetLevelId
+            targetLevelId = response.user.targetLevelId,
+            hasShownGoalSetup = true
         )
         return response
     }
@@ -54,7 +57,8 @@ class AuthRepository(
             dailyGoal = response.user.dailyNewWordsGoal,
             isOnboarded = true,
             currentLevelId = response.user.currentLevelId,
-            targetLevelId = response.user.targetLevelId
+            targetLevelId = response.user.targetLevelId,
+            hasShownGoalSetup = false
         )
         return response
     }

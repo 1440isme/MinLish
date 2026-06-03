@@ -6,6 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -58,13 +60,16 @@ import kotlinx.coroutines.delay
 fun DecksScreen(
     viewModel: DecksViewModel,
     onDeckClick: (String) -> Unit,
+    lazyListState: LazyListState = rememberLazyListState(),
+    selectedGoalFilter: String = "MY_DECKS",
+    onGoalFilterChange: (String) -> Unit = {},
+    searchKey: String = "",
+    onSearchKeyChange: (String) -> Unit = {},
 ) {
     val decks by viewModel.decksList.collectAsState()
     val isLoading by viewModel.isLoadingDecks.collectAsState()
     val lastErrorMessage by viewModel.lastErrorMessage.collectAsState()
-    var searchKey by remember { mutableStateOf("") }
     var showCreateDialog by remember { mutableStateOf(false) }
-    var selectedGoalFilter by remember { mutableStateOf("MY_DECKS") }
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(searchKey) {
@@ -138,12 +143,12 @@ fun DecksScreen(
 
             OutlinedTextField(
                 value = searchKey,
-                onValueChange = { searchKey = it },
+                onValueChange = onSearchKeyChange,
                 placeholder = { Text(stringResource(R.string.decks_search_placeholder)) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = {
                     if (searchKey.isNotBlank()) {
-                        IconButton(onClick = { searchKey = "" }) {
+                        IconButton(onClick = { onSearchKeyChange("") }) {
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = stringResource(R.string.decks_clear_search),
@@ -165,19 +170,19 @@ fun DecksScreen(
                 GoalFilterChip(
                     label = stringResource(R.string.decks_tab_my_decks),
                     selected = selectedGoalFilter == "MY_DECKS",
-                    onClick = { selectedGoalFilter = "MY_DECKS" },
+                    onClick = { onGoalFilterChange("MY_DECKS") },
                     accentColor = accentTeal,
                 )
                 GoalFilterChip(
                     label = stringResource(R.string.decks_tab_toeic),
                     selected = selectedGoalFilter == "TOEIC",
-                    onClick = { selectedGoalFilter = "TOEIC" },
+                    onClick = { onGoalFilterChange("TOEIC") },
                     accentColor = accentTeal,
                 )
                 GoalFilterChip(
                     label = stringResource(R.string.decks_tab_ielts),
                     selected = selectedGoalFilter == "IELTS",
-                    onClick = { selectedGoalFilter = "IELTS" },
+                    onClick = { onGoalFilterChange("IELTS") },
                     accentColor = accentTeal,
                 )
             }
@@ -195,6 +200,7 @@ fun DecksScreen(
                 }
             } else {
                 LazyColumn(
+                    state = lazyListState,
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),

@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,10 +42,13 @@ fun DashboardScreen(
     val stats by viewModel.dashboardAnalytics.collectAsState()
     val wordsGoal by viewModel.dailyNewWordsGoal.collectAsState()
     val recentStudyDeck by viewModel.recentStudyDeck.collectAsState()
+    val hasShownGoalSetup by viewModel.hasShownGoalSetup.collectAsState()
+    val learningLevels by viewModel.learningLevels.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.fetchDashboardAnalytics()
         viewModel.refreshRecentStudyDeck()
+        viewModel.fetchLearningLevels()
     }
 
     Column(
@@ -278,6 +282,165 @@ fun DashboardScreen(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+    }
+
+    if (!hasShownGoalSetup) {
+        AlertDialog(
+            onDismissRequest = { /* Force selection to proceed */ },
+            title = {
+                Text(
+                    text = stringResource(R.string.profile_learning_goal),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = Color(0xFF1C1C1A)
+                )
+            },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = stringResource(R.string.profile_select_goal_desc),
+                        fontSize = 14.sp,
+                        color = Color(0xFF7C776E)
+                    )
+                    
+                    var selectedVal by remember { mutableStateOf("TOEIC") }
+                    val goalOptions = listOf("TOEIC", "IELTS")
+                    val accentTeal = Color(0xFF0D9488)
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        goalOptions.forEach { opt ->
+                            val isSelected = opt == selectedVal
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(if (isSelected) accentTeal else Color.LightGray.copy(alpha = 0.2f))
+                                    .clickable { selectedVal = opt }
+                                    .padding(vertical = 16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = opt,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp,
+                                    color = if (isSelected) Color.White else Color.Black
+                                )
+                            }
+                        }
+                    }
+
+                    // Find level options based on current goal selection
+                    val filteredLevels = learningLevels.filter { level ->
+                        level.code.startsWith(selectedVal, ignoreCase = true)
+                    }
+                    val levelOptions = filteredLevels.map { it.id to it.name }.ifEmpty {
+                        if (selectedVal == "TOEIC") {
+                            listOf(
+                                "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1" to "TOEIC 450+",
+                                "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2" to "TOEIC 600+",
+                                "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3" to "TOEIC 750+",
+                                "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4" to "TOEIC 900+"
+                            )
+                        } else {
+                            listOf(
+                                "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1" to "IELTS 4.0+",
+                                "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2" to "IELTS 5.5+",
+                                "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3" to "IELTS 6.5+",
+                                "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb4" to "IELTS 7.0+"
+                            )
+                        }
+                    }
+
+                    // Default to TOEIC 600+ or IELTS 6.5+ when goal changes
+                    var selectedLevelId by remember(selectedVal) {
+                        mutableStateOf(
+                            if (selectedVal == "TOEIC") "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2"
+                            else "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3"
+                        )
+                    }
+
+                    Text(
+                        text = stringResource(R.string.profile_target_level),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = Color(0xFF1C1C1A),
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        levelOptions.chunked(2).forEach { rowList ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                rowList.forEach { (id, label) ->
+                                    val isSelected = id == selectedLevelId
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(if (isSelected) accentTeal else Color.LightGray.copy(alpha = 0.2f))
+                                            .clickable { selectedLevelId = id }
+                                            .padding(vertical = 10.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = label,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 13.sp,
+                                            color = if (isSelected) Color.White else Color.Black
+                                        )
+                                    }
+                                }
+                                if (rowList.size < 2) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    }
+
+                    Text(
+                        text = stringResource(R.string.dashboard_goal_setup_hint),
+                        fontSize = 11.sp,
+                        color = Color(0xFF7C776E),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = {
+                            viewModel.updateLearningGoalAndLevel(selectedVal, selectedLevelId)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = accentTeal),
+                        shape = RoundedCornerShape(20.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.common_save),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = Color.White
+                        )
+                    }
+                }
+            },
+            confirmButton = {},
+            shape = RoundedCornerShape(28.dp),
+            containerColor = Color.White
+        )
     }
 }
 
