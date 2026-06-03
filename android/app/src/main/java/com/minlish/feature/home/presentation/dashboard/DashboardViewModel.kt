@@ -19,11 +19,18 @@ import kotlinx.coroutines.launch
 
 class DashboardViewModel(
     private val vocabularyRepository: VocabularyRepository,
-    settingsRepository: SettingsRepository,
+    private val settingsRepository: SettingsRepository,
     private val userRepository: UserRepository,
     private val analyticsRepository: AnalyticsRepository,
 ) : ViewModel() {
     private val _learningLevels = MutableStateFlow<List<LearningLevelDto>>(emptyList())
+    val learningLevels: StateFlow<List<LearningLevelDto>> = _learningLevels
+
+    val hasShownGoalSetup = settingsRepository.hasShownGoalSetup.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = true,
+    )
 
     val fullName = settingsRepository.fullName.stateIn(
         scope = viewModelScope,
@@ -118,6 +125,20 @@ class DashboardViewModel(
                 _learningLevels.value = userRepository.getLevels()
             } catch (e: Exception) {
                 android.util.Log.e("MINLISH_LEVELS", "Failed to fetch learning levels: ", e)
+            }
+        }
+    }
+
+    fun updateLearningGoalAndLevel(goal: String, levelId: String) {
+        viewModelScope.launch {
+            try {
+                userRepository.updateProfile(
+                    learningGoal = goal,
+                    targetLevelId = levelId,
+                )
+                settingsRepository.saveHasShownGoalSetup(true)
+            } catch (e: Exception) {
+                android.util.Log.e("DashboardViewModel", "Failed to update initial learning goal and level: ", e)
             }
         }
     }

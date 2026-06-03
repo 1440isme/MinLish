@@ -12,6 +12,7 @@ class SettingsRepository(private val tokenManager: TokenManager) {
     val learningGoal: Flow<String> = tokenManager.learningGoal
     val dailyNewWordsGoal: Flow<Int> = tokenManager.dailyNewWordsGoal
     val isOnboarded: Flow<Boolean> = tokenManager.isOnboarded
+    val hasShownGoalSetup: Flow<Boolean> = tokenManager.hasShownGoalSetup
     val avatarUrl: Flow<String> = tokenManager.avatarUrl
 
     val targetLevelId: Flow<String> = tokenManager.targetLevelId
@@ -37,6 +38,10 @@ class SettingsRepository(private val tokenManager: TokenManager) {
 
     private val _isMockServiceOn = MutableStateFlow(false)
     val isMockServiceOn: StateFlow<Boolean> = _isMockServiceOn
+
+    suspend fun saveHasShownGoalSetup(shown: Boolean) {
+        tokenManager.saveHasShownGoalSetup(shown)
+    }
 
     suspend fun saveOnboarding(name: String, goal: String, level: String, words: Int, reminder: String) {
         tokenManager.saveAuthResponse(
