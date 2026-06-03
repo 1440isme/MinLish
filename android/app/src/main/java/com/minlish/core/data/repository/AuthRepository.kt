@@ -22,7 +22,8 @@ class AuthRepository(
             dailyGoal = response.user.dailyNewWordsGoal,
             isOnboarded = true,
             currentLevelId = response.user.currentLevelId,
-            targetLevelId = response.user.targetLevelId
+            targetLevelId = response.user.targetLevelId,
+            hasShownGoalSetup = true
         )
         return response
     }
@@ -38,7 +39,8 @@ class AuthRepository(
             dailyGoal = response.user.dailyNewWordsGoal,
             isOnboarded = true,
             currentLevelId = response.user.currentLevelId,
-            targetLevelId = response.user.targetLevelId
+            targetLevelId = response.user.targetLevelId,
+            hasShownGoalSetup = true
         )
         return response
     }
@@ -54,7 +56,8 @@ class AuthRepository(
             dailyGoal = response.user.dailyNewWordsGoal,
             isOnboarded = true,
             currentLevelId = response.user.currentLevelId,
-            targetLevelId = response.user.targetLevelId
+            targetLevelId = response.user.targetLevelId,
+            hasShownGoalSetup = false
         )
         return response
     }

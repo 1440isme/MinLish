@@ -87,7 +87,8 @@ class TokenManager(private val context: Context) {
         isOnboarded: Boolean,
         currentLevelId: String? = null,
         targetLevelId: String? = null,
-        avatarUrl: String? = null
+        avatarUrl: String? = null,
+        hasShownGoalSetup: Boolean? = null
     ) {
         context.dataStore.edit { preferences ->
             preferences[ACCESS_TOKEN] = accessToken
@@ -100,6 +101,9 @@ class TokenManager(private val context: Context) {
             preferences[CURRENT_LEVEL_ID] = currentLevelId ?: ""
             preferences[TARGET_LEVEL_ID] = targetLevelId ?: ""
             preferences[AVATAR_URL] = avatarUrl ?: ""
+            if (hasShownGoalSetup != null) {
+                preferences[HAS_SHOWN_GOAL_SETUP] = hasShownGoalSetup
+            }
         }
     }
 

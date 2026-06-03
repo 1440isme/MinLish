@@ -7,6 +7,7 @@ import com.minlish.core.data.repository.SettingsRepository
 import com.minlish.core.data.repository.VocabularyRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class MainViewModel(
@@ -14,11 +15,13 @@ class MainViewModel(
     private val settingsRepository: SettingsRepository,
     private val authRepository: AuthRepository,
 ) : ViewModel() {
-    val isOnboarded = settingsRepository.isOnboarded.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = false,
-    )
+    val isOnboarded = settingsRepository.isOnboarded
+        .map { it as Boolean? }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = null,
+        )
 
     val isDarkTheme = settingsRepository.isDarkTheme
     val isMockMode = settingsRepository.isMockServiceOn
