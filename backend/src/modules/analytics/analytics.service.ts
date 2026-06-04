@@ -105,7 +105,9 @@ export class AnalyticsService {
           activityDate: true,
           practiceSessionsCount: true,
           correctCount: true,
-          wrongCount: true
+          wrongCount: true,
+          newWordsCount: true,
+          reviewWordsCount: true
       },
     });
 
