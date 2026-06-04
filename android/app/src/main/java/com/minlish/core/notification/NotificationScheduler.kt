@@ -144,11 +144,7 @@ object NotificationScheduler {
             val alarmClockInfo = AlarmManager.AlarmClockInfo(triggerAt, pendingIntent)
             alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
 
-            android.util.Log.d("MINLISH_NOTI", " [FIXED CHECKPOINT] Next Silent Review Check scheduled precisely at: ${cal.time}")        } catch (e: Exception) {
-            // Cổng dự phòng an toàn cho các đời máy cũ
-            //alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
-            //android.util.Log.e("MINLISH_NOTI", "Fallback to inexact alarm due to error: ${e.localizedMessage}")
-        }
+            android.util.Log.d("MINLISH_NOTI", " [FIXED CHECKPOINT] Next Silent Review Check scheduled precisely at: ${cal.time}")        }
          catch (e: Exception) {
             alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
         }

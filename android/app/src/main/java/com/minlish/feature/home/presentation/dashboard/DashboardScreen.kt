@@ -577,45 +577,52 @@ fun RovioWeeklyTracker(streakCount: Int, weeklyActiveDays: List<Boolean>) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 // Danh sách 7 ngày hiển thị chữ cái đầu
-                val daysOfWeek = listOf("M", "T", "W", "T", "F", "S", "S")
+                val daysOfWeek = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
 
                 daysOfWeek.forEachIndexed { index, dayLabel ->
                     // Tránh lỗi Index nếu danh sách mảng chưa kịp update
-                    val isActive = weeklyActiveDays.getOrElse(index) { false }
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = dayLabel,
-                            fontSize = 13.sp,
-                            fontWeight = if (isActive) FontWeight.Bold else FontWeight.SemiBold,
-                            color = if (isActive) Color(0xFF1C1C1A) else Color(0xFF7C776E).copy(alpha = 0.6f)
-                        )
-                        
-                        // Circle Indicator
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (isActive) Color(0xFFFBBF24) else Color.White
-                                )
-                                .border(
-                                    width = 1.5.dp,
-                                    color = if (isActive) Color(0xFFFBBF24) else Color(0xFFE0E7FF),
-                                    shape = CircleShape
-                                ),
-                            contentAlignment = Alignment.Center
+                    //bọc khối xử lý bằng key() để ép compose re render ngay
+                    key(weeklyActiveDays, index) {
+                        val isActive = weeklyActiveDays.getOrElse(index) { false }
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            if (isActive) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = "Active",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(16.dp)
+                            Text(
+                                text = dayLabel,
+                                fontSize = 12.sp,
+                                fontWeight = if (isActive) FontWeight.Bold else FontWeight.SemiBold,
+                                color = if (isActive) Color(0xFF1C1C1A) else Color(0xFF7C776E).copy(
+                                    alpha = 0.6f
                                 )
+                            )
+
+                            // Circle Indicator
+                            Box(
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (isActive) Color(0xFFFBBF24) else Color.White
+                                    )
+                                    .border(
+                                        width = 1.5.dp,
+                                        color = if (isActive) Color(0xFFFBBF24) else Color(
+                                            0xFFE0E7FF
+                                        ),
+                                        shape = CircleShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isActive) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Active",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
                             }
                         }
                     }

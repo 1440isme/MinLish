@@ -30,6 +30,7 @@ import androidx.core.content.ContextCompat
 import com.minlish.core.notification.NotificationScheduler
 import com.minlish.feature.profile.presentation.ProfileSettingsViewModel
 import java.util.Calendar
+import java.util.Locale
 import androidx.compose.ui.res.stringResource
 import com.minlish.R
 
@@ -42,25 +43,41 @@ fun SettingsScreen(viewModel: ProfileSettingsViewModel, onBackClick: () -> Unit)
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
-    //Xin quyền runtime google compose
+    // Lấy chuỗi thông báo lỗi bằng hàm chuẩn của Compose để triệt tiêu vết bôi đỏ Lint hoàn toàn
+    val permissionDeniedMessage = stringResource(R.string.settings_notif_permission_denied)
+
+    // Lắng nghe trạng thái xem người dùng đang muốn kích hoạt công tắc nào để bọc lót cấp lịch sau khi xin quyền thành công
+    var pendingActionType by remember { mutableStateOf<String?>(null) } // "daily" hoặc "review"
+
+    // Bộ phóng hệ thống xin quyền Runtime chuẩn Jetpack Compose
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            // Nếu người dùng đồng ý cấp quyền, gạt công tắc bật lên mạng Cloud
-            viewModel.updateNotificationToggle(dailyEnabled = true)
-            // Đồng thời đặt luôn lịch giờ mặc định hiện tại vào chip máy di động
-            notiSettings?.dailyReminderTime?.let { timeStr ->
-                val cleanTime = if (timeStr.contains("T")) {
-                    timeStr.substringAfter("T").substringBefore(".")
-                } else {
-                    timeStr.substringBefore(".")
+            Toast.makeText(context, "Đã bật quyền thông báo thành công!", Toast.LENGTH_SHORT).show()
+
+            // Thực thi tiếp tục hành động còn dang dở sau khi người dùng bấm "Cho phép"
+            when (pendingActionType) {
+                "daily" -> {
+                    viewModel.updateNotificationToggle(dailyEnabled = true)
+                    notiSettings?.dailyReminderTime?.let { timeStr ->
+                        val cleanTime = if (timeStr.contains("T")) timeStr.substringAfter("T")
+                            .substringBefore(".") else timeStr.substringBefore(".")
+                        NotificationScheduler.scheduleDailyReminder(context, cleanTime)
+                    }
                 }
-                NotificationScheduler.scheduleDailyReminder(context, cleanTime)
+
+                "review" -> {
+                    viewModel.updateNotificationToggle(dueEnabled = true)
+                    NotificationScheduler.scheduleReviewCheck(context)
+                }
             }
-        } else {
-            showToast(context, context.getString(R.string.settings_notif_permission_denied), Toast.LENGTH_LONG)
         }
+        else {
+            // ✅ ĐÃ SỬA: Thay thế context.getString() thành biến permissionDeniedMessage cực kỳ sạch lỗi
+            showToast(context, permissionDeniedMessage, Toast.LENGTH_LONG)
+        }
+        pendingActionType = null // Reset trạng thái chờ
     }
 
     // Tự động kéo cấu hình thông báo mới nhất từ Server khi mở màn hình
@@ -126,14 +143,17 @@ fun SettingsScreen(viewModel: ProfileSettingsViewModel, onBackClick: () -> Unit)
                             }
                             Switch(
                                 checked = currentNoti.dailyReminderEnabled,
-                                //onCheckedChange = { viewModel.updateNotificationToggle(dailyEnabled = it) },
                                 onCheckedChange = { isChecked ->
                                     if (isChecked) {
                                         // Kiểm tra quyền : Nếu máy chạy Android 13+ mà chưa cấp quyền thông báo, kích hoạt hộp thoại xin quyền
                                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                                            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                                            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
+                                        {
+                                            pendingActionType = "daily"
                                             permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                        } else {
+                                        }
+                                        else
+                                        {
                                             viewModel.updateNotificationToggle(dailyEnabled = true)
                                             val cleanTime = currentNoti.dailyReminderTime.substringAfter("T").substringBefore(".")
                                             NotificationScheduler.scheduleDailyReminder(context, cleanTime)
@@ -164,7 +184,7 @@ fun SettingsScreen(viewModel: ProfileSettingsViewModel, onBackClick: () -> Unit)
                                         val dialog = TimePickerDialog(
                                             context,
                                             { _, hourOfDay, minute ->
-                                                val formattedTime = String.format("%02d:%02d:00", hourOfDay, minute)
+                                                val formattedTime = String.format(Locale.US, "%02d:%02d:00", hourOfDay, minute)
                                                 // 1. Đẩy lệnh PATCH lên Server Cloud
                                                 viewModel.updateNotificationToggle(timeStr = formattedTime)
                                                 // 2. Đồng bộ đặt lịch báo thức ngầm dưới chip máy di động ngay lập tức
@@ -176,7 +196,8 @@ fun SettingsScreen(viewModel: ProfileSettingsViewModel, onBackClick: () -> Unit)
                                         )
                                         dialog.show()
                                     }
-                                ) {
+                                )
+                                {
                                     Text(text = cleanTime, fontWeight = FontWeight.Bold, color = accentTeal, fontSize = 15.sp)
                                 }
                             }
@@ -200,11 +221,21 @@ fun SettingsScreen(viewModel: ProfileSettingsViewModel, onBackClick: () -> Unit)
                             }
                             Switch(
                                 checked = currentNoti.dueReviewReminderEnabled,
-                                { isChecked ->
-                                    viewModel.updateNotificationToggle(dueEnabled = isChecked)
+                                onCheckedChange = { isChecked ->
                                     if (isChecked) {
-                                        NotificationScheduler.scheduleReviewCheck(context)
+                                        // Kiểm tra gác cổng quyền hệ điều hành Android 13+ cho luồng Review
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                                            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+
+                                            // Gán biến chờ cho luồng Review để tránh bị null chặn luồng local
+                                            pendingActionType = "review"
+                                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                        } else {
+                                            viewModel.updateNotificationToggle(dueEnabled = true)
+                                            NotificationScheduler.scheduleReviewCheck(context)
+                                        }
                                     } else {
+                                        viewModel.updateNotificationToggle(dueEnabled = false)
                                         NotificationScheduler.cancelReviewCheck(context)
                                     }
                                 },
