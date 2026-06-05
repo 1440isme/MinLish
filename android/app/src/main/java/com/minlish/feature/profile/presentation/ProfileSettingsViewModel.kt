@@ -77,6 +77,14 @@ class ProfileSettingsViewModel(
     )
     val dailyReminderTime = settingsRepository.dailyReminderTime
 
+    //Biến theo dõi yêu cầu xin quyền runtime (dành cho ui compose )
+    private val _showPermissionRequest = MutableStateFlow(false)
+    val showPermissionRequest: StateFlow<Boolean> = _showPermissionRequest
+
+    fun PermissionRequestHandled() {
+        _showPermissionRequest.value = false
+    }
+
     private val _notificationSettings = MutableStateFlow<NotificationSettingsResponse?>(null)
     val notificationSettings: StateFlow<NotificationSettingsResponse?> = _notificationSettings
 

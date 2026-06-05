@@ -105,7 +105,9 @@ export class AnalyticsService {
           activityDate: true,
           practiceSessionsCount: true,
           correctCount: true,
-          wrongCount: true
+          wrongCount: true,
+          newWordsCount: true,
+          reviewWordsCount: true
       },
     });
 
@@ -220,25 +222,30 @@ export class AnalyticsService {
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-    //Logic Nếu cả hôm nay và hôm qua người dùng đều lười không học bài -> Streak đứt về 0
+    //Logic Nếu cả hôm nay và hôm qua người dùng đều không học, luện tập  -> Streak đứt về 0
     if (!activeDatesSet.has(todayStr) && !activeDatesSet.has(yesterdayStr)) {
-      return 0;
+          return 0;
     }
 
     let streakCount = 0;
-    // Bắt đầu vòng lặp kiểm tra: Xuất phát từ ngày có hoạt động gần nhất (hôm nay hoặc hôm qua)
-    const currentCheckDate = activeDatesSet.has(todayStr) ? todayDate : yesterday;
+    //Luôn luôn xuất phát đếm lùi lịch từ ngày HÔM QUA về quá khứ để lấy làm nền mốc tích lũy
+    const checkDate = new Date(yesterday);
 
     while (true) {
-      const checkStr = currentCheckDate.toISOString().split('T')[0];
+      const checkStr = checkDate.toISOString().split('T')[0];
       if (activeDatesSet.has(checkStr)) {
         streakCount++;
         // Lùi mốc kiểm tra về quá khứ 1 ngày lịch để chạy lượt lặp tiếp theo
-        currentCheckDate.setDate(currentCheckDate.getDate() - 1);
+        checkDate.setDate(checkDate.getDate() - 1);
       } else {
         // Phát hiện một ngày bị bỏ trống hoạt động -> Đứt chuỗi, thoát vòng lặp ngay
         break;
       }
+    }
+    // đồng bộ hiển thị:  Nếu ngày hôm nay người dùng đã có hoạt động học bài rồi
+    // thì cộng thêm 1 ngày của ngày hôm nay vào tổng chuỗi tích lũy nền!
+    if (activeDatesSet.has(todayStr)) {
+      streakCount++;
     }
 
     return streakCount;
