@@ -1,6 +1,7 @@
 package com.minlish
 
 import android.app.Application
+import com.minlish.core.audio.TextToSpeechManager
 import com.minlish.core.data.repository.AuthRepository
 import com.minlish.core.data.repository.SettingsRepository
 import com.minlish.core.data.repository.UserRepository
@@ -31,6 +32,7 @@ import kotlin.getValue
 class MinLishApplication : Application() {
     
     val tokenManager: TokenManager by lazy { TokenManager(this) }
+    val textToSpeechManager by lazy { TextToSpeechManager(this) }
 
     val authApiService: AuthApiService by lazy { retrofit.create(AuthApiService::class.java) }
     val userApiService: UserApiService by lazy { retrofit.create(UserApiService::class.java) }

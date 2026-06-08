@@ -24,6 +24,7 @@ class MainActivity : ComponentActivity() {
                 userRepository = app.userRepository,
                 analyticsRepository = app.analyticsRepository,
                 notificationRepository = app.notificationRepository,
+                textToSpeechManager = app.textToSpeechManager,
             )
             val mainViewModel: MainViewModel = viewModel(
                 factory = viewModelFactory,

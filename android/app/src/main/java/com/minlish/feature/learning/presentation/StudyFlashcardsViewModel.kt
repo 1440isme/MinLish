@@ -1,9 +1,9 @@
 package com.minlish.feature.learning.presentation
 
-import android.app.Application
-import android.speech.tts.TextToSpeech
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.minlish.core.audio.SpeechResult
+import com.minlish.core.audio.TextToSpeechManager
 import com.minlish.core.data.model.VocabularyWithReviewCard
 import com.minlish.core.data.repository.SettingsRepository
 import com.minlish.core.data.repository.VocabularyRepository
@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 private enum class StudySessionMode {
     MIXED,
@@ -21,18 +20,15 @@ private enum class StudySessionMode {
 }
 
 class StudyFlashcardsViewModel(
-    application: Application,
     private val vocabularyRepository: VocabularyRepository,
     settingsRepository: SettingsRepository,
-) : AndroidViewModel(application), TextToSpeech.OnInitListener {
+    private val textToSpeechManager: TextToSpeechManager,
+) : ViewModel() {
     private val dailyNewWordsGoal = settingsRepository.dailyNewWordsGoal.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = 10,
     )
-
-    private var tts: TextToSpeech? = TextToSpeech(application, this)
-    private var isTtsInitialized = false
 
     private val _activeFlashcards = MutableStateFlow<List<VocabularyWithReviewCard>>(emptyList())
     val activeFlashcards: StateFlow<List<VocabularyWithReviewCard>> = _activeFlashcards
@@ -64,29 +60,20 @@ class StudyFlashcardsViewModel(
     private val _lastErrorMessage = MutableStateFlow<String?>(null)
     val lastErrorMessage: StateFlow<String?> = _lastErrorMessage
 
+    fun clearLastError() {
+        _lastErrorMessage.value = null
+    }
+
     private var replayableStudyCards: List<VocabularyWithReviewCard> = emptyList()
     private var activeStudySessionMode: StudySessionMode? = null
     private var activeStudySessionDeckId: String? = null
 
-    override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            val result = tts?.setLanguage(Locale.US)
-            if (result != TextToSpeech.LANG_MISSING_DATA && result != TextToSpeech.LANG_NOT_SUPPORTED) {
-                isTtsInitialized = true
-            }
-        }
-    }
-
     fun speak(text: String) {
-        if (isTtsInitialized) {
-            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+        _lastErrorMessage.value = when (val result = textToSpeechManager.speak(text)) {
+            SpeechResult.Success -> null
+            SpeechResult.Loading -> "Text to speech is still loading. Please try again."
+            is SpeechResult.Error -> result.message
         }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        tts?.stop()
-        tts?.shutdown()
     }
 
     fun startStudySession(deckId: String? = null) {

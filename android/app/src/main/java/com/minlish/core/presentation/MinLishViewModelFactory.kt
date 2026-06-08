@@ -3,6 +3,7 @@ package com.minlish.core.presentation
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.minlish.core.audio.TextToSpeechManager
 import com.minlish.core.data.repository.AnalyticsRepository
 import com.minlish.core.data.repository.AuthRepository
 import com.minlish.core.data.repository.NotificationRepository
@@ -24,6 +25,7 @@ class MinLishViewModelFactory(
     private val userRepository: UserRepository,
     private val analyticsRepository: AnalyticsRepository,
     private val notificationRepository: NotificationRepository,
+    private val textToSpeechManager: TextToSpeechManager,
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val viewModel = when {
@@ -43,15 +45,17 @@ class MinLishViewModelFactory(
             )
             modelClass.isAssignableFrom(DeckDetailViewModel::class.java) -> DeckDetailViewModel(
                 vocabularyRepository = vocabularyRepository,
+                textToSpeechManager = textToSpeechManager,
             )
             modelClass.isAssignableFrom(StudyFlashcardsViewModel::class.java) -> StudyFlashcardsViewModel(
-                application = application,
                 vocabularyRepository = vocabularyRepository,
                 settingsRepository = settingsRepository,
+                textToSpeechManager = textToSpeechManager,
             )
             modelClass.isAssignableFrom(PracticeQuizViewModel::class.java) -> PracticeQuizViewModel(
                 vocabularyRepository = vocabularyRepository,
                 analyticsRepository = analyticsRepository,
+                textToSpeechManager = textToSpeechManager,
             )
             modelClass.isAssignableFrom(ProfileSettingsViewModel::class.java) -> ProfileSettingsViewModel(
                 settingsRepository = settingsRepository,

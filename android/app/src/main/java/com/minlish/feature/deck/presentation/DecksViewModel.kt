@@ -42,13 +42,20 @@ class DecksViewModel(
         }
     }
 
-    fun createCustomDeck(name: String, description: String, tags: List<String>) {
+    fun createCustomDeck(
+        name: String,
+        description: String,
+        tags: List<String>,
+        onSuccess: () -> Unit = {},
+    ) {
         viewModelScope.launch {
             try {
                 vocabularyRepository.createDeck(name, description, tags)
                 refreshDecks()
+                _lastErrorMessage.value = null
+                onSuccess()
             } catch (e: Exception) {
-                _lastErrorMessage.value = ApiErrorParser.humanMessage(e, "Failed to create deck")
+                _lastErrorMessage.value = deckActionMessage(e, "Failed to create deck")
             }
         }
     }
@@ -61,6 +68,14 @@ class DecksViewModel(
             } catch (e: Exception) {
                 _lastErrorMessage.value = ApiErrorParser.humanMessage(e, "Failed to delete deck")
             }
+        }
+    }
+
+    private fun deckActionMessage(error: Exception, fallback: String): String {
+        val apiError = ApiErrorParser.parse(error)
+        return when (apiError?.code) {
+            "DECK_NAME_DUPLICATE" -> "A deck with this name already exists."
+            else -> apiError?.message ?: error.localizedMessage ?: fallback
         }
     }
 }
