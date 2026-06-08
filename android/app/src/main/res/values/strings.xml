@@ -49,6 +49,8 @@
     <string name="decks_field_name">Deck Name</string>
     <string name="decks_field_description">Description</string>
     <string name="decks_field_tags">Tags (comma separated)</string>
+    <string name="decks_name_required">Please enter a deck name.</string>
+    <string name="decks_name_duplicate">A deck with this name already exists.</string>
     <string name="decks_badge_favorites">Favorites</string>
     <string name="decks_badge_saved_words">Saved words</string>
 

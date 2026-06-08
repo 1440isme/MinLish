@@ -236,7 +236,8 @@ fun DeckDetailScreen(
             Text(
                 text = deck!!.description,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 8.dp)
             )
 
             Row(
@@ -382,6 +383,9 @@ fun DeckDetailScreen(
         var dTags by remember(deck!!.id) {
             mutableStateOf(deck!!.tags.split(";").filter { it.isNotBlank() }.joinToString(", "))
         }
+        var deckNameError by remember(deck!!.id) { mutableStateOf<String?>(null) }
+        val deckNameRequiredText = stringResource(R.string.decks_name_required)
+        val deckNameDuplicateText = stringResource(R.string.decks_name_duplicate)
 
         Dialog(onDismissRequest = { showEditDeckDialog = false }) {
             Card(
@@ -398,10 +402,21 @@ fun DeckDetailScreen(
 
                     OutlinedTextField(
                         value = dName,
-                        onValueChange = { dName = it },
+                        onValueChange = {
+                            dName = it
+                            if (deckNameError != null) {
+                                deckNameError = null
+                            }
+                        },
                         label = { Text(stringResource(R.string.decks_field_name)) },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
+                        isError = deckNameError != null,
+                        supportingText = {
+                            deckNameError?.let { message ->
+                                Text(message)
+                            }
+                        },
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -434,10 +449,27 @@ fun DeckDetailScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
                             onClick = {
-                                if (dName.isNotBlank()) {
+                                val normalizedName = dName.trim()
+                                if (normalizedName.isBlank()) {
+                                    deckNameError = deckNameRequiredText
+                                } else {
                                     val tagsList = dTags.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-                                    viewModel.updateCustomDeck(deckId, dName, dDesc, tagsList)
-                                    showEditDeckDialog = false
+                                    viewModel.updateCustomDeck(
+                                        deckId = deckId,
+                                        name = normalizedName,
+                                        description = dDesc.trim(),
+                                        tags = tagsList,
+                                        onSuccess = { showEditDeckDialog = false },
+                                        onError = { message ->
+                                            if (message == deckNameDuplicateText) {
+                                                deckNameError = message
+                                            } else {
+                                                coroutineScope.launch {
+                                                    snackbarHostState.showSnackbar(message)
+                                                }
+                                            }
+                                        },
+                                    )
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = accentTeal)
@@ -702,14 +734,14 @@ fun DeckDetailScreen(
                                                     resetAddWordDialogForm()
                                                     pendingAddSnackbarMessage = wordAddedText
                                                 }
-                                            is AddVocabularyResult.DuplicateExact -> {
-                                                localSameWordWarning = null
-                                                addWordErrorMessage = if (result.code == "DUPLICATE_VOCABULARY") {
-                                                    duplicateVocabText
-                                                } else {
-                                                    result.message
+                                                is AddVocabularyResult.DuplicateExact -> {
+                                                    localSameWordWarning = null
+                                                    addWordErrorMessage = if (result.code == "DUPLICATE_VOCABULARY") {
+                                                        duplicateVocabText
+                                                    } else {
+                                                        result.message
+                                                    }
                                                 }
-                                            }
                                                 is AddVocabularyResult.SameWordDifferentMeaning -> {
                                                     addWordErrorMessage = null
                                                     localSameWordWarning = SameWordWarningState(

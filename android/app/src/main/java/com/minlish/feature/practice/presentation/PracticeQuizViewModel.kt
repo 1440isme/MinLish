@@ -2,6 +2,8 @@ package com.minlish.feature.practice.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.minlish.core.audio.SpeechResult
+import com.minlish.core.audio.TextToSpeechManager
 import com.minlish.core.data.model.PracticeSessionEntity
 import com.minlish.core.data.model.VocabularyEntity
 import com.minlish.core.data.repository.AnalyticsRepository
@@ -19,6 +21,7 @@ import kotlinx.coroutines.launch
 class PracticeQuizViewModel(
     private val vocabularyRepository: VocabularyRepository,
     private val analyticsRepository: AnalyticsRepository,
+    private val textToSpeechManager: TextToSpeechManager,
 ) : ViewModel() {
     private val _practiceSessions = MutableStateFlow<List<PracticeSessionEntity>>(emptyList())
     val practiceSessions: StateFlow<List<PracticeSessionEntity>> = _practiceSessions
@@ -229,6 +232,14 @@ class PracticeQuizViewModel(
 
     fun clearPracticeError() {
         _practiceError.value = null
+    }
+
+    fun speak(text: String) {
+        _practiceError.value = when (val result = textToSpeechManager.speak(text)) {
+            SpeechResult.Success -> null
+            SpeechResult.Loading -> "Text to speech is still loading. Please try again."
+            is SpeechResult.Error -> result.message
+        }
     }
 
     private fun practiceStartErrorMessage(error: Exception): String {

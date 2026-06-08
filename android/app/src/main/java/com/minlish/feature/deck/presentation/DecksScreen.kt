@@ -313,6 +313,8 @@ fun DecksScreen(
         var dName by remember { mutableStateOf("") }
         var dDesc by remember { mutableStateOf("") }
         var dTags by remember { mutableStateOf("") }
+        var deckNameError by remember { mutableStateOf<String?>(null) }
+        val deckNameRequiredText = stringResource(R.string.decks_name_required)
 
         Dialog(onDismissRequest = { showCreateDialog = false }) {
             Card(
@@ -333,12 +335,23 @@ fun DecksScreen(
 
                     OutlinedTextField(
                         value = dName,
-                        onValueChange = { dName = it },
+                        onValueChange = {
+                            dName = it
+                            if (deckNameError != null) {
+                                deckNameError = null
+                            }
+                        },
                         label = { Text(stringResource(R.string.decks_field_name)) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("deck_name_input"),
                         singleLine = true,
+                        isError = deckNameError != null,
+                        supportingText = {
+                            deckNameError?.let { message ->
+                                Text(message)
+                            }
+                        },
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -371,10 +384,17 @@ fun DecksScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
                             onClick = {
-                                if (dName.isNotBlank()) {
+                                val normalizedName = dName.trim()
+                                if (normalizedName.isBlank()) {
+                                    deckNameError = deckNameRequiredText
+                                } else {
                                     val tagsList = dTags.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-                                    viewModel.createCustomDeck(dName, dDesc, tagsList)
-                                    showCreateDialog = false
+                                    viewModel.createCustomDeck(
+                                        name = normalizedName,
+                                        description = dDesc.trim(),
+                                        tags = tagsList,
+                                        onSuccess = { showCreateDialog = false },
+                                    )
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = accentTeal),

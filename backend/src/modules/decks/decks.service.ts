@@ -227,7 +227,7 @@ export class DecksService {
     if (existing) {
       throw new BadRequestException({
         code: ErrorCodes.DECK_NAME_DUPLICATE,
-        message: 'Tên deck đã tồn tại',
+        message: 'A deck with this name already exists.',
       });
     }
 
@@ -313,7 +313,7 @@ export class DecksService {
       if (existing) {
         throw new BadRequestException({
           code: ErrorCodes.DECK_NAME_DUPLICATE,
-          message: 'Tên deck đã tồn tại',
+          message: 'A deck with this name already exists.',
         });
       }
     }

@@ -3,6 +3,8 @@ package com.minlish.feature.deck.presentation
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.minlish.core.audio.SpeechResult
+import com.minlish.core.audio.TextToSpeechManager
 import com.minlish.core.data.model.AddVocabularyResult
 import com.minlish.core.data.model.DeckEntity
 import com.minlish.core.data.model.DeckLearningProgressEntity
@@ -19,6 +21,7 @@ import kotlinx.coroutines.launch
 
 class DeckDetailViewModel(
     private val vocabularyRepository: VocabularyRepository,
+    private val textToSpeechManager: TextToSpeechManager,
 ) : ViewModel() {
     private val _selectedDeck = MutableStateFlow<DeckEntity?>(null)
     val selectedDeck: StateFlow<DeckEntity?> = _selectedDeck
@@ -40,6 +43,14 @@ class DeckDetailViewModel(
 
     fun clearLastError() {
         _lastErrorMessage.value = null
+    }
+
+    fun speak(text: String) {
+        _lastErrorMessage.value = when (val result = textToSpeechManager.speak(text)) {
+            SpeechResult.Success -> null
+            SpeechResult.Loading -> "Text to speech is still loading. Please try again."
+            is SpeechResult.Error -> result.message
+        }
     }
 
     fun selectDeck(deckId: String) {
@@ -95,13 +106,24 @@ class DeckDetailViewModel(
         }
     }
 
-    fun updateCustomDeck(deckId: String, name: String, description: String, tags: List<String>) {
+    fun updateCustomDeck(
+        deckId: String,
+        name: String,
+        description: String,
+        tags: List<String>,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {},
+    ) {
         viewModelScope.launch {
             try {
                 vocabularyRepository.updateDeck(deckId, name, description, tags)
+                _lastErrorMessage.value = null
                 selectDeck(deckId)
+                onSuccess()
             } catch (e: Exception) {
-                _lastErrorMessage.value = ApiErrorParser.humanMessage(e, "Failed to update deck")
+                val errorMessage = deckActionMessage(e, "Failed to update deck")
+                _lastErrorMessage.value = null
+                onError(errorMessage)
             }
         }
     }
@@ -241,6 +263,14 @@ class DeckDetailViewModel(
                 )
             }
         }
+    }
+}
+
+private fun deckActionMessage(error: Exception, fallback: String): String {
+    val apiError = ApiErrorParser.parse(error)
+    return when (apiError?.code) {
+        "DECK_NAME_DUPLICATE" -> "A deck with this name already exists."
+        else -> apiError?.message ?: error.localizedMessage ?: fallback
     }
 }
 
