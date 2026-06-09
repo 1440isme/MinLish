@@ -1,7 +1,10 @@
 import {
   Controller,
+  Get,
   Param,
   Post,
+  Res,
+  StreamableFile,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -11,6 +14,7 @@ import {
   ApiBody,
   ApiConsumes,
   ApiOperation,
+  ApiProduces,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -60,5 +64,30 @@ export class ImportsController {
       file?.buffer ?? Buffer.alloc(0),
       fileName,
     );
+  }
+
+  @Get(':deckId/export-csv')
+  @ApiOperation({ summary: 'Export vocabularies from a deck to CSV' })
+  @ApiProduces('text/csv')
+  @ApiResponse({
+    status: 200,
+    schema: {
+      type: 'string',
+      format: 'binary',
+    },
+  })
+  async exportCsv(
+    @CurrentUser() user: User,
+    @Param('deckId') deckId: string,
+    @Res({ passthrough: true }) response: any,
+  ): Promise<StreamableFile> {
+    const exported = await this.importsService.exportCsv(user.id, deckId);
+    response.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    response.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${exported.fileName}"`,
+    );
+
+    return new StreamableFile(exported.content);
   }
 }
