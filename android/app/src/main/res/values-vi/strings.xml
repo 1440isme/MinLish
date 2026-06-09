@@ -72,6 +72,8 @@
     <string name="deck_detail_practice">Luyện tập</string>
     <string name="deck_detail_add_manual_word">Thêm từ thủ công</string>
     <string name="deck_detail_import_csv">Import CSV</string>
+    <string name="deck_detail_import_export_csv">Import / Export CSV</string>
+    <string name="deck_detail_export_csv">Export CSV</string>
     <string name="deck_detail_delete_deck_title">Xóa deck?</string>
     <string name="deck_detail_delete_deck_message">Xóa "%1$s" khỏi danh sách deck cá nhân của bạn? Hành động này không thể hoàn tác.</string>
     <string name="deck_detail_add_vocab_title">Thêm từ vựng tiếng Anh</string>
@@ -89,6 +91,10 @@
     <string name="deck_detail_duplicate_vocab">Từ này đã tồn tại trong deck.</string>
     <string name="deck_detail_word_meaning_required">Từ vựng và nghĩa là bắt buộc!</string>
     <string name="deck_detail_import_title">Import từ vựng từ CSV</string>
+    <string name="deck_detail_import_export_title">Công cụ CSV</string>
+    <string name="deck_detail_import_export_description">Xuất deck hiện tại ra CSV hoặc chọn file .csv để import từ vựng. Các cột bắt buộc: word, meaning.</string>
+    <string name="deck_detail_export_card_description">Tải deck hiện tại xuống dưới dạng CSV để dùng lại hoặc chia sẻ.</string>
+    <string name="deck_detail_import_card_description">Chọn file CSV từ thiết bị rồi import trực tiếp vào deck này.</string>
     <string name="deck_detail_import_description">Chọn file .csv từ thiết bị của bạn. Các cột bắt buộc: word, meaning.</string>
     <string name="deck_detail_import_help">Cần đúng cấu trúc? Hãy tải file CSV mẫu với đầy đủ cột được hỗ trợ và giá trị ví dụ.</string>
     <string name="deck_detail_download_sample_csv">Tải CSV mẫu</string>
@@ -132,6 +138,8 @@
     <string name="deck_detail_import_report_duplicate_samples">Ví dụ dòng trùng lặp:</string>
     <string name="deck_detail_import_report_rows_to_fix">Các dòng cần chỉnh sửa:</string>
     <string name="deck_detail_import_failure_default">Không thể import file CSV đã chọn. Vui lòng kiểm tra định dạng file và các cột bắt buộc.</string>
+    <string name="deck_detail_export_success">Xuất file CSV thành công.</string>
+    <string name="deck_detail_export_failed_default">Không thể xuất file CSV.</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">Cấu hình ứng dụng</string>

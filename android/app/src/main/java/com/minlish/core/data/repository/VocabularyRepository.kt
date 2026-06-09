@@ -10,6 +10,7 @@ import com.minlish.core.data.model.AddVocabularyResult
 import com.minlish.core.data.model.DeckLearningProgressEntity
 import com.minlish.core.data.model.DashboardAnalyticsDto
 import com.minlish.core.data.model.DeckEntity
+import com.minlish.core.data.model.ExportCsvResult
 import com.minlish.core.data.model.FavoriteResult
 import com.minlish.core.data.model.ImportCsvResponse
 import com.minlish.core.data.model.PendingVocabularyRequest
@@ -332,6 +333,41 @@ class VocabularyRepository(
             )
         } finally {
             tempFile.delete()
+        }
+    }
+
+    suspend fun exportCsvFile(deckId: String, fileUri: Uri): ExportCsvResult {
+        return try {
+            val response = importsApi.exportCsv(deckId)
+            if (!response.isSuccessful) {
+                return ExportCsvResult(
+                    success = false,
+                    message = "Could not export CSV file.",
+                )
+            }
+
+            val body = response.body()
+                ?: return ExportCsvResult(
+                    success = false,
+                    message = "Empty CSV export response.",
+                )
+
+            context.contentResolver.openOutputStream(fileUri)?.use { output ->
+                body.byteStream().use { input ->
+                    input.copyTo(output)
+                    output.flush()
+                }
+            } ?: return ExportCsvResult(
+                success = false,
+                message = "Could not write the exported CSV file.",
+            )
+
+            ExportCsvResult(success = true)
+        } catch (e: Exception) {
+            ExportCsvResult(
+                success = false,
+                message = ApiErrorParser.humanMessage(e),
+            )
         }
     }
 

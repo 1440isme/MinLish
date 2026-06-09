@@ -101,6 +101,8 @@ fun DeckDetailScreen(
     val wordMeaningRequiredText = stringResource(R.string.deck_detail_word_meaning_required)
     val selectedCsvFallbackText = stringResource(R.string.deck_detail_selected_csv_fallback)
     val importChooseFileFirstText = stringResource(R.string.deck_detail_import_choose_file_first)
+    val exportSuccessText = stringResource(R.string.deck_detail_export_success)
+    val exportFailedDefaultText = stringResource(R.string.deck_detail_export_failed_default)
     val csvPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -121,6 +123,20 @@ fun DeckDetailScreen(
                     csvTemplateSaveFailedText
                 }
             )
+        }
+    }
+
+    val exportCsvLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        viewModel.exportCsv(deckId, uri) { result ->
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar(
+                    result.message.takeUnless { result.success || it.isNullOrBlank() }
+                        ?: if (result.success) exportSuccessText else exportFailedDefaultText
+                )
+            }
         }
     }
 
@@ -304,9 +320,9 @@ fun DeckDetailScreen(
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.UploadFile, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.ImportExport, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(stringResource(R.string.deck_detail_import_csv), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.deck_detail_import_export_csv), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }
@@ -841,154 +857,163 @@ fun DeckDetailScreen(
 
     // CSV BULK TEXT IMPORTER MODAL
     if (showImportDialog) {
-        Dialog(onDismissRequest = { showImportDialog = false }) {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                modifier = Modifier.fillMaxWidth().padding(12.dp)
+        val closeCsvToolsSheet = {
+            showImportDialog = false
+            selectedImportUri = null
+            selectedImportFileName = null
+        }
+
+        ModalBottomSheet(
+            onDismissRequest = closeCsvToolsSheet,
+            containerColor = MaterialTheme.colorScheme.surface,
+            dragHandle = {
+                BottomSheetDefaults.DragHandle()
+            },
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(18.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Text(
+                    text = stringResource(R.string.deck_detail_import_export_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = stringResource(R.string.deck_detail_import_export_description),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(stringResource(R.string.deck_detail_import_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = stringResource(R.string.deck_detail_import_description),
-                        fontSize = 11.sp,
-                        color = Color.Gray,
-                        modifier = Modifier.fillMaxWidth()
+                    CsvToolActionCard(
+                        title = stringResource(R.string.deck_detail_export_csv),
+                        description = stringResource(R.string.deck_detail_export_card_description),
+                        icon = Icons.Default.Download,
+                        accentColor = accentTeal,
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            exportCsvLauncher.launch(buildExportCsvFileName(deck!!.name))
+                        }
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = stringResource(R.string.deck_detail_import_help),
-                        fontSize = 11.sp,
-                        color = Color.Gray,
-                        modifier = Modifier.fillMaxWidth()
+
+                    CsvToolActionCard(
+                        title = stringResource(R.string.deck_detail_import_csv),
+                        description = stringResource(R.string.deck_detail_import_card_description),
+                        icon = Icons.Default.UploadFile,
+                        accentColor = accentTeal,
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            csvPickerLauncher.launch(arrayOf("text/*", "application/*"))
+                        }
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                }
 
-                    OutlinedButton(
-                        onClick = { csvTemplateLauncher.launch("minlish-import-template.csv") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, accentTeal.copy(alpha = 0.45f))
+                Text(
+                    text = stringResource(R.string.deck_detail_import_help),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                TextButton(
+                    onClick = { csvTemplateLauncher.launch("minlish-import-template.csv") },
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Download,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = accentTeal
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.deck_detail_download_sample_csv),
+                        color = accentTeal,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+                    ),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Default.Download,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = accentTeal
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                stringResource(R.string.deck_detail_download_sample_csv),
-                                fontWeight = FontWeight.SemiBold,
-                                color = accentTeal
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    OutlinedButton(
-                        onClick = { csvPickerLauncher.launch(arrayOf("text/*", "application/*")) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.AttachFile, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(stringResource(R.string.deck_detail_choose_csv_file), fontWeight = FontWeight.SemiBold)
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.deck_detail_selected_file),
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.Gray
-                            )
-                            Text(
-                                text = selectedImportFileName ?: stringResource(R.string.deck_detail_no_csv_selected),
-                                fontSize = 13.sp,
-                                fontWeight = if (selectedImportFileName == null) FontWeight.Normal else FontWeight.SemiBold,
-                                color = if (selectedImportFileName == null) Color.Gray else MaterialTheme.colorScheme.onSurface,
-                            )
-                            Text(
-                                text = if (selectedImportFileName == null) {
-                                    stringResource(R.string.deck_detail_choose_csv_prompt)
-                                } else {
-                                    stringResource(R.string.deck_detail_ready_to_import)
-                                },
-                                fontSize = 11.sp,
-                                color = Color.Gray
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Row(
-                        horizontalArrangement = Arrangement.End,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        TextButton(onClick = {
-                            showImportDialog = false
-                            selectedImportUri = null
-                            selectedImportFileName = null
-                        }) {
-                            Text(stringResource(R.string.common_cancel))
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Button(
-                            onClick = {
-                                selectedImportUri?.let { importUri ->
-                                    viewModel.importCsv(deckId, importUri) { res ->
-                                        if (res.success || res.importedCount > 0) {
-                                            importReportMessage = formatImportReport(
-                                                context = context,
-                                                fileName = selectedImportFileName ?: selectedCsvFallbackText,
-                                                response = res
-                                            )
-                                            showImportReport = true
-                                            showImportDialog = false
-                                            selectedImportUri = null
-                                            selectedImportFileName = null
-                                        } else {
-                                            val errMsg = formatImportFailureMessage(context, res)
-                                            coroutineScope.launch {
-                                                snackbarHostState.showSnackbar(errMsg)
-                                            }
-                                            selectedImportUri = null
-                                            selectedImportFileName = null
-                                            showImportDialog = false
-                                        }
-                                    }
-                                } ?: coroutineScope.launch {
-                                    snackbarHostState.showSnackbar(importChooseFileFirstText)
-                                }
+                        Text(
+                            text = stringResource(R.string.deck_detail_selected_file),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.Gray
+                        )
+                        Text(
+                            text = selectedImportFileName ?: stringResource(R.string.deck_detail_no_csv_selected),
+                            fontSize = 13.sp,
+                            fontWeight = if (selectedImportFileName == null) FontWeight.Normal else FontWeight.SemiBold,
+                            color = if (selectedImportFileName == null) Color.Gray else MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            text = if (selectedImportFileName == null) {
+                                stringResource(R.string.deck_detail_choose_csv_prompt)
+                            } else {
+                                stringResource(R.string.deck_detail_ready_to_import)
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = accentTeal),
-                            modifier = Modifier.testTag("csv_import_submit"),
-                            enabled = selectedImportUri != null
-                        ) {
-                            Text(stringResource(R.string.deck_detail_import_button))
-                        }
+                            fontSize = 11.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = closeCsvToolsSheet) {
+                        Text(stringResource(R.string.common_cancel))
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            selectedImportUri?.let { importUri ->
+                                viewModel.importCsv(deckId, importUri) { res ->
+                                    if (res.success || res.importedCount > 0) {
+                                        importReportMessage = formatImportReport(
+                                            context = context,
+                                            fileName = selectedImportFileName ?: selectedCsvFallbackText,
+                                            response = res
+                                        )
+                                        showImportReport = true
+                                        closeCsvToolsSheet()
+                                    } else {
+                                        val errMsg = formatImportFailureMessage(context, res)
+                                        coroutineScope.launch {
+                                            snackbarHostState.showSnackbar(errMsg)
+                                        }
+                                        closeCsvToolsSheet()
+                                    }
+                                }
+                            } ?: coroutineScope.launch {
+                                snackbarHostState.showSnackbar(importChooseFileFirstText)
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = accentTeal),
+                        modifier = Modifier.testTag("csv_import_submit"),
+                        enabled = selectedImportUri != null
+                    ) {
+                        Text(stringResource(R.string.deck_detail_import_button))
                     }
                 }
             }
@@ -1258,6 +1283,63 @@ private fun DeckLearningProgressHeader(
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+@Composable
+private fun CsvToolActionCard(
+    title: String,
+    description: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    accentColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Card(
+        onClick = onClick,
+        modifier = modifier,
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = accentColor.copy(alpha = 0.08f)
+        ),
+        border = BorderStroke(1.dp, accentColor.copy(alpha = 0.22f))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(accentColor.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 16.sp
+                )
+            }
+        }
     }
 }
 
@@ -1536,6 +1618,16 @@ private fun formatImportFailureMessage(
 ): String {
     val firstError = response.errors?.firstOrNull()?.takeIf { it.isNotBlank() }
     return firstError ?: context.getString(R.string.deck_detail_import_failure_default)
+}
+
+private fun buildExportCsvFileName(deckName: String): String {
+    val safeName = deckName
+        .trim()
+        .lowercase()
+        .replace(Regex("[^a-z0-9]+"), "_")
+        .trim('_')
+
+    return "${safeName.ifBlank { "deck" }}_vocabularies.csv"
 }
 
 private fun writeSampleCsvTemplate(context: Context, uri: Uri): Boolean {

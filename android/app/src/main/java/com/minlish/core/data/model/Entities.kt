@@ -99,3 +99,8 @@ data class ImportCsvResponse(
     val errors: List<String>? = null,
     val duplicateSamples: List<String>? = null,
 )
+
+data class ExportCsvResult(
+    val success: Boolean,
+    val message: String? = null,
+)

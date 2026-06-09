@@ -207,4 +207,54 @@ describe('ImportsService', () => {
       }),
     );
   });
+
+  it('exports csv for an accessible deck with escaped values', async () => {
+    prisma.deck.findFirst.mockResolvedValue({
+      id: 'deck-1',
+      name: 'Business English',
+      deckType: 'SYSTEM',
+      ownerUserId: null,
+      isDefault: false,
+      deletedAt: null,
+    });
+    prisma.vocabulary.findMany.mockResolvedValue([
+      {
+        word: 'budget',
+        meaning: 'ngân sách',
+        pronunciation: '/bud-get/',
+        descriptionEn: 'planned "spending"',
+        example: 'Keep, track',
+        collocation: 'tight budget',
+        relatedWords: 'finance',
+        note: 'line 1\nline 2',
+        partOfSpeech: 'noun',
+      },
+    ]);
+
+    const result = await service.exportCsv('user-1', 'deck-1');
+    const text = result.content.toString('utf8');
+
+    expect(result.fileName).toBe('business_english_vocabularies.csv');
+    expect(text).toContain(
+      'word,meaning,pronunciation,description_en,example,collocation,related_words,note,part_of_speech',
+    );
+    expect(text).toContain('"planned ""spending"""');
+    expect(text).toContain('"Keep, track"');
+    expect(text).toContain('"line 1\nline 2"');
+  });
+
+  it('forbids exporting another user deck', async () => {
+    prisma.deck.findFirst.mockResolvedValue({
+      id: 'deck-2',
+      name: 'Private Deck',
+      deckType: 'USER',
+      ownerUserId: 'user-2',
+      isDefault: false,
+      deletedAt: null,
+    });
+
+    await expect(service.exportCsv('user-1', 'deck-2')).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
+  });
 });

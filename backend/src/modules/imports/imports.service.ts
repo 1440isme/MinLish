@@ -24,6 +24,18 @@ type CsvRow = Record<string, unknown>;
 export class ImportsService {
   constructor(private prisma: PrismaService) {}
 
+  private readonly exportHeaders = [
+    'word',
+    'meaning',
+    'pronunciation',
+    'description_en',
+    'example',
+    'collocation',
+    'related_words',
+    'note',
+    'part_of_speech',
+  ] as const;
+
   private parseCsv(buffer: Buffer): CsvRow[] {
     // Minimal RFC4180-ish CSV parser (supports quotes + commas).
     const text = buffer.toString('utf8').replace(/^\uFEFF/, '');
@@ -118,6 +130,33 @@ export class ImportsService {
         message: 'Không thể import trực tiếp vào Favorites deck',
       });
     }
+  }
+
+  private assertDeckExportable(currentUserId: string, deck: Deck): void {
+    if (deck.deckType === 'USER' && deck.ownerUserId !== currentUserId) {
+      throw new ForbiddenException({
+        code: ErrorCodes.DECK_FORBIDDEN,
+        message: 'Bạn không có quyền export deck này',
+      });
+    }
+  }
+
+  private escapeCsvValue(value: string | null | undefined): string {
+    const text = value ?? '';
+    if (/[",\r\n]/.test(text)) {
+      return `"${text.replace(/"/g, '""')}"`;
+    }
+    return text;
+  }
+
+  private buildExportFileName(deckName: string): string {
+    const safeName = deckName
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+
+    return `${safeName || 'deck'}_vocabularies.csv`;
   }
 
   async importCsv(
@@ -379,6 +418,57 @@ export class ImportsService {
         message: 'File CSV không hợp lệ hoặc không thể parse',
       });
     }
+  }
+
+  async exportCsv(
+    currentUserId: string,
+    deckId: string,
+  ): Promise<{ fileName: string; content: Buffer }> {
+    const deck = await this.getDeckOrThrow(deckId);
+    this.assertDeckExportable(currentUserId, deck);
+
+    const vocabularies = await this.prisma.vocabulary.findMany({
+      where: {
+        deckId,
+        deletedAt: null,
+      },
+      orderBy: [{ word: 'asc' }, { meaning: 'asc' }],
+      select: {
+        word: true,
+        meaning: true,
+        pronunciation: true,
+        descriptionEn: true,
+        example: true,
+        collocation: true,
+        relatedWords: true,
+        note: true,
+        partOfSpeech: true,
+      },
+    });
+
+    const lines = [
+      this.exportHeaders.join(','),
+      ...vocabularies.map((vocabulary) =>
+        [
+          vocabulary.word,
+          vocabulary.meaning,
+          vocabulary.pronunciation,
+          vocabulary.descriptionEn,
+          vocabulary.example,
+          vocabulary.collocation,
+          vocabulary.relatedWords,
+          vocabulary.note,
+          vocabulary.partOfSpeech,
+        ]
+          .map((value) => this.escapeCsvValue(value))
+          .join(','),
+      ),
+    ];
+
+    return {
+      fileName: this.buildExportFileName(deck.name),
+      content: Buffer.from(`\uFEFF${lines.join('\n')}`, 'utf8'),
+    };
   }
 
   private async recalculateDeckTotalWords(deckId: string): Promise<void> {

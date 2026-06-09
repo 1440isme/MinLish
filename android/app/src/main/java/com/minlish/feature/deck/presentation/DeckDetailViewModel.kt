@@ -8,6 +8,7 @@ import com.minlish.core.audio.TextToSpeechManager
 import com.minlish.core.data.model.AddVocabularyResult
 import com.minlish.core.data.model.DeckEntity
 import com.minlish.core.data.model.DeckLearningProgressEntity
+import com.minlish.core.data.model.ExportCsvResult
 import com.minlish.core.data.model.FavoriteResult
 import com.minlish.core.data.model.ImportCsvResponse
 import com.minlish.core.data.model.PendingVocabularyRequest
@@ -262,6 +263,12 @@ class DeckDetailViewModel(
                     ),
                 )
             }
+        }
+    }
+
+    fun exportCsv(deckId: String, fileUri: Uri, onComplete: (ExportCsvResult) -> Unit) {
+        viewModelScope.launch {
+            onComplete(vocabularyRepository.exportCsvFile(deckId, fileUri))
         }
     }
 }

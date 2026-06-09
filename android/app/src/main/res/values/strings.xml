@@ -76,6 +76,8 @@
     <string name="deck_detail_practice">Practice</string>
     <string name="deck_detail_add_manual_word">Add Manual Word</string>
     <string name="deck_detail_import_csv">Import CSV</string>
+    <string name="deck_detail_import_export_csv">Import / Export CSV</string>
+    <string name="deck_detail_export_csv">Export CSV</string>
     <string name="deck_detail_delete_deck_title">Delete deck?</string>
     <string name="deck_detail_delete_deck_message">Delete "%1$s" and remove it from your personal decks? This action cannot be undone.</string>
     <string name="deck_detail_add_vocab_title">Add English Vocabulary</string>
@@ -93,6 +95,10 @@
     <string name="deck_detail_duplicate_vocab">This word already exists in this deck.</string>
     <string name="deck_detail_word_meaning_required">Word and Meaning are mandatory!</string>
     <string name="deck_detail_import_title">Import Vocabularies from CSV</string>
+    <string name="deck_detail_import_export_title">CSV Tools</string>
+    <string name="deck_detail_import_export_description">Export the current deck as CSV, or choose a .csv file to import vocabularies. Required columns: word, meaning.</string>
+    <string name="deck_detail_export_card_description">Download the current deck in a reusable CSV format.</string>
+    <string name="deck_detail_import_card_description">Pick a CSV file from your device and import it into this deck.</string>
     <string name="deck_detail_import_description">Choose a .csv file from your device. Required columns: word, meaning.</string>
     <string name="deck_detail_import_help">Need the exact structure? Download the sample CSV with all supported columns and example values.</string>
     <string name="deck_detail_download_sample_csv">Download Sample CSV</string>
@@ -136,6 +142,8 @@
     <string name="deck_detail_import_report_duplicate_samples">Duplicate samples:</string>
     <string name="deck_detail_import_report_rows_to_fix">Rows that need fixing:</string>
     <string name="deck_detail_import_failure_default">The selected CSV file could not be imported. Please check the file format and required columns.</string>
+    <string name="deck_detail_export_success">CSV exported successfully.</string>
+    <string name="deck_detail_export_failed_default">Could not export the CSV file.</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">App Settings</string>
